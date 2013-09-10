@@ -23,12 +23,12 @@ void usage() {
 }
 
 CK_C_GetFunctionList load_pkcs11_library(const char* libpath, const char* libname) {
-  if (libname == NULL) {
+  if (libname == nullptr) {
     cerr << "No library name provided" << endl;
     exit(1);
   }
   string fullname;
-  if (libpath != NULL) {
+  if (libpath != nullptr) {
     fullname = libpath;
     if (fullname.at(fullname.size() - 1) != '/') {
       fullname += '/';
@@ -41,13 +41,13 @@ CK_C_GetFunctionList load_pkcs11_library(const char* libpath, const char* libnam
   }
 
   void* lib = dlopen(fullname.c_str(), RTLD_NOW);
-  if (lib == NULL) {
+  if (lib == nullptr) {
     cerr << "Failed to dlopen(" << fullname << ")" << endl;
     exit(1);
   }
 
   void* fn = dlsym(lib, "C_GetFunctionList");
-  if (fn == NULL) {
+  if (fn == nullptr) {
     cerr<< "Failed to dlsym(\"C_GetFunctionList\")" << endl;
     exit(1);
   }
@@ -63,8 +63,8 @@ int main(int argc, char* argv[]) {
 
   // Retrieve PKCS module location.
   int opt;
-  const char* module_name = NULL;
-  const char* module_path = NULL;
+  const char* module_name = nullptr;
+  const char* module_path = nullptr;
   while ((opt = getopt(argc, argv, "l:m:s:h")) != -1) {
     switch (opt) {
       case 'l':

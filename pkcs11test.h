@@ -13,6 +13,12 @@
 #include "pkcs11-describe.h"
 // gTest header
 #include "gtest/gtest.h"
+#include <memory>
+
+// Deleter for std::unique_ptr that handles C's malloc'ed memory.
+struct freer {
+  void operator()(void* p) { free(p); }
+};
 
 // Additional macro for checking the return value of a PKCS#11 function.
 inline ::testing::AssertionResult IsCKR_OK(CK_RV rv) {

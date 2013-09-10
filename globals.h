@@ -10,5 +10,7 @@ extern CK_FUNCTION_LIST_PTR g_fns;
 extern CK_SLOT_ID g_slot_id;
 // User PIN.
 extern const char* g_user_pin;
+// Security Officer PIN.
+extern const char* g_so_pin;
 
 #endif  // GLOBALS_H

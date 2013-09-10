@@ -20,6 +20,7 @@ void usage() {
   cerr << "  -l path : path to PKCS#11 library" << endl;
   cerr << "  -s id   : slot ID to perform tests against" << endl;
   cerr << "  -u pwd  : user PIN/password" << endl;
+  cerr << "  -o pwd  : security officer PIN/password" << endl;
   exit(1);
 }
 
@@ -79,6 +80,9 @@ int main(int argc, char* argv[]) {
         break;
       case 'u':
         g_user_pin = optarg;
+        break;
+      case 'o':
+        g_so_pin = optarg;
         break;
       case 'h':
       default:

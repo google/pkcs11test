@@ -781,6 +781,7 @@ string session_info_description(CK_SESSION_INFO_PTR session) {
   ss << ", ";
   ss << ".flags=" << flag_names(session->flags, FLAG_VAL_NAME(CKF_RW_SESSION), FLAG_VAL_NAME(CKF_SERIAL_SESSION), 0);
   ss << ".ulDeviceError=" << (unsigned int)session->ulDeviceError << "}";
+  return ss.str();
 }
 
 string mechanism_info_description(CK_MECHANISM_INFO_PTR mechanism) {

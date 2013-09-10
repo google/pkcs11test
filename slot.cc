@@ -19,6 +19,17 @@ TEST_F(PKCS11Test, EnumerateSlots) {
       EXPECT_CKR_OK(g_fns->C_GetTokenInfo(slot.get()[ii], &token));
       cout << "  " << token_description(&token) << endl;
     }
+  }
+}
 
+TEST_F(PKCS11Test, EnumerateMechanisms) {
+  CK_ULONG mechanism_count;
+  EXPECT_CKR_OK(g_fns->C_GetMechanismList(g_slot_id, NULL_PTR, &mechanism_count));
+  unique_ptr<CK_MECHANISM_TYPE, freer> mechanism((CK_MECHANISM_TYPE_PTR)malloc(mechanism_count * sizeof(CK_MECHANISM_TYPE)));
+  EXPECT_CKR_OK(g_fns->C_GetMechanismList(g_slot_id, mechanism.get(), &mechanism_count));
+  for (int ii = 0; ii < mechanism_count; ii++) {
+    CK_MECHANISM_INFO mechanism_info;
+    EXPECT_CKR_OK(g_fns->C_GetMechanismInfo(g_slot_id, mechanism.get()[ii], &mechanism_info));
+    cout << "mechanism[" << ii << "]=" << mechanism_type_name(mechanism.get()[ii]) << mechanism_info_description(&mechanism_info) << endl;
   }
 }

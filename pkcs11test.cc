@@ -19,6 +19,7 @@ void usage() {
   cerr << "  -m name : name of PKCS#11 library" << endl;
   cerr << "  -l path : path to PKCS#11 library" << endl;
   cerr << "  -s id   : slot ID to perform tests against" << endl;
+  cerr << "  -L      : perform login tests (may lock out PINs)" << endl;
   cerr << "  -u pwd  : user PIN/password" << endl;
   cerr << "  -o pwd  : security officer PIN/password" << endl;
   exit(1);
@@ -67,7 +68,7 @@ int main(int argc, char* argv[]) {
   int opt;
   const char* module_name = nullptr;
   const char* module_path = nullptr;
-  while ((opt = getopt(argc, argv, "l:m:s:u:h")) != -1) {
+  while ((opt = getopt(argc, argv, "l:m:s:Lu:o:h")) != -1) {
     switch (opt) {
       case 'l':
         module_path = optarg;
@@ -78,6 +79,8 @@ int main(int argc, char* argv[]) {
       case 's':
         g_slot_id = atoi(optarg);
         break;
+      case 'L':
+        g_do_login_tests = true;
       case 'u':
         g_user_pin = optarg;
         break;

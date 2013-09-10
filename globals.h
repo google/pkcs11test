@@ -8,6 +8,8 @@
 extern CK_FUNCTION_LIST_PTR g_fns;
 // Slot to perform tests against.
 extern CK_SLOT_ID g_slot_id;
+// Whether to run login tests.  Usually best not to, because the PINs involved may get locked out.
+extern bool g_do_login_tests;
 // User PIN.
 extern const char* g_user_pin;
 // Security Officer PIN.

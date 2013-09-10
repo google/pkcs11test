@@ -637,14 +637,14 @@ string info_description(CK_INFO_PTR info) {
   if (info == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "CK_INFO {.cryptokiVersion="
-     << info->cryptokiVersion.major << "."
-     << info->cryptokiVersion.minor << ",";
+     << static_cast<int>(info->cryptokiVersion.major) << "."
+     << static_cast<int>(info->cryptokiVersion.minor) << ",";
   ss << ".manufacturerID='" << setw(32) << info->manufacturerID << "', ";
   ss << ".flags=" << hex << (unsigned int)info->flags << ", ";
   ss << ".libraryDescription='" << setw(32) << info->libraryDescription << "', ";
   ss << ".libraryVersion="
-     << info->libraryVersion.major << "."
-     << info->libraryVersion.minor << "}";
+     << static_cast<int>(info->libraryVersion.major) << "."
+     << static_cast<int>(info->libraryVersion.minor) << "}";
   return ss.str();
 }
 
@@ -652,7 +652,8 @@ string function_list_description(CK_FUNCTION_LIST_PTR fns) {
   if (fns == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "{" << endl << "  .version="
-     << fns->version.major << "." << fns->version.minor << "," << endl;
+     << static_cast<int>(fns->version.major) << "." 
+     << static_cast<int>(fns->version.minor) << "," << endl;
 
   // Hackery.
 #undef CK_NEED_ARG_LIST
@@ -699,12 +700,12 @@ string slot_description(CK_SLOT_INFO* slot) {
   ss << ".slotDescription=" << setw(32) << slot->slotDescription << ", ";
   ss << ".manufacturerID=" << setw(32) << slot->manufacturerID << ", ";
   ss << ".hardwareVersion="
-     << slot->hardwareVersion.major << "."
-     << slot->hardwareVersion.minor << ", ";
+     << static_cast<int>(slot->hardwareVersion.major) << "."
+     << static_cast<int>(slot->hardwareVersion.minor) << ", ";
   ss << ".flags=" << flag_names(slot->flags, CKF_TOKEN_PRESENT, CKF_REMOVABLE_DEVICE, CKF_HW_SLOT, 0);
   ss << ".firmwareVersion="
-     << slot->firmwareVersion.major << "."
-     << slot->firmwareVersion.minor;
+     << static_cast<int>(slot->firmwareVersion.major) << "."
+     << static_cast<int>(slot->firmwareVersion.minor);
   ss << "}";
   return ss.str();
 }
@@ -746,11 +747,11 @@ string token_description(CK_TOKEN_INFO_PTR token) {
   ss << ".ulTotalPrivateMemory=" << (unsigned int)token->ulTotalPrivateMemory << ", ";
   ss << ".ulFreePrivateMemory=" << (unsigned int)token->ulFreePrivateMemory << ", ";
   ss << ".hardwareVersion="
-     << token->hardwareVersion.major << "."
-     << token->hardwareVersion.minor << ", ";
+     << static_cast<int>(token->hardwareVersion.major) << "."
+     << static_cast<int>(token->hardwareVersion.minor) << ", ";
   ss << ".firmwareVersion="
-     << token->firmwareVersion.major << "."
-     << token->firmwareVersion.minor << ", ";
+     << static_cast<int>(token->firmwareVersion.major) << "."
+     << static_cast<int>(token->firmwareVersion.minor) << ", ";
   ss << ".utcTime='" << token->utcTime << "'}";
   return ss.str();
 }

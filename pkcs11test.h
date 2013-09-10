@@ -51,7 +51,7 @@ class SessionTest : public PKCS11Test {
     CK_SLOT_INFO slot_info;
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(g_slot_id, &slot_info));
     if (!(slot_info.flags & CKF_TOKEN_PRESENT)) {
-      std::cerr << "Need to specify a slot with a token present for testing" << std::endl;
+      std::cerr << "Need to specify a slot ID that has a token present" << std::endl;
       exit(1);
     }
   }
@@ -76,6 +76,31 @@ class ReadWriteSessionTest : public SessionTest {
     CK_FLAGS flags = CKF_SERIAL_SESSION | CKF_RW_SESSION;
     EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session_));
   }
+};
+
+class LoginSessionTest : public ReadOnlySessionTest {
+ public:
+  LoginSessionTest(CK_USER_TYPE user_type, const char* pin) {
+    if (g_fns->C_Login(session_, user_type,
+                       (CK_UTF8CHAR_PTR)pin,
+                       strlen(pin)) != CKR_OK) {
+      std::cerr << "Need to specify the " << user_type_name(user_type) << " PIN";
+      exit(1);
+    }
+  }
+  virtual ~LoginSessionTest() {
+    EXPECT_CKR_OK(g_fns->C_Logout(session_));
+  }
+};
+
+class ROUserSessionTest : public LoginSessionTest {
+ public:
+  ROUserSessionTest() : LoginSessionTest(CKU_USER, g_user_pin) {}
+};
+
+class ROSOSessionTest : public LoginSessionTest {
+ public:
+  ROSOSessionTest() : LoginSessionTest(CKU_SO, g_so_pin) {}
 };
 
 #endif  // PKCS11TEST_H

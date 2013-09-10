@@ -419,6 +419,12 @@ string object_class_name(CK_OBJECT_CLASS val) {
 
 namespace {
 
+// Many strings in the PKCS#11 interface are fixed-width, blank-padded, no null terminator.
+// This is a utility function to convert such a thing to a C++ string.
+string ck_char(const CK_CHAR* p, int width) {
+  return string(reinterpret_cast<const char*>(p), width);
+}
+
 char hex_nibble[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                      'a', 'b', 'c', 'd', 'e', 'f'};
 string to_hex(unsigned char* p, int len) {
@@ -639,9 +645,9 @@ string info_description(CK_INFO_PTR info) {
   ss << "CK_INFO {.cryptokiVersion="
      << static_cast<int>(info->cryptokiVersion.major) << "."
      << static_cast<int>(info->cryptokiVersion.minor) << ",";
-  ss << ".manufacturerID='" << setw(32) << info->manufacturerID << "', ";
+  ss << ".manufacturerID='" << ck_char(info->manufacturerID, 32) << "', ";
   ss << ".flags=" << hex << (unsigned int)info->flags << ", ";
-  ss << ".libraryDescription='" << setw(32) << info->libraryDescription << "', ";
+  ss << ".libraryDescription='" << ck_char(info->libraryDescription, 32) << "', ";
   ss << ".libraryVersion="
      << static_cast<int>(info->libraryVersion.major) << "."
      << static_cast<int>(info->libraryVersion.minor) << "}";
@@ -697,8 +703,8 @@ string slot_description(CK_SLOT_INFO* slot) {
   int first = 1;
   stringstream ss;
   ss <<"CK_SLOT_INFO {";
-  ss << ".slotDescription=" << setw(32) << slot->slotDescription << ", ";
-  ss << ".manufacturerID=" << setw(32) << slot->manufacturerID << ", ";
+  ss << ".slotDescription=" << ck_char(slot->slotDescription, 32) << ", ";
+  ss << ".manufacturerID=" << ck_char(slot->manufacturerID, 32) << ", ";
   ss << ".hardwareVersion="
      << static_cast<int>(slot->hardwareVersion.major) << "."
      << static_cast<int>(slot->hardwareVersion.minor) << ", ";
@@ -713,10 +719,10 @@ string slot_description(CK_SLOT_INFO* slot) {
 string token_description(CK_TOKEN_INFO_PTR token) {
   if (token == NULL_PTR) return "<nullptr>";
   stringstream ss;
-  ss << "CK_TOKEN_INFO {.label='" << setw(32) << token->label << "', ";
-  ss << ".manufacturerID='" << setw(32) << token->manufacturerID << "', "; 
-  ss << ".model=" << setw(16) << token->model << "', ";
-  ss << ".serialNumber=" << setw(16) << token->serialNumber << "', ";
+  ss << "CK_TOKEN_INFO {.label='" << ck_char(token->label, 32) << "', ";
+  ss << ".manufacturerID='" << ck_char(token->manufacturerID, 32) << "', "; 
+  ss << ".model=" << ck_char(token->model, 16) << "', ";
+  ss << ".serialNumber=" << ck_char(token->serialNumber, 16) << "', ";
   ss << ".flags=" << flag_names(token->flags,
                                 CKF_RNG,
                                 CKF_WRITE_PROTECTED,

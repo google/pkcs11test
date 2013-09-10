@@ -7,6 +7,7 @@
 #include <string>
 
 std::string rv_name(CK_RV val);
+std::string user_type_name(CK_USER_TYPE val);
 std::string key_type_name(CK_KEY_TYPE val);
 std::string mechanism_type_name(CK_MECHANISM_TYPE val);
 std::string certificate_type_name(CK_CERTIFICATE_TYPE val);

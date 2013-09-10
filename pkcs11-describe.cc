@@ -101,6 +101,15 @@ string rv_name(CK_RV val) {
   }
 }
 
+string user_type_name(CK_USER_TYPE val) {
+  switch (val) {
+    case CKU_SO: return "CKU_SO";
+    case CKU_USER: return "CKU_USER";
+    case CKU_CONTEXT_SPECIFIC: return "CKU_CONTEXT_SPECIFIC";
+    default: return "UNKNOWN";
+  }
+}
+
 string key_type_name(CK_KEY_TYPE val) {
   switch (val) {
     case CKK_RSA: return "CKK_RSA";

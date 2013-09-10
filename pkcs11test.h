@@ -36,4 +36,17 @@ class PKCS11Test : public ::testing::Test {
   }
 };
 
+// Test case that handles session setup/teardown
+class ReadOnlySessionTest : public PKCS11Test {
+ protected:
+  virtual void SetUp() {
+    CK_FLAGS flags = CKF_SERIAL_SESSION;
+    EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session_));
+  }
+  virtual void TearDown() {
+    EXPECT_CKR_OK(g_fns->C_CloseSession(session_));
+  }
+  CK_SESSION_HANDLE session_;
+};
+
 #endif  // PKCS11TEST_H

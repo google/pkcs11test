@@ -49,8 +49,9 @@ TEST(Init, InitArgsInternalLocks) {
 
 // From here on, wrap Initialize/Finalize in a fixture.
 class InitTest : public ::testing::Test {
-protected:
+ protected:
   virtual void SetUp() {
+    // Null argument => only planning to use PKCS#11 from single thread.
     EXPECT_CKR_OK(g_fns->C_Initialize(NULL_PTR));
   }
   virtual void TearDown() {

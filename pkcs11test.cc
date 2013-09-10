@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 
 // C++ headers
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
@@ -17,6 +18,7 @@ namespace {
 void usage() {
   cerr << "  -m name : name of PKCS#11 library" << endl;
   cerr << "  -l path : path to PKCS#11 library" << endl;
+  cerr << "  -s id   : slot ID to perform tests against" << endl;
   exit(1);
 }
 
@@ -63,13 +65,16 @@ int main(int argc, char* argv[]) {
   int opt;
   const char* module_name = NULL;
   const char* module_path = NULL;
-  while ((opt = getopt(argc, argv, "l:m:h")) != -1) {
+  while ((opt = getopt(argc, argv, "l:m:s:h")) != -1) {
     switch (opt) {
       case 'l':
         module_path = optarg;
         break;
       case 'm':
         module_name = optarg;
+        break;
+      case 's':
+        g_slot_id = atoi(optarg);
         break;
       case 'h':
       default:

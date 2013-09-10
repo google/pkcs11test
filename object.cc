@@ -3,15 +3,16 @@
 
 using namespace std;  // So sue me
 
-TEST_F(ReadOnlySessionTest, EnumerateObjects) {
-  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session_, NULL_PTR, 0));
+namespace {
+void EnumerateObjects(CK_SESSION_HANDLE session) {
+  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session, NULL_PTR, 0));
   while (true) {
     CK_OBJECT_HANDLE object;
     CK_ULONG object_count;
-    EXPECT_CKR_OK(g_fns->C_FindObjects(session_, &object, 1, &object_count));
+    EXPECT_CKR_OK(g_fns->C_FindObjects(session, &object, 1, &object_count));
     if (object_count == 0) break;
     CK_ULONG object_size;
-    EXPECT_CKR_OK(g_fns->C_GetObjectSize(session_, object, &object_size));
+    EXPECT_CKR_OK(g_fns->C_GetObjectSize(session, object, &object_size));
     cout << "  object x" << setw(8) << setfill('0') << hex << (unsigned int)object << " (size=" << (int)object_size << ")" << endl;
 
     for (int ii = 0; ii < pkcs11_attribute_count; ii++) {
@@ -20,11 +21,22 @@ TEST_F(ReadOnlySessionTest, EnumerateObjects) {
       attr.type = pkcs11_attribute_info[ii].val;
       attr.pValue = &(buffer[0]);
       attr.ulValueLen = sizeof(buffer);
-      CK_RV rv = g_fns->C_GetAttributeValue(session_, object, &attr, 1);
+      CK_RV rv = g_fns->C_GetAttributeValue(session, object, &attr, 1);
       if (rv == CKR_OK) {
         cout << "    " << attribute_description(&attr) << endl;
       }
     }
   }
-  EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session_));
+  EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session));
 }
+
+}  // namespace
+
+TEST_F(ReadOnlySessionTest, EnumerateObjects) {
+  EnumerateObjects(session_);
+}
+
+TEST_F(ROUserSessionTest, EnumerateObjects) {
+  EnumerateObjects(session_);
+}
+

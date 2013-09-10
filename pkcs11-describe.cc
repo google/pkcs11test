@@ -490,18 +490,7 @@ string to_object_class(unsigned char* p, int len) {
   CK_OBJECT_CLASS val = *(CK_OBJECT_CLASS*)p;
   return object_class_name(val);
 }
-
-// Information about how to format all attribute types
-typedef string AttrValueToString(unsigned char* data, int length);
-
-struct attr_val_name {
-  // Attribute type value
-  CK_ATTRIBUTE_TYPE val;
-  // Attribute type name
-  const char* name;
-  // Function that converts one of these attributes to a string
-  AttrValueToString* val_converter;
-};
+}  // namespace
 
 #define VN(x)  {x, #x, &to_hex}
 #define VNA(x) {x, #x, &to_ascii}
@@ -513,7 +502,7 @@ struct attr_val_name {
 #define VNC(x) {x, #x, &to_certificate_type}
 #define VNO(x) {x, #x, &to_object_class}
 #define VNN(x) {x, #x, &to_hex}  // DER-encoding
-struct attr_val_name all_attributes[] = {
+const struct attr_val_name pkcs11_attribute_info[] = {
   VNO(CKA_CLASS),
   VNB(CKA_TOKEN),
   VNB(CKA_PRIVATE),
@@ -614,10 +603,9 @@ struct attr_val_name all_attributes[] = {
   VN(CKA_ALLOWED_MECHANISMS),
   VN(CKA_VENDOR_DEFINED),
 };
-int all_attribute_count = sizeof(all_attributes) / sizeof(all_attributes[0]);
+int pkcs11_attribute_count = sizeof(pkcs11_attribute_info) / sizeof(pkcs11_attribute_info[0]);
 #define MAX_ATTR_SIZE 2048
 
-}  // namespace
 
 string attribute_description(CK_ATTRIBUTE_PTR attr) {
   if (attr == NULL_PTR) return "<nullptr>";
@@ -625,19 +613,20 @@ string attribute_description(CK_ATTRIBUTE_PTR attr) {
   stringstream ss;
   int ii;
   ss << "CK_ATTRIBUTE {.type=";
-  for (ii = 0; ii < all_attribute_count; ii++) {
-    if (all_attributes[ii].val == attr->type) {
-      val_converter = all_attributes[ii].val_converter;
-      ss << all_attributes[ii].name;
+  for (ii = 0; ii < pkcs11_attribute_count; ii++) {
+    if (pkcs11_attribute_info[ii].val == attr->type) {
+      val_converter = pkcs11_attribute_info[ii].val_converter;
+      ss << pkcs11_attribute_info[ii].name;
       break;
     }
   }
-  if (ii >= all_attribute_count) {
+  if (ii >= pkcs11_attribute_count) {
     ss << "UNKNOWN(" << hex << (unsigned int) attr->type << ")";
   }
   int len = (int)attr->ulValueLen;
   unsigned char* p = static_cast<unsigned char*>(attr->pValue);
   ss << ", .ulValueLen=" << len << " .pValue=" << val_converter(p, len) << "}";
+  return ss.str();
 }
 
 

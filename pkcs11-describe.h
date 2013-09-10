@@ -19,4 +19,17 @@ std::string token_description(CK_TOKEN_INFO_PTR token);
 std::string session_info_description(CK_SESSION_INFO_PTR session);
 std::string mechanism_info_description(CK_MECHANISM_INFO_PTR mechanism);
 
+// Information about object attributes.
+typedef std::string AttrValueToString(unsigned char* data, int length);
+struct attr_val_name {
+  // Attribute type value
+  CK_ATTRIBUTE_TYPE val;
+  // Attribute type name
+  const char* name;
+  // Function that converts one of these attributes to a string
+  AttrValueToString* val_converter;
+};
+extern const attr_val_name pkcs11_attribute_info[];
+extern int pkcs11_attribute_count;
+
 #endif  // PKCS11_DESCRIBE_H

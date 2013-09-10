@@ -59,8 +59,9 @@ class SessionTest : public PKCS11Test {
     EXPECT_CKR_OK(g_fns->C_CloseSession(session_));
   }
   void Login(CK_USER_TYPE user_type, const char* pin) {
-    if (g_fns->C_Login(session_, user_type, (CK_UTF8CHAR_PTR)pin, strlen(pin)) != CKR_OK) {
-      std::cerr << "Need to specify the correct " << user_type_name(user_type) << " PIN (given '" << pin << "')" << std::endl;
+    CK_RV rv = g_fns->C_Login(session_, user_type, (CK_UTF8CHAR_PTR)pin, strlen(pin));
+    if (rv != CKR_OK) {
+      std::cerr << "Failed to login as user type " << user_type_name(user_type) << ", error " << rv_name(rv) << std::endl;
       exit(1);
     }
   }

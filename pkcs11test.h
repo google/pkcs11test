@@ -24,4 +24,16 @@ inline ::testing::AssertionResult IsCKR_OK(CK_RV rv) {
 }
 #define EXPECT_CKR_OK(val) EXPECT_TRUE(IsCKR_OK(val))
 
+// Test case that handles Initialize/Finalize
+class PKCS11Test : public ::testing::Test {
+ protected:
+  virtual void SetUp() {
+    // Null argument => only planning to use PKCS#11 from single thread.
+    EXPECT_CKR_OK(g_fns->C_Initialize(NULL_PTR));
+  }
+  virtual void TearDown() {
+    EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
+  }
+};
+
 #endif  // PKCS11TEST_H

@@ -59,17 +59,17 @@ class InitTest : public ::testing::Test {
   }
 };
 
-TEST_F(InitTest, NestedFail) {
+TEST_F(PKCS11Test, InitNestedFail) {
   EXPECT_EQ(CKR_CRYPTOKI_ALREADY_INITIALIZED, g_fns->C_Initialize(NULL_PTR));
 }
 
-TEST_F(InitTest, GetInfo) {
+TEST_F(PKCS11Test, GetInfo) {
   CK_INFO info = {0};
   EXPECT_CKR_OK(g_fns->C_GetInfo(&info));
   cout << info_description(&info) << endl;
 }
 
-TEST_F(InitTest, FailedTermination) {
+TEST_F(PKCS11Test, FailedTermination) {
   EXPECT_EQ(CKR_ARGUMENTS_BAD, g_fns->C_Finalize((void *)1));
 }
 

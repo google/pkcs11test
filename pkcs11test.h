@@ -13,6 +13,8 @@
 #include "pkcs11-describe.h"
 // gTest header
 #include "gtest/gtest.h"
+
+#include <iostream>
 #include <memory>
 
 // Deleter for std::unique_ptr that handles C's malloc'ed memory.
@@ -32,26 +34,33 @@ inline ::testing::AssertionResult IsCKR_OK(CK_RV rv) {
 
 // Test case that handles Initialize/Finalize
 class PKCS11Test : public ::testing::Test {
- protected:
-  virtual void SetUp() {
+ public:
+  PKCS11Test() {
     // Null argument => only planning to use PKCS#11 from single thread.
     EXPECT_CKR_OK(g_fns->C_Initialize(NULL_PTR));
   }
-  virtual void TearDown() {
+  virtual ~PKCS11Test() {
     EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
   }
 };
 
 // Test case that handles session setup/teardown
 class ReadOnlySessionTest : public PKCS11Test {
- protected:
-  virtual void SetUp() {
+ public:
+  ReadOnlySessionTest(){
+    CK_SLOT_INFO slot_info;
+    EXPECT_CKR_OK(g_fns->C_GetSlotInfo(g_slot_id, &slot_info));
+    if (!(slot_info.flags & CKF_TOKEN_PRESENT)) {
+      std::cerr << "Need to specify a slot with a token present for testing" << std::endl;
+      exit(1);
+    }
     CK_FLAGS flags = CKF_SERIAL_SESSION;
     EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session_));
   }
-  virtual void TearDown() {
+  virtual ~ReadOnlySessionTest() {
     EXPECT_CKR_OK(g_fns->C_CloseSession(session_));
   }
+ protected:
   CK_SESSION_HANDLE session_;
 };
 

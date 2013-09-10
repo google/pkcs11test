@@ -1,6 +1,8 @@
 all: pkcs11test
 test: pkcs11test
 	./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki
+test_chaps: pkcs11test
+	./pkcs11test -m libchaps.so -l ../out
 
 CXXFLAGS+=-I pkcs11 -g
 GTEST_DIR=gtest-1.6.0

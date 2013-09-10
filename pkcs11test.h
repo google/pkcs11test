@@ -58,6 +58,12 @@ class SessionTest : public PKCS11Test {
   virtual ~SessionTest() {
     EXPECT_CKR_OK(g_fns->C_CloseSession(session_));
   }
+  void Login(CK_USER_TYPE user_type, const char* pin) {
+    if (g_fns->C_Login(session_, user_type, (CK_UTF8CHAR_PTR)pin, strlen(pin)) != CKR_OK) {
+      std::cerr << "Need to specify the correct " << user_type_name(user_type) << " PIN (given '" << pin << "')" << std::endl;
+      exit(1);
+    }
+  }
  protected:
   CK_SESSION_HANDLE session_;
 };
@@ -78,29 +84,22 @@ class ReadWriteSessionTest : public SessionTest {
   }
 };
 
-class LoginSessionTest : public ReadOnlySessionTest {
+class ROUserSessionTest : public ReadOnlySessionTest {
  public:
-  LoginSessionTest(CK_USER_TYPE user_type, const char* pin) {
-    if (g_fns->C_Login(session_, user_type,
-                       (CK_UTF8CHAR_PTR)pin,
-                       strlen(pin)) != CKR_OK) {
-      std::cerr << "Need to specify the " << user_type_name(user_type) << " PIN";
-      exit(1);
-    }
-  }
-  virtual ~LoginSessionTest() {
-    EXPECT_CKR_OK(g_fns->C_Logout(session_));
-  }
+  ROUserSessionTest() { Login(CKU_USER, g_user_pin); }
+  virtual ~ROUserSessionTest() { EXPECT_CKR_OK(g_fns->C_Logout(session_)); }
 };
 
-class ROUserSessionTest : public LoginSessionTest {
+class RWUserSessionTest : public ReadWriteSessionTest {
  public:
-  ROUserSessionTest() : LoginSessionTest(CKU_USER, g_user_pin) {}
+  RWUserSessionTest() { Login(CKU_USER, g_user_pin); }
+  virtual ~RWUserSessionTest() { EXPECT_CKR_OK(g_fns->C_Logout(session_)); }
 };
 
-class ROSOSessionTest : public LoginSessionTest {
+class RWSOSessionTest : public ReadWriteSessionTest {
  public:
-  ROSOSessionTest() : LoginSessionTest(CKU_SO, g_so_pin) {}
+  RWSOSessionTest() { Login(CKU_SO, g_so_pin); }
+  virtual ~RWSOSessionTest() { EXPECT_CKR_OK(g_fns->C_Logout(session_)); }
 };
 
 #endif  // PKCS11TEST_H

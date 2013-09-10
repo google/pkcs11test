@@ -44,24 +44,38 @@ class PKCS11Test : public ::testing::Test {
   }
 };
 
-// Test case that handles session setup/teardown
-class ReadOnlySessionTest : public PKCS11Test {
+// Test cases that handle session setup/teardown
+class SessionTest : public PKCS11Test {
  public:
-  ReadOnlySessionTest(){
+  SessionTest() {
     CK_SLOT_INFO slot_info;
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(g_slot_id, &slot_info));
     if (!(slot_info.flags & CKF_TOKEN_PRESENT)) {
       std::cerr << "Need to specify a slot with a token present for testing" << std::endl;
       exit(1);
     }
-    CK_FLAGS flags = CKF_SERIAL_SESSION;
-    EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session_));
   }
-  virtual ~ReadOnlySessionTest() {
+  virtual ~SessionTest() {
     EXPECT_CKR_OK(g_fns->C_CloseSession(session_));
   }
  protected:
   CK_SESSION_HANDLE session_;
+};
+
+class ReadOnlySessionTest : public SessionTest {
+ public:
+  ReadOnlySessionTest() {
+    CK_FLAGS flags = CKF_SERIAL_SESSION;
+    EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session_));
+  }
+};
+
+class ReadWriteSessionTest : public SessionTest {
+ public:
+  ReadWriteSessionTest() {
+    CK_FLAGS flags = CKF_SERIAL_SESSION | CKF_RW_SESSION;
+    EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session_));
+  }
 };
 
 #endif  // PKCS11TEST_H

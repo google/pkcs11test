@@ -422,7 +422,9 @@ namespace {
 // Many strings in the PKCS#11 interface are fixed-width, blank-padded, no null terminator.
 // This is a utility function to convert such a thing to a C++ string.
 string ck_char(const CK_CHAR* p, int width) {
-  return string(reinterpret_cast<const char*>(p), width);
+  string s(reinterpret_cast<const char*>(p), width);
+  s.erase(s.find_last_not_of(" ") + 1);
+  return s;
 }
 
 char hex_nibble[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',

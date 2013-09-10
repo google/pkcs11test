@@ -660,7 +660,7 @@ string function_list_description(CK_FUNCTION_LIST_PTR fns) {
   if (fns == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "{" << endl << "  .version="
-     << static_cast<int>(fns->version.major) << "." 
+     << static_cast<int>(fns->version.major) << "."
      << static_cast<int>(fns->version.minor) << "," << endl;
 
   // Hackery.
@@ -676,14 +676,14 @@ namespace {
 #define FLAG_VAL_NAME(name) (unsigned long)(name), #name
 // Expects pairs of val,name arguments until val of zero is reached.
 string flag_names(unsigned long val, ...) {
-  va_list ap;
+  va_list vl;
   bool first = true;
   stringstream ss;
-  va_start(ap, val);
+  va_start(vl, val);
   while (true) {
-    int flag = va_arg(ap, unsigned long);
+    int flag = va_arg(vl, unsigned long);
     if (flag == 0) break;
-    const char* flag_name = va_arg(ap, const char *);
+    const char* flag_name = va_arg(vl, const char *);
     if (val | flag) {
       if (!first) ss << "|";
       ss << flag_name;
@@ -695,7 +695,7 @@ string flag_names(unsigned long val, ...) {
     if (!first) ss << "|";
     ss << hex << val;
   }
-  va_end(ap);
+  va_end(vl);
   return ss.str();
 }
 
@@ -705,12 +705,15 @@ string slot_description(CK_SLOT_INFO* slot) {
   int first = 1;
   stringstream ss;
   ss <<"CK_SLOT_INFO {";
-  ss << ".slotDescription=" << ck_char(slot->slotDescription, 32) << ", ";
-  ss << ".manufacturerID=" << ck_char(slot->manufacturerID, 32) << ", ";
+  ss << ".slotDescription='" << ck_char(slot->slotDescription, 32) << "', ";
+  ss << ".manufacturerID='" << ck_char(slot->manufacturerID, 32) << "', ";
   ss << ".hardwareVersion="
      << static_cast<int>(slot->hardwareVersion.major) << "."
      << static_cast<int>(slot->hardwareVersion.minor) << ", ";
-  ss << ".flags=" << flag_names(slot->flags, CKF_TOKEN_PRESENT, CKF_REMOVABLE_DEVICE, CKF_HW_SLOT, 0);
+  ss << ".flags=" << flag_names(slot->flags,
+                                FLAG_VAL_NAME(CKF_TOKEN_PRESENT),
+                                FLAG_VAL_NAME(CKF_REMOVABLE_DEVICE),
+                                FLAG_VAL_NAME(CKF_HW_SLOT), 0) << ", ";
   ss << ".firmwareVersion="
      << static_cast<int>(slot->firmwareVersion.major) << "."
      << static_cast<int>(slot->firmwareVersion.minor);
@@ -723,27 +726,27 @@ string token_description(CK_TOKEN_INFO_PTR token) {
   stringstream ss;
   ss << "CK_TOKEN_INFO {.label='" << ck_char(token->label, 32) << "', ";
   ss << ".manufacturerID='" << ck_char(token->manufacturerID, 32) << "', "; 
-  ss << ".model=" << ck_char(token->model, 16) << "', ";
+  ss << ".model='" << ck_char(token->model, 16) << "', ";
   ss << ".serialNumber=" << ck_char(token->serialNumber, 16) << "', ";
   ss << ".flags=" << flag_names(token->flags,
-                                CKF_RNG,
-                                CKF_WRITE_PROTECTED,
-                                CKF_LOGIN_REQUIRED,
-                                CKF_USER_PIN_INITIALIZED,
-                                CKF_RESTORE_KEY_NOT_NEEDED,
-                                CKF_CLOCK_ON_TOKEN,
-                                CKF_PROTECTED_AUTHENTICATION_PATH,
-                                CKF_DUAL_CRYPTO_OPERATIONS,
-                                CKF_TOKEN_INITIALIZED,
-                                CKF_SECONDARY_AUTHENTICATION,
-                                CKF_USER_PIN_COUNT_LOW,
-                                CKF_USER_PIN_FINAL_TRY,
-                                CKF_USER_PIN_LOCKED,
-                                CKF_USER_PIN_TO_BE_CHANGED,
-                                CKF_SO_PIN_COUNT_LOW,
-                                CKF_SO_PIN_FINAL_TRY,
-                                CKF_SO_PIN_LOCKED,
-                                CKF_SO_PIN_TO_BE_CHANGED, 0) << ", ";
+                                FLAG_VAL_NAME(CKF_RNG),
+                                FLAG_VAL_NAME(CKF_WRITE_PROTECTED),
+                                FLAG_VAL_NAME(CKF_LOGIN_REQUIRED),
+                                FLAG_VAL_NAME(CKF_USER_PIN_INITIALIZED),
+                                FLAG_VAL_NAME(CKF_RESTORE_KEY_NOT_NEEDED),
+                                FLAG_VAL_NAME(CKF_CLOCK_ON_TOKEN),
+                                FLAG_VAL_NAME(CKF_PROTECTED_AUTHENTICATION_PATH),
+                                FLAG_VAL_NAME(CKF_DUAL_CRYPTO_OPERATIONS),
+                                FLAG_VAL_NAME(CKF_TOKEN_INITIALIZED),
+                                FLAG_VAL_NAME(CKF_SECONDARY_AUTHENTICATION),
+                                FLAG_VAL_NAME(CKF_USER_PIN_COUNT_LOW),
+                                FLAG_VAL_NAME(CKF_USER_PIN_FINAL_TRY),
+                                FLAG_VAL_NAME(CKF_USER_PIN_LOCKED),
+                                FLAG_VAL_NAME(CKF_USER_PIN_TO_BE_CHANGED),
+                                FLAG_VAL_NAME(CKF_SO_PIN_COUNT_LOW),
+                                FLAG_VAL_NAME(CKF_SO_PIN_FINAL_TRY),
+                                FLAG_VAL_NAME(CKF_SO_PIN_LOCKED),
+                                FLAG_VAL_NAME(CKF_SO_PIN_TO_BE_CHANGED), 0) << ", ";
   ss << ".ulMaxSessionCount=" << (unsigned int)token->ulMaxSessionCount << ", ";
   ss << ".ulSessionCount=" << (unsigned int)token->ulSessionCount << ", ";
   ss << ".ulMaxRwSessionCount=" << (unsigned int)token->ulMaxRwSessionCount << ", ";
@@ -776,7 +779,7 @@ string session_info_description(CK_SESSION_INFO_PTR session) {
   else if (session->state==CKS_RW_SO_FUNCTIONS) ss << "CKS_RW_SO_FUNCTIONS";
   else ss << "UNKNOWN(" << (int)session->state << ")";
   ss << ", ";
-  ss << ".flags=" << flag_names(session->flags, CKF_RW_SESSION, CKF_SERIAL_SESSION, 0);
+  ss << ".flags=" << flag_names(session->flags, FLAG_VAL_NAME(CKF_RW_SESSION), FLAG_VAL_NAME(CKF_SERIAL_SESSION), 0);
   ss << ".ulDeviceError=" << (unsigned int)session->ulDeviceError << "}";
 }
 
@@ -786,26 +789,26 @@ string mechanism_info_description(CK_MECHANISM_INFO_PTR mechanism) {
   ss << "CK_MECHANISM_INFO {.ulMinKeySize=" << (unsigned int)mechanism->ulMinKeySize << ", ";
   ss << ".ulMaxKeySize" << (unsigned int)mechanism->ulMaxKeySize << ", ";
   ss << ".flags=" << flag_names(mechanism->flags,
-                                CKF_HW,
-                                CKF_ENCRYPT,
-                                CKF_DECRYPT,
-                                CKF_DIGEST,
-                                CKF_SIGN,
-                                CKF_SIGN_RECOVER,
-                                CKF_VERIFY,
-                                CKF_VERIFY_RECOVER,
-                                CKF_GENERATE,
-                                CKF_GENERATE_KEY_PAIR,
-                                CKF_WRAP,
-                                CKF_UNWRAP,
-                                CKF_DERIVE,
-                                CKF_EC_F_P,
-                                CKF_EC_F_2M,
-                                CKF_EC_ECPARAMETERS,
-                                CKF_EC_NAMEDCURVE,
-                                CKF_EC_UNCOMPRESS,
-                                CKF_EC_COMPRESS,
-                                CKF_EXTENSION, 0);
+                                FLAG_VAL_NAME(CKF_HW),
+                                FLAG_VAL_NAME(CKF_ENCRYPT),
+                                FLAG_VAL_NAME(CKF_DECRYPT),
+                                FLAG_VAL_NAME(CKF_DIGEST),
+                                FLAG_VAL_NAME(CKF_SIGN),
+                                FLAG_VAL_NAME(CKF_SIGN_RECOVER),
+                                FLAG_VAL_NAME(CKF_VERIFY),
+                                FLAG_VAL_NAME(CKF_VERIFY_RECOVER),
+                                FLAG_VAL_NAME(CKF_GENERATE),
+                                FLAG_VAL_NAME(CKF_GENERATE_KEY_PAIR),
+                                FLAG_VAL_NAME(CKF_WRAP),
+                                FLAG_VAL_NAME(CKF_UNWRAP),
+                                FLAG_VAL_NAME(CKF_DERIVE),
+                                FLAG_VAL_NAME(CKF_EC_F_P),
+                                FLAG_VAL_NAME(CKF_EC_F_2M),
+                                FLAG_VAL_NAME(CKF_EC_ECPARAMETERS),
+                                FLAG_VAL_NAME(CKF_EC_NAMEDCURVE),
+                                FLAG_VAL_NAME(CKF_EC_UNCOMPRESS),
+                                FLAG_VAL_NAME(CKF_EC_COMPRESS),
+                                FLAG_VAL_NAME(CKF_EXTENSION), 0);
   ss << "}";
   return ss.str();
 }

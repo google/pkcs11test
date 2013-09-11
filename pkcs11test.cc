@@ -8,8 +8,7 @@
 #include <string>
 
 // Local headers
-#include "gtest/gtest.h"
-#include "globals.h"
+#include "pkcs11test.h"
 
 using namespace std;  // So sue me
 
@@ -100,6 +99,35 @@ int main(int argc, char* argv[]) {
   // Retrieve the set of function pointers (C_GetFunctionList is the only function it's OK to call before C_Initialize).
   if (get_fn_list(&g_fns) != CKR_OK) {
     cerr << "Failed to retrieve list of functions" << endl;
+    exit(1);
+  }
+
+  // Determine the characteristics of the specified token/slot.
+  CK_RV rv;
+  rv = g_fns->C_Initialize(NULL_PTR);
+  if (rv != CKR_OK) {
+    cerr << "Failed to C_Initialize (" << rv_name(rv) << ")" << endl;
+    exit(1);
+  }
+  CK_SLOT_INFO slot_info = {0};
+  rv = g_fns->C_GetSlotInfo(g_slot_id, &slot_info);
+  if (rv != CKR_OK) {
+    cerr << "Failed to get slot info (" << rv_name(rv) << ") for slot " << g_slot_id << endl;
+    exit(1);
+  }
+  if (!(slot_info.flags & CKF_TOKEN_PRESENT)) {
+    cerr << "Slot " << g_slot_id << " has no token present." << endl;
+    exit(1);
+  }
+  CK_TOKEN_INFO token = {0};
+  rv = g_fns->C_GetTokenInfo(g_slot_id, &token);
+  if (rv != CKR_OK) {
+    cerr << "Failed to get token info (" << rv_name(rv) << ") for token in slot " << g_slot_id << endl;
+    exit(1);
+  }
+  rv = g_fns->C_Finalize(NULL_PTR);
+  if (rv != CKR_OK) {
+    cerr << "Failed to C_Finalize (" << rv_name(rv) << ")" << endl;
     exit(1);
   }
 

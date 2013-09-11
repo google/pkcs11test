@@ -48,17 +48,6 @@ TEST(Init, InitArgsInternalLocks) {
 // TODO(drysdale): add the other two cases (function pointers supplied, flag set+not-set)
 
 // From here on, wrap Initialize/Finalize in a fixture.
-class InitTest : public ::testing::Test {
- protected:
-  virtual void SetUp() {
-    // Null argument => only planning to use PKCS#11 from single thread.
-    EXPECT_CKR_OK(g_fns->C_Initialize(NULL_PTR));
-  }
-  virtual void TearDown() {
-    EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
-  }
-};
-
 TEST_F(PKCS11Test, InitNestedFail) {
   EXPECT_EQ(CKR_CRYPTOKI_ALREADY_INITIALIZED, g_fns->C_Initialize(NULL_PTR));
 }
@@ -72,4 +61,3 @@ TEST_F(PKCS11Test, GetInfo) {
 TEST_F(PKCS11Test, FailedTermination) {
   EXPECT_EQ(CKR_ARGUMENTS_BAD, g_fns->C_Finalize((void *)1));
 }
-

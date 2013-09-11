@@ -56,6 +56,7 @@ TEST_F(PKCS11Test, GetInfo) {
   CK_INFO info = {0};
   EXPECT_CKR_OK(g_fns->C_GetInfo(&info));
   cout << info_description(&info) << endl;
+  EXPECT_LE(2, info.cryptokiVersion.major);
 }
 
 TEST_F(PKCS11Test, FailedTermination) {

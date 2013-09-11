@@ -37,6 +37,9 @@ TEST_F(ReadOnlySessionTest, EnumerateObjects) {
 }
 
 TEST_F(ROUserSessionTest, EnumerateObjects) {
+  if (!g_login_required) {
+    cout << "Skipping test that requires login" << endl;
+    return;
+  }
   EnumerateObjects(session_);
 }
-

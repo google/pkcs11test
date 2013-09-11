@@ -85,6 +85,7 @@ class ReadWriteSessionTest : public SessionTest {
   }
 };
 
+// The following test fixtures perform a login, which is only appropriate if the token requires login.
 class ROUserSessionTest : public ReadOnlySessionTest {
  public:
   ROUserSessionTest() { Login(CKU_USER, g_user_pin); }

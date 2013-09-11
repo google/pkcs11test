@@ -11,11 +11,11 @@ TEST_F(PKCS11Test, EnumerateSlots) {
   // Retrieve slot list.
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, slot.get(), &slot_count));
   for (int ii = 0; ii < slot_count; ii++) {
-    CK_SLOT_INFO slot_info;
+    CK_SLOT_INFO slot_info = {0};
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot.get()[ii], &slot_info));
     cout << "slot[" << ii << "] = " << (unsigned int)slot.get()[ii] << " = " << slot_description(&slot_info) << endl;
     if (slot_info.flags & CKF_TOKEN_PRESENT) {
-      CK_TOKEN_INFO token;
+      CK_TOKEN_INFO token = {0};
       EXPECT_CKR_OK(g_fns->C_GetTokenInfo(slot.get()[ii], &token));
       cout << "  " << token_description(&token) << endl;
     }

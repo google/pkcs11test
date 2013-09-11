@@ -19,7 +19,7 @@ TEST(RNG, SeedRandomNoInit) {
 }
 
 TEST_F(ReadOnlySessionTest, SeedRandomBadArguments) {
-  EXPECT_EQ(CKR_ARGUMENTS_BAD, g_fns->C_SeedRandom(session_, nullptr, 0));
+  EXPECT_EQ(CKR_ARGUMENTS_BAD, g_fns->C_SeedRandom(session_, nullptr, 1));
 }
 
 TEST_F(PKCS11Test, SeedRandomNoSession) {
@@ -38,7 +38,7 @@ TEST(RNG, GenerateRandomNoInit) {
 }
 
 TEST_F(ReadOnlySessionTest, GenerateRandomBadArguments) {
-  EXPECT_EQ(CKR_ARGUMENTS_BAD, g_fns->C_GenerateRandom(session_, nullptr, 0));
+  EXPECT_EQ(CKR_ARGUMENTS_BAD, g_fns->C_GenerateRandom(session_, nullptr, 1));
 }
 
 TEST_F(PKCS11Test, GenerateRandomNoSession) {

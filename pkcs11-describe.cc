@@ -682,7 +682,7 @@ string flag_names(unsigned long val, ...) {
     int flag = va_arg(vl, unsigned long);
     if (flag == 0) break;
     const char* flag_name = va_arg(vl, const char *);
-    if (val | flag) {
+    if (val & flag) {
       if (!first) ss << "|";
       ss << flag_name;
       first = false;
@@ -700,7 +700,6 @@ string flag_names(unsigned long val, ...) {
 }  // namespace
 
 string slot_description(CK_SLOT_INFO* slot) {
-  int first = 1;
   stringstream ss;
   ss <<"CK_SLOT_INFO {";
   ss << ".slotDescription='" << ck_char(slot->slotDescription, 32) << "', ";
@@ -723,7 +722,7 @@ string token_description(CK_TOKEN_INFO_PTR token) {
   if (token == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "CK_TOKEN_INFO {.label='" << ck_char(token->label, 32) << "', ";
-  ss << ".manufacturerID='" << ck_char(token->manufacturerID, 32) << "', "; 
+  ss << ".manufacturerID='" << ck_char(token->manufacturerID, 32) << "', ";
   ss << ".model='" << ck_char(token->model, 16) << "', ";
   ss << ".serialNumber=" << ck_char(token->serialNumber, 16) << "', ";
   ss << ".flags=" << flag_names(token->flags,

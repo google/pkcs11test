@@ -1,3 +1,4 @@
+/* -*- c++ -*- */
 #ifndef PKCS11_DESCRIBE_H
 #define PKCS11_DESCRIBE_H
 

@@ -1,3 +1,4 @@
+/* -*- c++ -*- */
 #ifndef PKCS11TEST_H
 #define PKCS11TEST_H
 

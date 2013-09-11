@@ -14,5 +14,7 @@ extern bool g_login_required;
 extern const char* g_user_pin;
 // Security Officer PIN.  Only used if g_login_required.
 extern const char* g_so_pin;
+// Whether the token has a random number generator.
+extern bool g_rng;
 
 #endif  // GLOBALS_H

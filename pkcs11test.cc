@@ -128,6 +128,7 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
   g_login_required = (token.flags & CKF_LOGIN_REQUIRED);
+  g_rng = (token.flags & CKF_RNG);
 
   if (!g_login_required) {
     // Disable all tests that require login in their fixture.

@@ -2,7 +2,7 @@ all: pkcs11test
 test: pkcs11test
 	./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki
 test_chaps: pkcs11test
-	./pkcs11test -m libchaps.so -l ../out
+	./pkcs11test -m libchaps.so -l /usr/lib
 
 CXXFLAGS+=-I pkcs11 -g -std=c++0x
 GTEST_DIR=gtest-1.6.0

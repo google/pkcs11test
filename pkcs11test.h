@@ -23,7 +23,7 @@ struct freer {
   void operator()(void* p) { free(p); }
 };
 
-// Additional macro for checking the return value of a PKCS#11 function.
+// Additional macros for checking the return value of a PKCS#11 function.
 inline ::testing::AssertionResult IsCKR_OK(CK_RV rv) {
   if (rv == CKR_OK) {
     return testing::AssertionSuccess();
@@ -32,6 +32,17 @@ inline ::testing::AssertionResult IsCKR_OK(CK_RV rv) {
   }
 }
 #define EXPECT_CKR_OK(val) EXPECT_TRUE(IsCKR_OK(val))
+
+struct CK_RV_ {
+  CK_RV_(CK_RV rv) : rv_(rv) {}
+  CK_RV rv_;
+  bool operator==(const CK_RV_& other) const { return rv_ == other.rv_; }
+};
+inline std::ostream& operator<<(std::ostream& os, const CK_RV_& wrv) {
+  os << rv_name(wrv.rv_);
+  return os;
+}
+#define EXPECT_CKR(expected, actual) EXPECT_EQ(CK_RV_(expected), CK_RV_(actual))
 
 // Test case that handles Initialize/Finalize
 class PKCS11Test : public ::testing::Test {

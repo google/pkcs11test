@@ -24,15 +24,6 @@ struct freer {
 };
 
 // Additional macros for checking the return value of a PKCS#11 function.
-inline ::testing::AssertionResult IsCKR_OK(CK_RV rv) {
-  if (rv == CKR_OK) {
-    return testing::AssertionSuccess();
-  } else {
-    return testing::AssertionFailure() << rv_name(rv);
-  }
-}
-#define EXPECT_CKR_OK(val) EXPECT_TRUE(IsCKR_OK(val))
-
 struct CK_RV_ {
   CK_RV_(CK_RV rv) : rv_(rv) {}
   CK_RV rv_;
@@ -43,6 +34,7 @@ inline std::ostream& operator<<(std::ostream& os, const CK_RV_& wrv) {
   return os;
 }
 #define EXPECT_CKR(expected, actual) EXPECT_EQ(CK_RV_(expected), CK_RV_(actual))
+#define EXPECT_CKR_OK(val) EXPECT_CKR(CKR_OK, (val))
 
 // Test case that handles Initialize/Finalize
 class PKCS11Test : public ::testing::Test {

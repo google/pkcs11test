@@ -6,7 +6,7 @@ using namespace std;  // So sue me
 TEST_F(PKCS11Test, ParallelSessionUnsupported) {
   // No CKF_SERIAL_SESSION => not supported
   CK_SESSION_HANDLE session;
-  EXPECT_EQ(CKR_SESSION_PARALLEL_NOT_SUPPORTED, g_fns->C_OpenSession(g_slot_id, 0, NULL_PTR, NULL_PTR, &session));
+  EXPECT_CKR(CKR_SESSION_PARALLEL_NOT_SUPPORTED, g_fns->C_OpenSession(g_slot_id, 0, NULL_PTR, NULL_PTR, &session));
 }
 
 TEST_F(ReadOnlySessionTest, SessionInfo) {

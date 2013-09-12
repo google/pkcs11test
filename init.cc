@@ -9,13 +9,13 @@ TEST(Init, Simple) {
 }
 
 TEST(Init, UnexpectedFinalize) {
-  EXPECT_EQ(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_Finalize(NULL_PTR));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_Finalize(NULL_PTR));
 }
 
 TEST(Init, InitArgsBadReserved) {
   CK_C_INITIALIZE_ARGS init_args = {0};
   init_args.pReserved = (void*)1;
-  EXPECT_EQ(CKR_ARGUMENTS_BAD, g_fns->C_Initialize(&init_args));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_Initialize(&init_args));
 }
 
 TEST(Init, InitArgsNoNewThreads) {
@@ -27,7 +27,7 @@ TEST(Init, InitArgsNoNewThreads) {
     EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
   } else {
     cout << "Library needs to be able to create OS threads" << endl;
-    EXPECT_EQ(CKR_NEED_TO_CREATE_THREADS, rv);
+    EXPECT_CKR(CKR_NEED_TO_CREATE_THREADS, rv);
   }
 }
 
@@ -49,7 +49,7 @@ TEST(Init, InitArgsInternalLocks) {
 
 // From here on, wrap Initialize/Finalize in a fixture.
 TEST_F(PKCS11Test, InitNestedFail) {
-  EXPECT_EQ(CKR_CRYPTOKI_ALREADY_INITIALIZED, g_fns->C_Initialize(NULL_PTR));
+  EXPECT_CKR(CKR_CRYPTOKI_ALREADY_INITIALIZED, g_fns->C_Initialize(NULL_PTR));
 }
 
 TEST_F(PKCS11Test, GetInfo) {
@@ -60,5 +60,5 @@ TEST_F(PKCS11Test, GetInfo) {
 }
 
 TEST_F(PKCS11Test, FailedTermination) {
-  EXPECT_EQ(CKR_ARGUMENTS_BAD, g_fns->C_Finalize((void *)1));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_Finalize((void *)1));
 }

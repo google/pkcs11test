@@ -9,7 +9,7 @@ TEST_F(ReadOnlySessionTest, DISABLED_UserLoginWrongPIN) {
     cout << "Skipping test that requires login" << endl;
     return;
   }
-  EXPECT_EQ(CKR_PIN_INCORRECT, g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)"simply-wrong", 12));
+  EXPECT_CKR(CKR_PIN_INCORRECT, g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)"simply-wrong", 12));
 }
 
 TEST_F(ReadOnlySessionTest, SOLoginFail) {
@@ -18,23 +18,23 @@ TEST_F(ReadOnlySessionTest, SOLoginFail) {
     return;
   }
   // Can't login as SO in read-only session.
-  EXPECT_EQ(CKR_SESSION_READ_ONLY_EXISTS,
+  EXPECT_CKR(CKR_SESSION_READ_ONLY_EXISTS,
             g_fns->C_Login(session_, CKU_SO, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin)));
 }
 
 
 TEST_F(ROUserSessionTest, UserLoginAlreadyLoggedIn) {
-  EXPECT_EQ(CKR_USER_ALREADY_LOGGED_IN,
+  EXPECT_CKR(CKR_USER_ALREADY_LOGGED_IN,
             g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
 }
 
 TEST_F(RWUserSessionTest, SOLoginFail) {
   // Can't login as SO in read-write session if already logged in as user.
-  EXPECT_EQ(CKR_SESSION_READ_ONLY_EXISTS,
+  EXPECT_CKR(CKR_SESSION_READ_ONLY_EXISTS,
             g_fns->C_Login(session_, CKU_SO, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin)));
 }
 
 TEST_F(RWSOSessionTest, UserLoginFail) {
-  EXPECT_EQ(CKR_USER_ANOTHER_ALREADY_LOGGED_IN,
+  EXPECT_CKR(CKR_USER_ANOTHER_ALREADY_LOGGED_IN,
             g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
 }

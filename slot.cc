@@ -39,9 +39,44 @@ TEST_F(PKCS11Test, EnumerateMechanisms) {
   unique_ptr<CK_MECHANISM_TYPE, freer> mechanism((CK_MECHANISM_TYPE_PTR)malloc(mechanism_count * sizeof(CK_MECHANISM_TYPE)));
   EXPECT_CKR_OK(g_fns->C_GetMechanismList(g_slot_id, mechanism.get(), &mechanism_count));
   for (int ii = 0; ii < mechanism_count; ii++) {
+    const CK_MECHANISM_TYPE mechanism_type = mechanism.get()[ii];
     CK_MECHANISM_INFO mechanism_info;
-    EXPECT_CKR_OK(g_fns->C_GetMechanismInfo(g_slot_id, mechanism.get()[ii], &mechanism_info));
-    cout << "mechanism[" << ii << "]=" << mechanism_type_name(mechanism.get()[ii]) << " " << mechanism_info_description(&mechanism_info) << endl;
+    EXPECT_CKR_OK(g_fns->C_GetMechanismInfo(g_slot_id, mechanism_type, &mechanism_info));
+    cout << "mechanism[" << ii << "]=" << mechanism_type_name(mechanism_type)
+         << " " << mechanism_info_description(&mechanism_info) << endl;
+    EXPECT_LE(mechanism_info.ulMinKeySize, mechanism_info.ulMaxKeySize);
+    // Check the expected functionality is available.
+    CK_FLAGS expected_flags = CKF_HW;
+    if (encrypt_decrypt_mechanisms.count(mechanism_type)) {
+      expected_flags |= CKF_ENCRYPT;
+      expected_flags |= CKF_DECRYPT;
+    }
+    if (sign_verify_mechanisms.count(mechanism_type)) {
+      expected_flags |= CKF_SIGN;
+      expected_flags |= CKF_VERIFY;
+    }
+    if (sign_verify_recover_mechanisms.count(mechanism_type)) {
+      expected_flags |= CKF_SIGN_RECOVER;
+      expected_flags |= CKF_VERIFY_RECOVER;
+    }
+    if (digest_mechanisms.count(mechanism_type)) {
+      expected_flags |= CKF_DIGEST;
+    }
+    if (generate_mechanisms.count(mechanism_type)) {
+      expected_flags |= CKF_GENERATE;
+      expected_flags |= CKF_GENERATE_KEY_PAIR;
+    }
+    if (wrap_unwrap_mechanisms.count(mechanism_type)) {
+      expected_flags |= CKF_WRAP;
+      expected_flags |= CKF_UNWRAP;
+    }
+    if (derive_mechanisms.count(mechanism_type)) {
+      expected_flags |= CKF_DERIVE;
+    }
+    // Check that the mechanism's flags are a subset of those expected.
+    CK_FLAGS extra_flags = mechanism_info.flags;
+    extra_flags &= ~(expected_flags);
+    EXPECT_EQ(0, extra_flags);
   }
 }
 

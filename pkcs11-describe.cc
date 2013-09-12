@@ -785,7 +785,7 @@ string mechanism_info_description(CK_MECHANISM_INFO_PTR mechanism) {
   if (mechanism == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "CK_MECHANISM_INFO {.ulMinKeySize=" << (unsigned int)mechanism->ulMinKeySize << ", ";
-  ss << ".ulMaxKeySize" << (unsigned int)mechanism->ulMaxKeySize << ", ";
+  ss << ".ulMaxKeySize=" << (unsigned int)mechanism->ulMaxKeySize << ", ";
   ss << ".flags=" << flag_names(mechanism->flags,
                                 FLAG_VAL_NAME(CKF_HW),
                                 FLAG_VAL_NAME(CKF_ENCRYPT),

@@ -73,6 +73,11 @@ TEST_F(PKCS11Test, GetInfoFail) {
   EXPECT_CKR(CKR_FUNCTION_FAILED, g_fns->C_GetInfo(nullptr));
 }
 
+TEST(Init, GetInfoNoInit) {
+  CK_INFO info = {0};
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetInfo(&info));
+}
+
 TEST_F(PKCS11Test, GetFunctionList) {
   CK_FUNCTION_LIST_PTR fns;
   EXPECT_CKR_OK(g_fns->C_GetFunctionList(&fns));
@@ -82,3 +87,4 @@ TEST_F(PKCS11Test, GetFunctionList) {
 TEST_F(PKCS11Test, GetFunctionListFail) {
   EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetFunctionList(nullptr));
 }
+

@@ -1,3 +1,9 @@
+// Tests to cover the 4 general purpose functions (PKCS#11 s11.4):
+//   C_Initialize
+//   C_Finalize
+//   C_GetFunctionList
+//   C_GetInfo
+
 #include "pkcs11test.h"
 
 using namespace std;  // So sue me
@@ -52,6 +58,10 @@ TEST_F(PKCS11Test, InitNestedFail) {
   EXPECT_CKR(CKR_CRYPTOKI_ALREADY_INITIALIZED, g_fns->C_Initialize(NULL_PTR));
 }
 
+TEST_F(PKCS11Test, FailedTermination) {
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_Finalize((void *)1));
+}
+
 TEST_F(PKCS11Test, GetInfo) {
   CK_INFO info = {0};
   EXPECT_CKR_OK(g_fns->C_GetInfo(&info));
@@ -59,6 +69,16 @@ TEST_F(PKCS11Test, GetInfo) {
   EXPECT_LE(2, info.cryptokiVersion.major);
 }
 
-TEST_F(PKCS11Test, FailedTermination) {
-  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_Finalize((void *)1));
+TEST_F(PKCS11Test, GetInfoFail) {
+  EXPECT_CKR(CKR_FUNCTION_FAILED, g_fns->C_GetInfo(nullptr));
+}
+
+TEST_F(PKCS11Test, GetFunctionList) {
+  CK_FUNCTION_LIST_PTR fns;
+  EXPECT_CKR_OK(g_fns->C_GetFunctionList(&fns));
+  EXPECT_EQ(fns, g_fns);
+}
+
+TEST_F(PKCS11Test, GetFunctionListFail) {
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetFunctionList(nullptr));
 }

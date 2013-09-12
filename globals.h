@@ -11,6 +11,8 @@
 extern CK_FUNCTION_LIST_PTR g_fns;
 // Slot to perform tests against.
 extern CK_SLOT_ID g_slot_id;
+// Whether to emit verbose information.
+extern bool g_verbose;
 // Whether the token needs the user to login.
 extern bool g_login_required;
 // User PIN.  Only used if g_login_required.

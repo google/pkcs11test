@@ -24,11 +24,11 @@ TEST_F(PKCS11Test, EnumerateSlots) {
   for (int ii = 0; ii < slot_count; ii++) {
     CK_SLOT_INFO slot_info = {0};
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot.get()[ii], &slot_info));
-    cout << "slot[" << ii << "] = " << (unsigned int)slot.get()[ii] << " = " << slot_description(&slot_info) << endl;
+    if (g_verbose) cout << "slot[" << ii << "] = " << (unsigned int)slot.get()[ii] << " = " << slot_description(&slot_info) << endl;
     if (slot_info.flags & CKF_TOKEN_PRESENT) {
       CK_TOKEN_INFO token_info = {0};
       EXPECT_CKR_OK(g_fns->C_GetTokenInfo(slot.get()[ii], &token_info));
-      cout << "  " << token_description(&token_info) << endl;
+      if (g_verbose) cout << "  " << token_description(&token_info) << endl;
     }
   }
 }
@@ -42,8 +42,8 @@ TEST_F(PKCS11Test, EnumerateMechanisms) {
     const CK_MECHANISM_TYPE mechanism_type = mechanism.get()[ii];
     CK_MECHANISM_INFO mechanism_info;
     EXPECT_CKR_OK(g_fns->C_GetMechanismInfo(g_slot_id, mechanism_type, &mechanism_info));
-    cout << "mechanism[" << ii << "]=" << mechanism_type_name(mechanism_type)
-         << " " << mechanism_info_description(&mechanism_info) << endl;
+    if (g_verbose) cout << "mechanism[" << ii << "]=" << mechanism_type_name(mechanism_type)
+                        << " " << mechanism_info_description(&mechanism_info) << endl;
     EXPECT_LE(mechanism_info.ulMinKeySize, mechanism_info.ulMaxKeySize);
     // Check the expected functionality is available.
     CK_FLAGS expected_flags = CKF_HW;

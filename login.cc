@@ -6,7 +6,7 @@ using namespace std;  // So sue me
 // This test may induce the PIN to be locked out.
 TEST_F(ReadOnlySessionTest, DISABLED_UserLoginWrongPIN) {
   if (!g_login_required) {
-    cout << "Skipping test that requires login" << endl;
+    if (g_verbose) cout << "Skipping test that requires login" << endl;
     return;
   }
   EXPECT_CKR(CKR_PIN_INCORRECT, g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)"simply-wrong", 12));
@@ -14,7 +14,7 @@ TEST_F(ReadOnlySessionTest, DISABLED_UserLoginWrongPIN) {
 
 TEST_F(ReadOnlySessionTest, SOLoginFail) {
   if (!g_login_required) {
-    cout << "Skipping test that requires login" << endl;
+    if (g_verbose) cout << "Skipping test that requires login" << endl;
     return;
   }
   // Can't login as SO in read-only session.

@@ -29,10 +29,10 @@ TEST(Init, InitArgsNoNewThreads) {
   init_args.flags = CKF_LIBRARY_CANT_CREATE_OS_THREADS;
   CK_RV rv = g_fns->C_Initialize(&init_args);
   if (rv == CKR_OK) {
-    cout << "Library can cope without creating OS threads" << endl;
+    if (g_verbose) cout << "Library can cope without creating OS threads" << endl;
     EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
   } else {
-    cout << "Library needs to be able to create OS threads" << endl;
+    if (g_verbose) cout << "Library needs to be able to create OS threads" << endl;
     EXPECT_CKR(CKR_NEED_TO_CREATE_THREADS, rv);
   }
 }
@@ -65,7 +65,7 @@ TEST_F(PKCS11Test, FailedTermination) {
 TEST_F(PKCS11Test, GetInfo) {
   CK_INFO info = {0};
   EXPECT_CKR_OK(g_fns->C_GetInfo(&info));
-  cout << info_description(&info) << endl;
+  if (g_verbose) cout << info_description(&info) << endl;
   EXPECT_LE(2, info.cryptokiVersion.major);
 }
 

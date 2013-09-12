@@ -12,11 +12,11 @@ TEST_F(PKCS11Test, ParallelSessionUnsupported) {
 TEST_F(ReadOnlySessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
-  cout << session_info_description(&session_info) << endl;
+  if (g_verbose) cout << session_info_description(&session_info) << endl;
 }
 
 TEST_F(ReadWriteSessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
-  cout << session_info_description(&session_info) << endl;
+  if (g_verbose) cout << session_info_description(&session_info) << endl;
 }

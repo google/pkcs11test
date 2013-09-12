@@ -13,7 +13,8 @@ void EnumerateObjects(CK_SESSION_HANDLE session) {
     if (object_count == 0) break;
     CK_ULONG object_size;
     EXPECT_CKR_OK(g_fns->C_GetObjectSize(session, object, &object_size));
-    cout << "  object x" << setw(8) << setfill('0') << hex << (unsigned int)object << " (size=" << (int)object_size << ")" << endl;
+    if (g_verbose) cout << "  object x" << setw(8) << setfill('0') << hex << (unsigned int)object 
+                        << " (size=" << (int)object_size << ")" << endl;
 
     for (int ii = 0; ii < pkcs11_attribute_count; ii++) {
       CK_BYTE buffer[2048];
@@ -23,7 +24,7 @@ void EnumerateObjects(CK_SESSION_HANDLE session) {
       attr.ulValueLen = sizeof(buffer);
       CK_RV rv = g_fns->C_GetAttributeValue(session, object, &attr, 1);
       if (rv == CKR_OK) {
-        cout << "    " << attribute_description(&attr) << endl;
+        if (g_verbose) cout << "    " << attribute_description(&attr) << endl;
       }
     }
   }
@@ -38,7 +39,7 @@ TEST_F(ReadOnlySessionTest, EnumerateObjects) {
 
 TEST_F(ROUserSessionTest, EnumerateObjects) {
   if (!g_login_required) {
-    cout << "Skipping test that requires login" << endl;
+    if (g_verbose) cout << "Skipping test that requires login" << endl;
     return;
   }
   EnumerateObjects(session_);

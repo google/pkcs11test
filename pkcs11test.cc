@@ -15,6 +15,7 @@ using namespace std;  // So sue me
 namespace {
 
 void usage() {
+  cerr << "  -v      : verbose output" << endl;
   cerr << "  -m name : name of PKCS#11 library" << endl;
   cerr << "  -l path : path to PKCS#11 library" << endl;
   cerr << "  -s id   : slot ID to perform tests against" << endl;
@@ -66,8 +67,11 @@ int main(int argc, char* argv[]) {
   int opt;
   const char* module_name = nullptr;
   const char* module_path = nullptr;
-  while ((opt = getopt(argc, argv, "l:m:s:u:o:h")) != -1) {
+  while ((opt = getopt(argc, argv, "vl:m:s:u:o:h")) != -1) {
     switch (opt) {
+      case 'v':
+        g_verbose = true;
+        break;
       case 'l':
         module_path = optarg;
         break;

@@ -59,6 +59,8 @@ std::set<CK_MECHANISM_TYPE> encrypt_decrypt_mechanisms = {
   CKM_JUNIPER_CBC128,
   CKM_JUNIPER_COUNTER,
   CKM_JUNIPER_SHUFFLE,
+  CKM_BLOWFISH_CBC,
+  CKM_TWOFISH_CBC,
 };
 std::set<CK_MECHANISM_TYPE> sign_verify_mechanisms = {
   CKM_RSA_PKCS,
@@ -185,6 +187,8 @@ std::set<CK_MECHANISM_TYPE> generate_mechanisms = {
   CKM_SSL3_PRE_MASTER_KEY_GEN,
   CKM_TLS_PRE_MASTER_KEY_GEN,
   CKM_WTLS_PRE_MASTER_KEY_GEN,
+  CKM_BLOWFISH_KEY_GEN,
+  CKM_TWOFISH_KEY_GEN,
 };
 std::set<CK_MECHANISM_TYPE> wrap_unwrap_mechanisms = {
   CKM_RSA_PKCS,
@@ -227,6 +231,12 @@ std::set<CK_MECHANISM_TYPE> wrap_unwrap_mechanisms = {
   CKM_JUNIPER_WRAP,
   CKM_KEY_WRAP_SET_OAEP,
   CKM_KEY_WRAP_LYNKS,
+  CKM_DES_OFB64,
+  CKM_DES_OFB8,
+  CKM_DES_CFB64,
+  CKM_DES_CFB8,
+  CKM_BLOWFISH_CBC,
+  CKM_TWOFISH_CBC,
 };
 std::set<CK_MECHANISM_TYPE> derive_mechanisms = {
   CKM_ECDH1_DERIVE,

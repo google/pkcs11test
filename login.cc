@@ -5,7 +5,7 @@ using namespace std;  // So sue me
 
 // This test may induce the PIN to be locked out.
 TEST_F(ReadOnlySessionTest, DISABLED_UserLoginWrongPIN) {
-  if (!g_login_required) {
+  if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
     if (g_verbose) cout << "Skipping test that requires login" << endl;
     return;
   }
@@ -13,7 +13,7 @@ TEST_F(ReadOnlySessionTest, DISABLED_UserLoginWrongPIN) {
 }
 
 TEST_F(ReadOnlySessionTest, SOLoginFail) {
-  if (!g_login_required) {
+  if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
     if (g_verbose) cout << "Skipping test that requires login" << endl;
     return;
   }

@@ -131,10 +131,9 @@ int main(int argc, char* argv[]) {
     cerr << "Failed to C_Finalize (" << rv_name(rv) << ")" << endl;
     exit(1);
   }
-  g_login_required = (token.flags & CKF_LOGIN_REQUIRED);
-  g_rng = (token.flags & CKF_RNG);
+  g_token_flags = token.flags;
 
-  if (!g_login_required) {
+  if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
     // Disable all tests that require login in their fixture.
     // This unfortunately relies on some gTest innards.
     string filter(testing::GTEST_FLAG(filter).c_str());

@@ -13,14 +13,12 @@ extern CK_FUNCTION_LIST_PTR g_fns;
 extern CK_SLOT_ID g_slot_id;
 // Whether to emit verbose information.
 extern bool g_verbose;
-// Whether the token needs the user to login.
-extern bool g_login_required;
-// User PIN.  Only used if g_login_required.
+// The flags describing the capabilities of the token.
+extern CK_FLAGS g_token_flags;
+// User PIN.  Only used if (g_token_flags & CKF_LOGIN_REQUIRED).
 extern const char* g_user_pin;
-// Security Officer PIN.  Only used if g_login_required.
+// Security Officer PIN.  Only used if (g_token_flags & CKF_LOGIN_REQUIRED).
 extern const char* g_so_pin;
-// Whether the token has a random number generator.
-extern bool g_rng;
 
 // PKCS#11 mechanisms for encrypt/decrypt.
 extern std::set<CK_MECHANISM_TYPE> encrypt_decrypt_mechanisms;

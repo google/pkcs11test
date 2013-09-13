@@ -6,7 +6,7 @@ using namespace std;  // So sue me
 TEST_F(ReadOnlySessionTest, SeedRandom) {
   // Additional seed data. Not actually particularly random.
   CK_BYTE seed[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-  if (g_rng) {
+  if (g_token_flags & CKF_RNG) {
     EXPECT_CKR_OK(g_fns->C_SeedRandom(session_, seed, sizeof(seed)));
   } else {
     EXPECT_CKR(CKR_RANDOM_NO_RNG, g_fns->C_SeedRandom(session_, seed, sizeof(seed)));
@@ -29,7 +29,11 @@ TEST_F(PKCS11Test, SeedRandomNoSession) {
 
 TEST_F(ReadOnlySessionTest, GenerateRandom) {
   CK_BYTE data[16];
-  EXPECT_CKR_OK(g_fns->C_GenerateRandom(session_, data, sizeof(data)));
+  if (g_token_flags & CKF_RNG) {
+    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session_, data, sizeof(data)));
+  } else {
+    EXPECT_CKR(CKR_RANDOM_NO_RNG, g_fns->C_GenerateRandom(session_, data, sizeof(data)));
+  }
 }
 
 TEST(RNG, GenerateRandomNoInit) {

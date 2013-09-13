@@ -3,10 +3,9 @@
 CK_FUNCTION_LIST_PTR g_fns = nullptr;
 CK_SLOT_ID g_slot_id = 0;
 bool g_verbose = false;
-bool g_login_required = false;
+CK_FLAGS g_token_flags;
 const char* g_user_pin = "useruser";
 const char* g_so_pin = "sososo";
-bool g_rng = false;
 
 // Taken from table 34, section 12 of PKCS#11 spec.
 std::set<CK_MECHANISM_TYPE> encrypt_decrypt_mechanisms = {

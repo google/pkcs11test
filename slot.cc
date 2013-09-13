@@ -168,7 +168,10 @@ TEST(Slot, NoInit) {
   CK_MECHANISM_INFO mechanism_info;
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetMechanismInfo(g_slot_id, CKM_RSA_PKCS_KEY_PAIR_GEN, &mechanism_info));
   CK_UTF8CHAR so_pin[] = "sososo";
-  CK_UTF8CHAR label[32] = "PKCS#11 Unit Test";  // Should be space-padded
+  const char* label_str = "PKCS#11 Unit Test";
+  CK_UTF8CHAR label[32];
+  memset(label, sizeof(label), ' ');
+  memcpy(label, label_str, strlen(label_str));  // Not including null terminator.
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_InitToken(INVALID_SLOT_ID, so_pin, strlen((const char*)so_pin), label));
   CK_UTF8CHAR user_pin[] = "useruser";
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_InitPIN(INVALID_SESSION_HANDLE, user_pin, strlen((const char*)user_pin)));

@@ -15,7 +15,7 @@ TEST_F(ReadOnlySessionTest, SeedRandom) {
 
 TEST(RNG, SeedRandomNoInit) {
   CK_BYTE seed[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_SeedRandom(123456, seed, sizeof(seed)));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_SeedRandom(INVALID_SLOT_ID, seed, sizeof(seed)));
 }
 
 TEST_F(ReadOnlySessionTest, SeedRandomBadArguments) {
@@ -24,7 +24,7 @@ TEST_F(ReadOnlySessionTest, SeedRandomBadArguments) {
 
 TEST_F(PKCS11Test, SeedRandomNoSession) {
   CK_BYTE seed[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_SeedRandom(123456, seed, sizeof(seed)));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_SeedRandom(INVALID_SLOT_ID, seed, sizeof(seed)));
 }
 
 TEST_F(ReadOnlySessionTest, GenerateRandom) {
@@ -34,7 +34,7 @@ TEST_F(ReadOnlySessionTest, GenerateRandom) {
 
 TEST(RNG, GenerateRandomNoInit) {
   CK_BYTE data[8];
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_SeedRandom(123456, data, sizeof(data)));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_SeedRandom(INVALID_SLOT_ID, data, sizeof(data)));
 }
 
 TEST_F(ReadOnlySessionTest, GenerateRandomBadArguments) {
@@ -43,5 +43,5 @@ TEST_F(ReadOnlySessionTest, GenerateRandomBadArguments) {
 
 TEST_F(PKCS11Test, GenerateRandomNoSession) {
   CK_BYTE data[16];
-  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GenerateRandom(123456, data, sizeof(data)));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GenerateRandom(INVALID_SLOT_ID, data, sizeof(data)));
 }

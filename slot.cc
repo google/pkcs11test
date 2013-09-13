@@ -116,13 +116,13 @@ TEST_F(PKCS11Test, GetSlotListFailArgumentsBad) {
 
 TEST_F(PKCS11Test, GetSlotInfoFail) {
   CK_SLOT_INFO slot_info = {0};
-  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetSlotInfo(123456, &slot_info));
+  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetSlotInfo(INVALID_SLOT_ID, &slot_info));
   EXPECT_CKR(CKR_FUNCTION_FAILED, g_fns->C_GetSlotInfo(g_slot_id, nullptr));
 }
 
 TEST_F(PKCS11Test, GetTokenInfoFail) {
   CK_TOKEN_INFO token_info = {0};
-  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetTokenInfo(123456, &token_info));
+  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetTokenInfo(INVALID_SLOT_ID, &token_info));
   EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetTokenInfo(g_slot_id, nullptr));
 }
 

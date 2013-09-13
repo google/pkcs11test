@@ -19,7 +19,9 @@
 #include <memory>
 
 // Value to use for invalid slot IDs.
-#define INVALID_SLOT_ID 123456
+#define INVALID_SLOT_ID 88888
+// Value to use for invalid session handles.
+#define INVALID_SESSION_HANDLE 99999
 
 // Deleter for std::unique_ptr that handles C's malloc'ed memory.
 struct freer {

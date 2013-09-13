@@ -117,7 +117,8 @@ TEST_F(PKCS11Test, GetSlotListFailArgumentsBad) {
 TEST_F(PKCS11Test, GetSlotInfoFail) {
   CK_SLOT_INFO slot_info = {0};
   EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetSlotInfo(INVALID_SLOT_ID, &slot_info));
-  EXPECT_CKR(CKR_FUNCTION_FAILED, g_fns->C_GetSlotInfo(g_slot_id, nullptr));
+  CK_RV rv = g_fns->C_GetSlotInfo(g_slot_id, nullptr);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
 }
 
 TEST_F(PKCS11Test, GetTokenInfoFail) {
@@ -150,7 +151,8 @@ TEST_F(PKCS11Test, GetMechanismInfoInvalid) {
 }
 
 TEST_F(PKCS11Test, GetMechanismInfoFail) {
-  EXPECT_CKR(CKR_FUNCTION_FAILED, g_fns->C_GetMechanismInfo(g_slot_id, CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR));
+  CK_RV rv = g_fns->C_GetMechanismInfo(g_slot_id, CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
 }
 
 TEST(Slot, NoInit) {

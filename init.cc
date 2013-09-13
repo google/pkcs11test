@@ -70,7 +70,8 @@ TEST_F(PKCS11Test, GetInfo) {
 }
 
 TEST_F(PKCS11Test, GetInfoFail) {
-  EXPECT_CKR(CKR_FUNCTION_FAILED, g_fns->C_GetInfo(nullptr));
+  CK_RV rv = g_fns->C_GetInfo(nullptr);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
 }
 
 TEST(Init, GetInfoNoInit) {
@@ -84,7 +85,7 @@ TEST_F(PKCS11Test, GetFunctionList) {
   EXPECT_EQ(fns, g_fns);
 }
 
-TEST_F(PKCS11Test, GetFunctionListFail) {
-  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetFunctionList(nullptr));
+TEST_F(PKCS11Test, DISABLED_GetFunctionListFail) {
+  CK_RV rv = g_fns->C_GetFunctionList(nullptr) ;
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
 }
-

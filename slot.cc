@@ -167,5 +167,35 @@ TEST(Slot, NoInit) {
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetMechanismList(g_slot_id, NULL_PTR, &mechanism_count));
   CK_MECHANISM_INFO mechanism_info;
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetMechanismInfo(g_slot_id, CKM_RSA_PKCS_KEY_PAIR_GEN, &mechanism_info));
-  // TODO(drysdale): Add C_InitToken, C_InitPIN, C_SetPIN
+  CK_UTF8CHAR so_pin[] = "sososo";
+  CK_UTF8CHAR label[32] = "PKCS#11 Unit Test";  // Should be space-padded
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_InitToken(INVALID_SLOT_ID, so_pin, strlen((const char*)so_pin), label));
+  CK_UTF8CHAR user_pin[] = "useruser";
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_InitPIN(INVALID_SESSION_HANDLE, user_pin, strlen((const char*)user_pin)));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_SetPIN(INVALID_SESSION_HANDLE,
+                                                           user_pin, strlen((const char*)user_pin),
+                                                           user_pin, strlen((const char*)user_pin)));
 }
+
+// TODO(drysdale): Add InitToken/InitPIN/SetPIN tests, but protect them so they are only run if some command line option
+// is set (because they will destroy token data).
+//
+// InitToken Notes:
+//  - The CKF_TOKEN_INITIALIZED flag in the token info indicates whether the token is already initialize.  If it is,
+//    calling InitToken is a re-initialization then the SO PIN needs to be supplied.
+//  - Calling InitToken will destroy all objects on the token.
+//  - If CKF_TOKEN_PROTECTED_AUTHENTICATION_PATH is set, then SO PIN argument should be null, and the user needs
+//    to use an out-of-band mechanism to authenticate.  This is hard to automate in a test.
+// TEST_F(*SessionTest, NoInitTokenWithSession) -- any attempt to InitToken when a session is open should give CKR_SESSION_EXISTS.
+//
+// InitPIN Notes:
+//  - Only allowed in R/W SO session.
+//  - (Presumably) this doesn't work if the user has already set a PIN.
+//  - If CKF_TOKEN_PROTECTED_AUTHENTICATION_PATH is set, then user PIN argument should be null, and the user needs
+//    to use an out-of-band mechanism to enter initial PIN.
+// SetPIN Notes:
+//  - Modifies PIN of logged in user (i.e. user PIN in R/W User session, SO PIN in R/W SO session).
+//  - If not logged in, change user PIN (i.s user PIN in R/W Public session).
+//  - Not possible in R/O session.
+//  - If CKF_TOKEN_PROTECTED_AUTHENTICATION_PATH is set, then both PIN arguments should be null, and the user needs
+//    to use an out-of-band mechanism to enter old and new PINs.

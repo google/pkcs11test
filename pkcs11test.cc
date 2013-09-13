@@ -15,12 +15,13 @@ using namespace std;  // So sue me
 namespace {
 
 void usage() {
-  cerr << "  -v      : verbose output" << endl;
   cerr << "  -m name : name of PKCS#11 library" << endl;
   cerr << "  -l path : path to PKCS#11 library" << endl;
   cerr << "  -s id   : slot ID to perform tests against" << endl;
+  cerr << "  -v      : verbose output" << endl;
   cerr << "  -u pwd  : user PIN/password" << endl;
   cerr << "  -o pwd  : security officer PIN/password" << endl;
+  cerr << "  -I      : perform token init tests **WILL WIPE TOKEN CONTENTS**" << endl;
   exit(1);
 }
 
@@ -67,10 +68,13 @@ int main(int argc, char* argv[]) {
   int opt;
   const char* module_name = nullptr;
   const char* module_path = nullptr;
-  while ((opt = getopt(argc, argv, "vl:m:s:u:o:h")) != -1) {
+  while ((opt = getopt(argc, argv, "vIl:m:s:u:o:h")) != -1) {
     switch (opt) {
       case 'v':
         g_verbose = true;
+        break;
+      case 'I':
+        g_init_token = true;
         break;
       case 'l':
         module_path = optarg;
@@ -132,6 +136,7 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
   g_token_flags = token.flags;
+  memcpy(g_token_label, token.label, sizeof(g_token_label));
 
   if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
     // Disable all tests that require login in their fixture.

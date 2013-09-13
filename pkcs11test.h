@@ -113,4 +113,34 @@ class RWSOSessionTest : public ReadWriteSessionTest {
   virtual ~RWSOSessionTest() { EXPECT_CKR_OK(g_fns->C_Logout(session_)); }
 };
 
+// RAII objects for different types of session.
+template <CK_FLAGS F> class Session {
+ public:
+  Session() { EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, F, NULL_PTR, NULL_PTR, &session_)); }
+  ~Session() { EXPECT_CKR_OK(g_fns->C_CloseSession(session_)); }
+  CK_SESSION_HANDLE handle() const { return session_; }
+ protected:
+  CK_SESSION_HANDLE session_;
+};
+
+template <CK_FLAGS F, CK_USER_TYPE U> class LoginSession : public Session<F> {
+ public:
+  LoginSession(const char* pin) {
+      CK_RV rv = g_fns->C_Login(Session<F>::handle(), U, (CK_UTF8CHAR_PTR)pin, strlen(pin));
+      if (rv != CKR_OK) {
+        std::cerr << "Failed to login as user type " << user_type_name(U) 
+                  << " with PIN '" << pin << "', error " << rv_name(rv) << std::endl;
+      }
+  }
+  ~LoginSession() { g_fns->C_Logout(Session<F>::handle()); }
+};
+
+typedef Session<CKF_SERIAL_SESSION> ROSession;
+typedef Session<(CKF_SERIAL_SESSION|CKF_RW_SESSION)> RWSession;
+typedef LoginSession<CKF_SERIAL_SESSION, CKU_USER> ROUserSession;
+typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_USER> RWUserSession;
+typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_SO> RWSOSession;
+
+
+
 #endif  // PKCS11TEST_H

@@ -167,38 +167,90 @@ TEST(Slot, NoInit) {
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetMechanismList(g_slot_id, NULL_PTR, &mechanism_count));
   CK_MECHANISM_INFO mechanism_info;
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetMechanismInfo(g_slot_id, CKM_RSA_PKCS_KEY_PAIR_GEN, &mechanism_info));
-  CK_UTF8CHAR so_pin[] = "sososo";
   const char* label_str = "PKCS#11 Unit Test";
   CK_UTF8CHAR label[32];
   memset(label, sizeof(label), ' ');
   memcpy(label, label_str, strlen(label_str));  // Not including null terminator.
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_InitToken(INVALID_SLOT_ID, so_pin, strlen((const char*)so_pin), label));
-  CK_UTF8CHAR user_pin[] = "useruser";
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_InitPIN(INVALID_SESSION_HANDLE, user_pin, strlen((const char*)user_pin)));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_InitToken(INVALID_SLOT_ID, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin), label));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_InitPIN(INVALID_SESSION_HANDLE, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_SetPIN(INVALID_SESSION_HANDLE,
-                                                           user_pin, strlen((const char*)user_pin),
-                                                           user_pin, strlen((const char*)user_pin)));
+                                                           (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin),
+                                                           (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
 }
 
-// TODO(drysdale): Add InitToken/InitPIN/SetPIN tests, but protect them so they are only run if some command line option
-// is set (because they will destroy token data).
-//
-// InitToken Notes:
-//  - The CKF_TOKEN_INITIALIZED flag in the token info indicates whether the token is already initialize.  If it is,
-//    calling InitToken is a re-initialization then the SO PIN needs to be supplied.
-//  - Calling InitToken will destroy all objects on the token.
-//  - If CKF_TOKEN_PROTECTED_AUTHENTICATION_PATH is set, then SO PIN argument should be null, and the user needs
-//    to use an out-of-band mechanism to authenticate.  This is hard to automate in a test.
-// TEST_F(*SessionTest, NoInitTokenWithSession) -- any attempt to InitToken when a session is open should give CKR_SESSION_EXISTS.
-//
-// InitPIN Notes:
-//  - Only allowed in R/W SO session.
-//  - (Presumably) this doesn't work if the user has already set a PIN.
-//  - If CKF_TOKEN_PROTECTED_AUTHENTICATION_PATH is set, then user PIN argument should be null, and the user needs
-//    to use an out-of-band mechanism to enter initial PIN.
-// SetPIN Notes:
-//  - Modifies PIN of logged in user (i.e. user PIN in R/W User session, SO PIN in R/W SO session).
-//  - If not logged in, change user PIN (i.s user PIN in R/W Public session).
-//  - Not possible in R/O session.
-//  - If CKF_TOKEN_PROTECTED_AUTHENTICATION_PATH is set, then both PIN arguments should be null, and the user needs
-//    to use an out-of-band mechanism to enter old and new PINs.
+TEST_F(PKCS11Test, TokenInit) {
+  if (!g_init_token) {
+    if (g_verbose) cout << "Skipping token initialization test" << endl;
+    return;
+  }
+  if (g_token_flags & CKF_PROTECTED_AUTHENTICATION_PATH) {
+    if (g_verbose) cout << "Skipping token initialization due to protected authentication path" << endl;
+  }
+  // !!!WARNING!!! - The following line will destroy all content on the token.
+  EXPECT_CKR_OK(g_fns->C_InitToken(g_slot_id, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin), g_token_label));
+
+  if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
+    if (g_verbose) cout << "Skipping restoration of PINs" << endl;
+    return;
+  }
+
+  // Both PINs will have been reset, so need to set them, which means we need a R/W SO session.
+  {
+    RWSOSession session(g_reset_so_pin);
+    // Restore the SO PIN to the expected value.
+    EXPECT_CKR_OK(g_fns->C_SetPIN(session.handle(),
+                                  (CK_UTF8CHAR_PTR)g_reset_so_pin, strlen(g_reset_so_pin),
+                                  (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin)));
+  }
+  // Now set the user PIN.  Use a new session (which also checks that the SO PIN has been changed).
+  {
+    RWSOSession session(g_so_pin);
+    EXPECT_CKR_OK(g_fns->C_InitPIN(session.handle(), (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+  }
+  // Check the user PIN is as expected.
+  {
+    ROSession session;
+    EXPECT_CKR_OK(g_fns->C_Login(session.handle(), CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+    g_fns->C_Logout(session.handle());
+  }
+  // TODO(drysdale): figure this out
+  // Some tokens (OpenCryptoKi) don't do anything on InitPIN.  Instead, log in with the reset user PIN and do SetPIN.
+  {
+    RWUserSession session(g_reset_user_pin);
+    EXPECT_CKR_OK(g_fns->C_SetPIN(session.handle(),
+                                  (CK_UTF8CHAR_PTR)g_reset_user_pin, strlen(g_reset_user_pin),
+                                  (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+  }
+  // Check the user PIN is as expected.
+  {
+    ROSession session;
+    EXPECT_CKR_OK(g_fns->C_Login(session.handle(), CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+    g_fns->C_Logout(session.handle());
+  }
+
+}
+
+TEST_F(PKCS11Test, TokenInitPinIncorrect) {
+  if (!g_init_token) {
+    if (g_verbose) cout << "Skipping token initialization test" << endl;
+    return;
+  }
+  const char* wrong_pin = "wrong";
+  EXPECT_CKR(CKR_PIN_INCORRECT, g_fns->C_InitToken(g_slot_id, (CK_UTF8CHAR_PTR)wrong_pin, strlen(wrong_pin), g_token_label));
+}
+
+TEST_F(PKCS11Test, TokenInitInvalidSlot) {
+  if (!g_init_token) {
+    if (g_verbose) cout << "Skipping token initialization test" << endl;
+    return;
+  }
+  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_InitToken(INVALID_SLOT_ID, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin), g_token_label));
+}
+
+TEST_F(ReadOnlySessionTest, TokenInitWithSession) {
+  if (!g_init_token) {
+    if (g_verbose) cout << "Skipping token initialization test" << endl;
+    return;
+  }
+  EXPECT_CKR(CKR_SESSION_EXISTS, g_fns->C_InitToken(g_slot_id, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin), g_token_label));
+}

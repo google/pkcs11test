@@ -284,3 +284,6 @@ std::set<CK_MECHANISM_TYPE> derive_mechanisms = {
 
 CK_BBOOL g_ck_false = CK_FALSE;
 CK_BBOOL g_ck_true = CK_TRUE;
+
+const char* g_label = "pkcs11test object";
+CK_ULONG g_label_len = 17;  // = strlen(g_label)

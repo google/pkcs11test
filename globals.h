@@ -48,5 +48,10 @@ extern std::set<CK_MECHANISM_TYPE> derive_mechanisms;
 // attribute lists.
 extern CK_BBOOL g_ck_false;
 extern CK_BBOOL g_ck_true;
+// Label value to use for all test-created objects.  If the test leaves
+// the token in a bad state, this label can be used to spot what needs
+// cleaning up.
+extern const char* g_label;
+extern CK_ULONG g_label_len;
 
 #endif  // GLOBALS_H

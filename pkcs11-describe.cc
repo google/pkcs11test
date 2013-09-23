@@ -810,3 +810,21 @@ string mechanism_info_description(CK_MECHANISM_INFO_PTR mechanism) {
   ss << "}";
   return ss.str();
 }
+
+string object_description(CK_FUNCTION_LIST_PTR fns,
+                          CK_SESSION_HANDLE session,
+                          CK_OBJECT_HANDLE object) {
+  stringstream ss;
+  for (int ii = 0; ii < pkcs11_attribute_count; ii++) {
+    CK_BYTE buffer[2048];
+    CK_ATTRIBUTE attr;
+    attr.type = pkcs11_attribute_info[ii].val;
+    attr.pValue = &(buffer[0]);
+    attr.ulValueLen = sizeof(buffer);
+    CK_RV rv = fns->C_GetAttributeValue(session, object, &attr, 1);
+    if (rv == CKR_OK) {
+      ss << "    " << attribute_description(&attr) << endl;
+    }
+  }
+  return ss.str();
+}

@@ -20,6 +20,9 @@ std::string slot_description(CK_SLOT_INFO* slot);
 std::string token_description(CK_TOKEN_INFO_PTR token);
 std::string session_info_description(CK_SESSION_INFO_PTR session);
 std::string mechanism_info_description(CK_MECHANISM_INFO_PTR mechanism);
+std::string object_description(CK_FUNCTION_LIST_PTR fns,
+                               CK_SESSION_HANDLE session,
+                               CK_OBJECT_HANDLE object);
 
 // Information about object attributes.
 typedef std::string AttrValueToString(unsigned char* data, int length);

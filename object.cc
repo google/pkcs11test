@@ -13,20 +13,9 @@ void EnumerateObjects(CK_SESSION_HANDLE session) {
     if (object_count == 0) break;
     CK_ULONG object_size;
     EXPECT_CKR_OK(g_fns->C_GetObjectSize(session, object, &object_size));
-    if (g_verbose) cout << "  object x" << setw(8) << setfill('0') << hex << (unsigned int)object 
+    if (g_verbose) cout << "  object x" << setw(8) << setfill('0') << hex << (unsigned int)object
                         << " (size=" << (int)object_size << ")" << endl;
-
-    for (int ii = 0; ii < pkcs11_attribute_count; ii++) {
-      CK_BYTE buffer[2048];
-      CK_ATTRIBUTE attr;
-      attr.type = pkcs11_attribute_info[ii].val;
-      attr.pValue = &(buffer[0]);
-      attr.ulValueLen = sizeof(buffer);
-      CK_RV rv = g_fns->C_GetAttributeValue(session, object, &attr, 1);
-      if (rv == CKR_OK) {
-        if (g_verbose) cout << "    " << attribute_description(&attr) << endl;
-      }
-    }
+    if (g_verbose) cout << object_description(g_fns, session, object);
   }
   EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session));
 }

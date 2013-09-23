@@ -85,7 +85,7 @@ TEST_F(PKCS11Test, GetFunctionList) {
   EXPECT_EQ(fns, g_fns);
 }
 
-TEST_F(PKCS11Test, DISABLED_GetFunctionListFail) {
+TEST_F(PKCS11Test, GetFunctionListFail) {
   CK_RV rv = g_fns->C_GetFunctionList(nullptr) ;
   EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
 }

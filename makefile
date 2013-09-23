@@ -1,5 +1,5 @@
 all: pkcs11test
-test: pkcs11test
+test_opencryptoki: pkcs11test
 	./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki
 test_chaps: pkcs11test
 	./pkcs11test -m libchaps.so -l /usr/lib

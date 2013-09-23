@@ -130,7 +130,8 @@ TEST_F(PKCS11Test, GetTokenInfoFail) {
 TEST_F(PKCS11Test, WaitForSlotEvent) {
   CK_SLOT_ID slot_id = -1;
   // Ask twice without blocking, to clear any pending event.
-  g_fns->C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot_id, NULL_PTR);
+  CK_RV rv = g_fns->C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot_id, NULL_PTR);
+  if (rv == CKR_FUNCTION_NOT_SUPPORTED) return;
   EXPECT_CKR(CKR_NO_EVENT, g_fns->C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot_id, NULL_PTR));
 }
 

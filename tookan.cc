@@ -29,8 +29,16 @@ class ObjectAttributes {
   CK_ULONG size() const { return attrs_.size(); }
   CK_ATTRIBUTE_PTR data() { return &attrs_[0]; }
  private:
+  friend ostream& operator<<(ostream& os, const ObjectAttributes& attrobj);
   vector<CK_ATTRIBUTE> attrs_;
 };
+
+ostream& operator<<(ostream& os, const ObjectAttributes& attrobj) {
+  for (CK_ATTRIBUTE attr : attrobj.attrs_) {
+    os << attribute_description(&attr) << endl;
+  }
+  return os;
+}
 
 class SecretKey {
  public:
@@ -54,6 +62,7 @@ class SecretKey {
       EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, key_));
     }
   }
+  bool valid() const { return (key_ != INVALID_OBJECT_HANDLE); }
   CK_OBJECT_HANDLE handle() const { return key_; }
  private:
   CK_SESSION_HANDLE session_;
@@ -70,13 +79,15 @@ class KeyPair {
     : session_(session),
       public_attrs_(public_attr_types), private_attrs_(private_attr_types),
       public_key_(INVALID_OBJECT_HANDLE), private_key_(INVALID_OBJECT_HANDLE) {
-    CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};
-    CK_ULONG modulus_bits = 768;
+
+    CK_ULONG modulus_bits = 1024;
     CK_ATTRIBUTE modulus = {CKA_MODULUS_BITS, &modulus_bits, sizeof(modulus_bits)};
     public_attrs_.push_back(modulus);
-    CK_BYTE public_exponent_data[] = {3};
-    CK_ATTRIBUTE public_exponent = {CKA_PUBLIC_EXPONENT, public_exponent_data, sizeof(public_exponent_data)};
+    CK_ULONG public_exponent_value = 65537; // OpenCryptoKi requires 65537
+    CK_ATTRIBUTE public_exponent = {CKA_PUBLIC_EXPONENT, &public_exponent_value, sizeof(public_exponent_value)};
     public_attrs_.push_back(public_exponent);
+
+    CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};
     EXPECT_CKR_OK(g_fns->C_GenerateKeyPair(session_, &mechanism,
                                            public_attrs_.data(), public_attrs_.size(),
                                            private_attrs_.data(), private_attrs_.size(),
@@ -90,6 +101,7 @@ class KeyPair {
       EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, private_key_));
     }
   }
+  bool valid() const { return (public_key_ != INVALID_OBJECT_HANDLE); }
   CK_OBJECT_HANDLE public_handle() const { return public_key_; }
   CK_OBJECT_HANDLE private_handle() const { return private_key_; }
 
@@ -111,7 +123,7 @@ TEST_F(ReadWriteSessionTest, TookanAttackA1) {
   SecretKey k2(session_, k2_attrs);
 
   // Use k2 to wrap k1.
-  CK_MECHANISM wrap_mechanism = {CKM_DES3_ECB, NULL_PTR, 0};
+  CK_MECHANISM wrap_mechanism = {CKM_DES_ECB, NULL_PTR, 0};
   CK_BYTE data[4096];
   CK_ULONG data_len = sizeof(data);
   CK_RV rv;
@@ -125,11 +137,13 @@ TEST_F(ReadWriteSessionTest, TookanAttackA1) {
     EXPECT_CKR_OK(g_fns->C_DecryptInit(session_, &wrap_mechanism, k2.handle()));
     CK_ULONG key_out_len = sizeof(data);
     rv = g_fns->C_Decrypt(session_, data, data_len, data, &key_out_len);
-    EXPECT_NE(CKR_OK, rv);
+    if (rv == CKR_OK) {
+      cerr << "Secret key is: " << hex_data(data, key_out_len) << endl;
+    }
   }
 }
 
-TEST_F(ReadWriteSessionTest, TookanAttackA2) {
+TEST_F(RWEitherSessionTest, TookanAttackA2) {
     // First, create a sensitive key k1.
   vector<CK_ATTRIBUTE_TYPE> k1_attrs = {CKA_SENSITIVE};
   SecretKey k1(session_, k1_attrs);
@@ -153,7 +167,9 @@ TEST_F(ReadWriteSessionTest, TookanAttackA2) {
     EXPECT_CKR_OK(g_fns->C_DecryptInit(session_, &wrap_mechanism, k2.private_handle()));
     CK_ULONG key_out_len = sizeof(data);
     rv = g_fns->C_Decrypt(session_, data, data_len, data, &key_out_len);
-    EXPECT_NE(CKR_OK, rv);
+    if (rv == CKR_OK) {
+      cerr << "Secret key is: " << hex_data(data, key_out_len) << endl;
+    }
   }
 }
 

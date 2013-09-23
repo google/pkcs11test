@@ -12,6 +12,8 @@
 
 using namespace std;  // So sue me
 
+namespace pkcs11 {
+namespace test {
 namespace {
 
 void usage() {
@@ -58,7 +60,11 @@ CK_C_GetFunctionList load_pkcs11_library(const char* libpath, const char* libnam
 }
 
 }  // namespace
+}  // namespace test
+}  // namespace pkcs11
 
+using namespace pkcs11;
+using namespace pkcs11::test;
 
 int main(int argc, char* argv[]) {
   // Let gTest have first crack at the arguments.

@@ -3,6 +3,9 @@
 
 using namespace std;  // So sue me
 
+namespace pkcs11 {
+namespace test {
+
 // This test may induce the PIN to be locked out.
 TEST_F(ReadOnlySessionTest, UserLoginWrongPIN) {
   if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
@@ -42,3 +45,6 @@ TEST_F(RWSOSessionTest, UserLoginFail) {
   EXPECT_CKR(CKR_USER_ANOTHER_ALREADY_LOGGED_IN,
             g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
 }
+
+}  // namespace test
+}  // namespace pkcs11

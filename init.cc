@@ -8,6 +8,9 @@
 
 using namespace std;  // So sue me
 
+namespace pkcs11 {
+namespace test {
+
 // Explicitly test Initialize/Finalize.
 TEST(Init, Simple) {
   EXPECT_CKR_OK(g_fns->C_Initialize(NULL_PTR));
@@ -89,3 +92,6 @@ TEST_F(PKCS11Test, GetFunctionListFail) {
   CK_RV rv = g_fns->C_GetFunctionList(nullptr) ;
   EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
 }
+
+}  // namespace test
+}  // namespace pkcs11

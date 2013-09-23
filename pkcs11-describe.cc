@@ -7,8 +7,13 @@
 
 using namespace std;  // So sue me.
 
-static char hex_nibble[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                            'a', 'b', 'c', 'd', 'e', 'f'};
+namespace pkcs11 {
+
+namespace {
+  char hex_nibble[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                       'a', 'b', 'c', 'd', 'e', 'f'};
+}  // namespace
+
 string hex_data(CK_BYTE_PTR p, int len) {
   stringstream ss;
   for (int ii = 0; ii < len; ii++) {
@@ -511,7 +516,7 @@ string to_object_class(unsigned char* p, int len) {
 #define VNC(x) {x, #x, &to_certificate_type}
 #define VNO(x) {x, #x, &to_object_class}
 #define VNN(x) {x, #x, &hex_data}  // DER-encoding
-const struct attr_val_name pkcs11_attribute_info[] = {
+const struct attr_val_name attribute_info[] = {
   VNO(CKA_CLASS),
   VNA(CKA_LABEL),
   VN(CKA_ID),
@@ -612,7 +617,7 @@ const struct attr_val_name pkcs11_attribute_info[] = {
   VN(CKA_ALLOWED_MECHANISMS),
   VN(CKA_VENDOR_DEFINED),
 };
-int pkcs11_attribute_count = sizeof(pkcs11_attribute_info) / sizeof(pkcs11_attribute_info[0]);
+int attribute_count = sizeof(attribute_info) / sizeof(attribute_info[0]);
 #define MAX_ATTR_SIZE 2048
 
 
@@ -622,14 +627,14 @@ string attribute_description(CK_ATTRIBUTE_PTR attr) {
   stringstream ss;
   int ii;
   ss << "CK_ATTRIBUTE {.type=";
-  for (ii = 0; ii < pkcs11_attribute_count; ii++) {
-    if (pkcs11_attribute_info[ii].val == attr->type) {
-      val_converter = pkcs11_attribute_info[ii].val_converter;
-      ss << pkcs11_attribute_info[ii].name;
+  for (ii = 0; ii < attribute_count; ii++) {
+    if (attribute_info[ii].val == attr->type) {
+      val_converter = attribute_info[ii].val_converter;
+      ss << attribute_info[ii].name;
       break;
     }
   }
-  if (ii >= pkcs11_attribute_count) {
+  if (ii >= attribute_count) {
     ss << "UNKNOWN(" << hex << (unsigned int) attr->type << ")";
   }
   int len = (int)attr->ulValueLen;
@@ -815,10 +820,10 @@ string object_description(CK_FUNCTION_LIST_PTR fns,
                           CK_SESSION_HANDLE session,
                           CK_OBJECT_HANDLE object) {
   stringstream ss;
-  for (int ii = 0; ii < pkcs11_attribute_count; ii++) {
+  for (int ii = 0; ii < attribute_count; ii++) {
     CK_BYTE buffer[2048];
     CK_ATTRIBUTE attr;
-    attr.type = pkcs11_attribute_info[ii].val;
+    attr.type = attribute_info[ii].val;
     attr.pValue = &(buffer[0]);
     attr.ulValueLen = sizeof(buffer);
     CK_RV rv = fns->C_GetAttributeValue(session, object, &attr, 1);
@@ -828,3 +833,5 @@ string object_description(CK_FUNCTION_LIST_PTR fns,
   }
   return ss.str();
 }
+
+}  // namespace pkcs11

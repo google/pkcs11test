@@ -7,6 +7,8 @@
 
 #include <string>
 
+namespace pkcs11 {
+
 std::string hex_data(CK_BYTE_PTR p, int len);
 std::string rv_name(CK_RV val);
 std::string user_type_name(CK_USER_TYPE val);
@@ -35,7 +37,9 @@ struct attr_val_name {
   // Function that converts one of these attributes to a string
   AttrValueToString* val_converter;
 };
-extern const attr_val_name pkcs11_attribute_info[];
-extern int pkcs11_attribute_count;
+extern const attr_val_name attribute_info[];
+extern int attribute_count;
+
+}  // namespace pkcs11
 
 #endif  // PKCS11_DESCRIBE_H

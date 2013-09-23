@@ -18,17 +18,21 @@
 #include <iostream>
 #include <memory>
 
+namespace pkcs11 {
+
+// Deleter for std::unique_ptr that handles C's malloc'ed memory.
+struct freer {
+  void operator()(void* p) { free(p); }
+};
+
+namespace test {
+
 // Value to use for invalid slot IDs.
 #define INVALID_SLOT_ID 88888
 // Value to use for invalid session handles.
 #define INVALID_SESSION_HANDLE 99999
 // Value to use for invalid object handles.
 #define INVALID_OBJECT_HANDLE 77777
-
-// Deleter for std::unique_ptr that handles C's malloc'ed memory.
-struct freer {
-  void operator()(void* p) { free(p); }
-};
 
 // Additional macros for checking the return value of a PKCS#11 function.
 struct CK_RV_ {
@@ -40,6 +44,7 @@ inline std::ostream& operator<<(std::ostream& os, const CK_RV_& wrv) {
   os << rv_name(wrv.rv_);
   return os;
 }
+
 #define EXPECT_CKR(expected, actual) EXPECT_EQ(CK_RV_(expected), CK_RV_(actual))
 #define EXPECT_CKR_OK(val) EXPECT_CKR(CKR_OK, (val))
 
@@ -155,5 +160,9 @@ typedef Session<(CKF_SERIAL_SESSION|CKF_RW_SESSION)> RWSession;
 typedef LoginSession<CKF_SERIAL_SESSION, CKU_USER> ROUserSession;
 typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_USER> RWUserSession;
 typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_SO> RWSOSession;
+
+}  // namespace test
+
+}  // namespace pkcs11
 
 #endif  // PKCS11TEST_H

@@ -3,6 +3,7 @@
 using namespace std;  // So sue me
 
 namespace pkcs11 {
+namespace test {
 
 class ObjectAttributes {
  public:
@@ -236,4 +237,6 @@ TEST_F(ReadWriteSessionTest, TookanAttackA5b) {
   EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, key.handle(), &ret_attr, 1));
   EXPECT_EQ(CK_FALSE, (CK_BBOOL)data[0]);
 }
+
+}  // namespace test
 }  // namespace pkcs11

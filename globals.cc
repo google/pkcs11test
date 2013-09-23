@@ -1,5 +1,8 @@
 #include "globals.h"
 
+namespace pkcs11 {
+namespace test {
+
 CK_FUNCTION_LIST_PTR g_fns = nullptr;
 CK_SLOT_ID g_slot_id = 0;
 bool g_verbose = false;
@@ -287,3 +290,6 @@ CK_BBOOL g_ck_true = CK_TRUE;
 
 const char* g_label = "pkcs11test object";
 CK_ULONG g_label_len = 17;  // = strlen(g_label)
+
+}  // namespace test
+}  // namespace pkcs11

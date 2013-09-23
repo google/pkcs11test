@@ -3,6 +3,9 @@
 
 using namespace std;  // So sue me
 
+namespace pkcs11 {
+namespace test {
+
 TEST_F(ReadOnlySessionTest, SeedRandom) {
   // Additional seed data. Not actually particularly random.
   CK_BYTE seed[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
@@ -49,3 +52,6 @@ TEST_F(PKCS11Test, GenerateRandomNoSession) {
   CK_BYTE data[16];
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GenerateRandom(INVALID_SLOT_ID, data, sizeof(data)));
 }
+
+}  // namespace test
+}  // namespace pkcs11

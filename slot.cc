@@ -14,6 +14,9 @@
 
 using namespace std;  // So sue me
 
+namespace pkcs11 {
+namespace test {
+
 TEST_F(PKCS11Test, EnumerateSlots) {
   // First determine how many slots.
   CK_ULONG slot_count;
@@ -257,3 +260,6 @@ TEST_F(ReadOnlySessionTest, TokenInitWithSession) {
   }
   EXPECT_CKR(CKR_SESSION_EXISTS, g_fns->C_InitToken(g_slot_id, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin), g_token_label));
 }
+
+}  // namespace test
+}  // namespace pkcs11

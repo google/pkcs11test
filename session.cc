@@ -3,6 +3,9 @@
 
 using namespace std;  // So sue me
 
+namespace pkcs11 {
+namespace test {
+
 TEST_F(PKCS11Test, ParallelSessionUnsupported) {
   // No CKF_SERIAL_SESSION => not supported
   CK_SESSION_HANDLE session;
@@ -20,3 +23,6 @@ TEST_F(ReadWriteSessionTest, SessionInfo) {
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
 }
+
+}  // namespace test
+}  // namespace pkcs11

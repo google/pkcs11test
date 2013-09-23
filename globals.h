@@ -7,6 +7,9 @@
 
 #include <set>
 
+namespace pkcs11 {
+namespace test {
+
 // Set of function pointers holding PKCS#11 implementation.
 extern CK_FUNCTION_LIST_PTR g_fns;
 // Slot to perform tests against.
@@ -53,5 +56,8 @@ extern CK_BBOOL g_ck_true;
 // cleaning up.
 extern const char* g_label;
 extern CK_ULONG g_label_len;
+
+}  // namespace test
+}  // namespace pkcs11
 
 #endif  // GLOBALS_H

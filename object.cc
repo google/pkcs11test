@@ -3,7 +3,10 @@
 
 using namespace std;  // So sue me
 
+namespace pkcs11 {
+namespace test {
 namespace {
+
 void EnumerateObjects(CK_SESSION_HANDLE session) {
   EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session, NULL_PTR, 0));
   while (true) {
@@ -33,3 +36,6 @@ TEST_F(ROUserSessionTest, EnumerateObjects) {
   }
   EnumerateObjects(session_);
 }
+
+}  // namespace test
+}  // namespace pkcs11

@@ -143,6 +143,4 @@ typedef LoginSession<CKF_SERIAL_SESSION, CKU_USER> ROUserSession;
 typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_USER> RWUserSession;
 typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_SO> RWSOSession;
 
-
-
 #endif  // PKCS11TEST_H

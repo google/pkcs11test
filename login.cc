@@ -4,12 +4,15 @@
 using namespace std;  // So sue me
 
 // This test may induce the PIN to be locked out.
-TEST_F(ReadOnlySessionTest, DISABLED_UserLoginWrongPIN) {
+TEST_F(ReadOnlySessionTest, UserLoginWrongPIN) {
   if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
     if (g_verbose) cout << "Skipping test that requires login" << endl;
     return;
   }
   EXPECT_CKR(CKR_PIN_INCORRECT, g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)"simply-wrong", 12));
+  // Do a successful login to try to ensure the PIN isn't locked out.
+  EXPECT_CKR_OK(g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+  EXPECT_CKR_OK(g_fns->C_Logout(session_));
 }
 
 TEST_F(ReadOnlySessionTest, SOLoginFail) {

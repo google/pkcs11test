@@ -7,6 +7,17 @@
 
 using namespace std;  // So sue me.
 
+static char hex_nibble[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                            'a', 'b', 'c', 'd', 'e', 'f'};
+string hex_data(CK_BYTE_PTR p, int len) {
+  stringstream ss;
+  for (int ii = 0; ii < len; ii++) {
+    unsigned char b = p[ii];
+    ss << hex_nibble[b >> 4] << hex_nibble[b & 0xF];
+  }
+  return ss.str();
+}
+
 string rv_name(CK_RV val) {
   switch (val) {
     case CKR_OK: return "CKR_OK";
@@ -436,17 +447,6 @@ string ck_char(const CK_CHAR* p, int width) {
   return s;
 }
 
-char hex_nibble[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                     'a', 'b', 'c', 'd', 'e', 'f'};
-string to_hex(unsigned char* p, int len) {
-  stringstream ss;
-  for (int ii = 0; ii < len; ii++) {
-    unsigned char b = p[ii];
-    ss << hex_nibble[b >> 4] << hex_nibble[b & 0xF];
-  }
-  return ss.str();
-}
-
 string to_ascii(unsigned char* p, int len) {
   stringstream ss;
   ss << '\'';
@@ -501,7 +501,7 @@ string to_object_class(unsigned char* p, int len) {
 }
 }  // namespace
 
-#define VN(x)  {x, #x, &to_hex}
+#define VN(x)  {x, #x, &hex_data}
 #define VNA(x) {x, #x, &to_ascii}
 #define VNB(x) {x, #x, &to_bool}
 #define VNU(x) {x, #x, &to_ulong}
@@ -510,7 +510,7 @@ string to_object_class(unsigned char* p, int len) {
 #define VNM(x) {x, #x, &to_mechanism_type}
 #define VNC(x) {x, #x, &to_certificate_type}
 #define VNO(x) {x, #x, &to_object_class}
-#define VNN(x) {x, #x, &to_hex}  // DER-encoding
+#define VNN(x) {x, #x, &hex_data}  // DER-encoding
 const struct attr_val_name pkcs11_attribute_info[] = {
   VNO(CKA_CLASS),
   VNA(CKA_LABEL),
@@ -618,7 +618,7 @@ int pkcs11_attribute_count = sizeof(pkcs11_attribute_info) / sizeof(pkcs11_attri
 
 string attribute_description(CK_ATTRIBUTE_PTR attr) {
   if (attr == NULL_PTR) return "<nullptr>";
-  AttrValueToString* val_converter = to_hex;
+  AttrValueToString* val_converter = hex_data;
   stringstream ss;
   int ii;
   ss << "CK_ATTRIBUTE {.type=";

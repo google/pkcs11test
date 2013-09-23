@@ -7,6 +7,7 @@
 
 #include <string>
 
+std::string hex_data(CK_BYTE_PTR p, int len);
 std::string rv_name(CK_RV val);
 std::string user_type_name(CK_USER_TYPE val);
 std::string key_type_name(CK_KEY_TYPE val);

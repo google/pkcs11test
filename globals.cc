@@ -281,3 +281,6 @@ std::set<CK_MECHANISM_TYPE> derive_mechanisms = {
   CKM_XOR_BASE_AND_DATA,
   CKM_EXTRACT_KEY_FROM_KEY,
 };
+
+CK_BBOOL g_ck_false = CK_FALSE;
+CK_BBOOL g_ck_true = CK_TRUE;

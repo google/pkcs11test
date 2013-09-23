@@ -44,5 +44,9 @@ extern std::set<CK_MECHANISM_TYPE> wrap_unwrap_mechanisms;
 // PKCS#11 mechanisms for derive.
 extern std::set<CK_MECHANISM_TYPE> derive_mechanisms;
 
+// Global variables for boolean values.  These are useful in object
+// attribute lists.
+extern CK_BBOOL g_ck_false;
+extern CK_BBOOL g_ck_true;
 
 #endif  // GLOBALS_H

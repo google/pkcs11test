@@ -22,6 +22,8 @@
 #define INVALID_SLOT_ID 88888
 // Value to use for invalid session handles.
 #define INVALID_SESSION_HANDLE 99999
+// Value to use for invalid object handles.
+#define INVALID_OBJECT_HANDLE 77777
 
 // Deleter for std::unique_ptr that handles C's malloc'ed memory.
 struct freer {
@@ -128,7 +130,7 @@ template <CK_FLAGS F, CK_USER_TYPE U> class LoginSession : public Session<F> {
   LoginSession(const char* pin) {
       CK_RV rv = g_fns->C_Login(Session<F>::handle(), U, (CK_UTF8CHAR_PTR)pin, strlen(pin));
       if (rv != CKR_OK) {
-        std::cerr << "Failed to login as user type " << user_type_name(U) 
+        std::cerr << "Failed to login as user type " << user_type_name(U)
                   << " with PIN '" << pin << "', error " << rv_name(rv) << std::endl;
       }
   }

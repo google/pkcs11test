@@ -1,3 +1,4 @@
 pkcs11test
 libgtest.a
 *.o
+opencryptoki.out

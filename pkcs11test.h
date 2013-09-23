@@ -56,22 +56,22 @@ class PKCS11Test : public ::testing::Test {
 // Test cases that handle session setup/teardown
 class SessionTest : public PKCS11Test {
  public:
-  SessionTest() {
+  SessionTest() : session_(INVALID_SESSION_HANDLE) {
     CK_SLOT_INFO slot_info;
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(g_slot_id, &slot_info));
     if (!(slot_info.flags & CKF_TOKEN_PRESENT)) {
       std::cerr << "Need to specify a slot ID that has a token present" << std::endl;
-      exit(1);
     }
   }
   virtual ~SessionTest() {
-    EXPECT_CKR_OK(g_fns->C_CloseSession(session_));
+    if (session_ != INVALID_SESSION_HANDLE) {
+      EXPECT_CKR_OK(g_fns->C_CloseSession(session_));
+    }
   }
   void Login(CK_USER_TYPE user_type, const char* pin) {
     CK_RV rv = g_fns->C_Login(session_, user_type, (CK_UTF8CHAR_PTR)pin, strlen(pin));
     if (rv != CKR_OK) {
       std::cerr << "Failed to login as user type " << user_type_name(user_type) << ", error " << rv_name(rv) << std::endl;
-      exit(1);
     }
   }
  protected:

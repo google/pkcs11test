@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <memory>
+#include <vector>
 
 namespace pkcs11 {
 
@@ -160,6 +161,115 @@ typedef Session<(CKF_SERIAL_SESSION|CKF_RW_SESSION)> RWSession;
 typedef LoginSession<CKF_SERIAL_SESSION, CKU_USER> ROUserSession;
 typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_USER> RWUserSession;
 typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_SO> RWSOSession;
+
+class ObjectAttributes {
+ public:
+  ObjectAttributes() {
+    CK_ATTRIBUTE label = {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len};
+    attrs_.push_back(label);
+  }
+  // Constructor deliberately not explicit
+  ObjectAttributes(std::vector<CK_ATTRIBUTE_TYPE>& attr_types) {
+    CK_ATTRIBUTE label = {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len};
+    attrs_.push_back(label);
+    for (CK_ATTRIBUTE_TYPE attr_type : attr_types) {
+      CK_ATTRIBUTE attr = {attr_type, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)};
+      attrs_.push_back(attr);
+    };
+  }
+  // Append a boolean (CK_TRUE) attribute.
+  void push_back(CK_ATTRIBUTE_TYPE attr_type) {
+    CK_ATTRIBUTE attr = {attr_type, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)};
+    attrs_.push_back(attr);
+  }
+  // Append an arbitrary attribute.
+  void push_back(const CK_ATTRIBUTE& attr) { attrs_.push_back(attr); }
+  CK_ULONG size() const { return attrs_.size(); }
+  CK_ATTRIBUTE_PTR data() { return &attrs_[0]; }
+ private:
+  friend std::ostream& operator<<(std::ostream& os, const ObjectAttributes& attrobj);
+  std::vector<CK_ATTRIBUTE> attrs_;
+};
+
+inline std::ostream& operator<<(std::ostream& os, const ObjectAttributes& attrobj) {
+  for (CK_ATTRIBUTE attr : attrobj.attrs_) {
+    os << attribute_description(&attr) << std::endl;
+  }
+  return os;
+}
+
+class SecretKey {
+ public:
+  // Create a secret key with the given list of (boolean) attributes set to true.
+  SecretKey(CK_SESSION_HANDLE session, std::vector<CK_ATTRIBUTE_TYPE>& attr_types)
+    : session_(session), attrs_(attr_types), key_(INVALID_OBJECT_HANDLE) {
+    CK_MECHANISM mechanism = {CKM_DES_KEY_GEN, NULL_PTR, 0};
+    EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
+                                       attrs_.data(), attrs_.size(),
+                                       &key_));
+  }
+  SecretKey(CK_SESSION_HANDLE session, const ObjectAttributes& attrs)
+    : session_(session), attrs_(attrs), key_(INVALID_OBJECT_HANDLE) {
+    CK_MECHANISM mechanism = {CKM_DES_KEY_GEN, NULL_PTR, 0};
+    EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
+                                       attrs_.data(), attrs_.size(),
+                                       &key_));
+  }
+  ~SecretKey() {
+    if (key_ != INVALID_OBJECT_HANDLE) {
+      EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, key_));
+    }
+  }
+  bool valid() const { return (key_ != INVALID_OBJECT_HANDLE); }
+  CK_OBJECT_HANDLE handle() const { return key_; }
+ private:
+  CK_SESSION_HANDLE session_;
+  ObjectAttributes attrs_;
+  CK_OBJECT_HANDLE key_;
+};
+
+class KeyPair {
+ public:
+  // Create a keypair with the given lists of (boolean) attributes set to true.
+  KeyPair(CK_SESSION_HANDLE session,
+          std::vector<CK_ATTRIBUTE_TYPE>& public_attr_types,
+          std::vector<CK_ATTRIBUTE_TYPE>& private_attr_types)
+    : session_(session),
+      public_attrs_(public_attr_types), private_attrs_(private_attr_types),
+      public_key_(INVALID_OBJECT_HANDLE), private_key_(INVALID_OBJECT_HANDLE) {
+
+    CK_ULONG modulus_bits = 1024;
+    CK_ATTRIBUTE modulus = {CKA_MODULUS_BITS, &modulus_bits, sizeof(modulus_bits)};
+    public_attrs_.push_back(modulus);
+    CK_BYTE public_exponent_value[] = {0x1, 0x0, 0x1}; // OpenCryptoKi requires 65537=0x00010001
+    CK_ATTRIBUTE public_exponent = {CKA_PUBLIC_EXPONENT, public_exponent_value, sizeof(public_exponent_value)};
+    public_attrs_.push_back(public_exponent);
+
+    CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};
+    EXPECT_CKR_OK(g_fns->C_GenerateKeyPair(session_, &mechanism,
+                                           public_attrs_.data(), public_attrs_.size(),
+                                           private_attrs_.data(), private_attrs_.size(),
+                                           &public_key_, &private_key_));
+  }
+  ~KeyPair() {
+    if (public_key_ != INVALID_OBJECT_HANDLE) {
+      EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, public_key_));
+    }
+    if (private_key_ != INVALID_OBJECT_HANDLE) {
+      EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, private_key_));
+    }
+  }
+  bool valid() const { return (public_key_ != INVALID_OBJECT_HANDLE); }
+  CK_OBJECT_HANDLE public_handle() const { return public_key_; }
+  CK_OBJECT_HANDLE private_handle() const { return private_key_; }
+
+ private:
+  CK_SESSION_HANDLE session_;
+  ObjectAttributes public_attrs_;
+  ObjectAttributes private_attrs_;
+  CK_OBJECT_HANDLE public_key_;
+  CK_OBJECT_HANDLE private_key_;
+};
 
 }  // namespace test
 

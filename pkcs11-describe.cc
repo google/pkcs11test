@@ -699,7 +699,7 @@ string flag_names(unsigned long val, ...) {
 
 }  // namespace
 
-string slot_description(CK_SLOT_INFO* slot) {
+string slot_description(CK_SLOT_INFO_PTR slot) {
   stringstream ss;
   ss <<"CK_SLOT_INFO {";
   ss << ".slotDescription='" << ck_char(slot->slotDescription, 32) << "', ";

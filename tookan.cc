@@ -83,8 +83,8 @@ class KeyPair {
     CK_ULONG modulus_bits = 1024;
     CK_ATTRIBUTE modulus = {CKA_MODULUS_BITS, &modulus_bits, sizeof(modulus_bits)};
     public_attrs_.push_back(modulus);
-    CK_ULONG public_exponent_value = 65537; // OpenCryptoKi requires 65537
-    CK_ATTRIBUTE public_exponent = {CKA_PUBLIC_EXPONENT, &public_exponent_value, sizeof(public_exponent_value)};
+    CK_BYTE public_exponent_value[] = {0x1, 0x0, 0x1}; // OpenCryptoKi requires 65537=0x00010001
+    CK_ATTRIBUTE public_exponent = {CKA_PUBLIC_EXPONENT, public_exponent_value, sizeof(public_exponent_value)};
     public_attrs_.push_back(public_exponent);
 
     CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};

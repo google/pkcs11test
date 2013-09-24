@@ -16,6 +16,7 @@ std::string key_type_name(CK_KEY_TYPE val);
 std::string mechanism_type_name(CK_MECHANISM_TYPE val);
 std::string certificate_type_name(CK_CERTIFICATE_TYPE val);
 std::string object_class_name(CK_OBJECT_CLASS val);
+std::string BERDecode(CK_BYTE_PTR p, int len);
 std::string attribute_description(CK_ATTRIBUTE_PTR attr);
 std::string info_description(CK_INFO_PTR info);
 std::string function_list_description(CK_FUNCTION_LIST_PTR fns);

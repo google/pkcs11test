@@ -4,6 +4,9 @@
 #include <cstdarg>
 #include <sstream>
 #include <iomanip>
+#include <sstream>
+#include <vector>
+#include <map>
 
 using namespace std;  // So sue me.
 
@@ -442,6 +445,202 @@ string object_class_name(CK_OBJECT_CLASS val) {
   }
 }
 
+namespace ber {
+
+class DataPiece {
+ public:
+  DataPiece(const string& str) : data((const CK_BYTE*)str.data()), len(str.size()) {}
+  const CK_BYTE* data;
+  int len;
+  CK_BYTE ConsumeByte() {
+    CK_BYTE val = data[0];
+    ++data;
+    --len;
+    return val;
+  }
+};
+
+class Identifier {
+ public:
+  enum ASN1Class {
+    UNIVERSAL = 0,
+    APPLICATION = 1,
+    CONTEXT_SPECIFIC = 2,
+    PRIVATE = 3
+  };
+  enum ASN1Tag {
+    EOC = 0,
+    BOOLEAN = 1,
+    INTEGER = 2,
+    BIT_STRING = 3,
+    OCTET_STRING = 4,
+    ASN1_NULL = 5,
+    OBJECT_IDENTIFIER = 6,
+    OBJECT_DESCRIPTOR = 7,
+    EXTERNAL = 8,
+    REAL = 9,
+    ENUMERATED = 10,
+    EMBEDDED_PDV = 11,
+    UTF8STRING = 12,
+    RELATIVE_OID = 13,
+    SEQUENCE_OF = 16,
+    SET_OF = 17,
+    NUMERIC_STRING = 18,
+    PRINTABLE_STRING = 19,
+    T61_STRING = 20,
+    VIDEOTEX_STRING = 21,
+    IA5STRING = 22,
+    UTCTIME = 23,
+    GENERALIZED_TIME = 24,
+    GRAPHIC_STRING = 25,
+    VISIBLE_STRING = 26,
+    GENERAL_STRING = 27,
+    UNIVERSAL_STRING = 28,
+    CHARACTER_STRING = 29,
+    BMPSTRING = 30,
+  };
+  ASN1Class asn1class;
+  bool constructed;
+  int tag;
+};
+
+Identifier ParseIdentifier(DataPiece* dp) {
+  CK_BYTE id = dp->ConsumeByte();
+  Identifier identifier;
+  identifier.asn1class = static_cast<Identifier::ASN1Class>(id >> 6);
+  identifier.constructed = (bool)(id & 0x20);
+  identifier.tag = (id & 0x1F);
+  if (identifier.tag == 0x1F) {
+    // Long form tag number
+    // TODO(drysdale): add parsing loop
+  }
+  return identifier;
+}
+
+int ParseLength(DataPiece* dp) {
+  CK_BYTE len = dp->ConsumeByte();
+  if (len == 0x80) {
+    // Indefinite form -- look for EOC to find end
+    return -1;
+  } else if (len & 0x80) {
+    // Definite long form
+    int num_len_bytes = (len & 0x7f);
+    int full_len = 0;
+    for (int ii = 0; ii < num_len_bytes; ii++) {
+      len = dp->ConsumeByte();
+      full_len = (full_len << 8) + len;
+    }
+    return full_len;
+  } else {
+    // Definite short form
+    return len;
+  }
+}
+
+// OIDs that we know a short name for.
+map <string, string> shortnames = {
+  { "oid2.5.4.3", "CN=" },
+  { "oid2.5.4.6", "C=" },
+  { "oid2.5.4.10", "O=" },
+  { "oid2.5.4.11", "OU=" },
+  { "oid1.2.840.113549.1.9.1", "email=" },
+};
+
+string ObjectIdentifier(const DataPiece& dp) {
+  // Build an OID string
+  if (dp.len == 0)  return "";
+  int first = (int)dp.data[0];
+  stringstream ss;
+  ss << "oid" << (first / 40) << '.' << (first % 40);
+  unsigned int value = 0;
+  for (int ii = 1; ii < dp.len; ii++) {
+    int b = (int)dp.data[ii];
+    value = (value << 7) + (b & 0x7f);
+    if (!(b & 0x80)) {
+      ss << '.' << value;
+      value = 0;
+    }
+  }
+  string result = ss.str();
+  auto it = shortnames.find(result);
+  if (it == shortnames.end()) {
+    return result;
+  } else {
+    return it->second;
+  }
+}
+
+string ParseContent(const Identifier& ident, const DataPiece& content) {
+  switch (ident.tag) {
+    case Identifier::OBJECT_IDENTIFIER:
+      return ObjectIdentifier(content);
+    case Identifier::UTF8STRING:
+    case Identifier::NUMERIC_STRING:
+    case Identifier::PRINTABLE_STRING:
+    case Identifier::T61_STRING:
+    case Identifier::VIDEOTEX_STRING:
+    case Identifier::IA5STRING:
+    case Identifier::GRAPHIC_STRING:
+    case Identifier::VISIBLE_STRING:
+    case Identifier::GENERAL_STRING:
+    case Identifier::UNIVERSAL_STRING:
+    case Identifier::CHARACTER_STRING:
+    case Identifier::BMPSTRING:
+      return "'" + string((const char*)content.data, content.len) + "'";
+    // TODO(drysdale): add other types, check all strings work.
+    default:
+      return pkcs11::hex_data((CK_BYTE_PTR)content.data, content.len);
+  }
+}
+
+string BERDecodeTLV(DataPiece* dp) {
+  if (dp->len == 0) return "";
+  if (dp->len < 2) return "<error>";
+
+  Identifier ident = ParseIdentifier(dp);
+  int length = ParseLength(dp);
+  if (length == -1) {
+    // TODO(drysdale): cope with indefinite length
+  } else {
+    DataPiece content = *dp;
+    content.len = length;
+    // Consume the value regardless
+    dp->len -= length;
+    dp->data += length;
+    if (ident.constructed) {
+      // Value is itself made up of TLVs
+      vector<string> results;
+      while (content.len > 0) {
+        results.push_back(BERDecodeTLV(&content));
+      }
+      stringstream ss;
+      char end_delim;
+      if (ident.tag == Identifier::SET_OF) {
+        ss << '{';
+        end_delim = '}';
+      } else if (ident.tag == Identifier::SEQUENCE_OF) {
+        ss << '[';
+        end_delim = ']';
+      } else {
+        ss << '(';
+        end_delim = ')';
+      }
+      bool first = true;
+      for (const string& result : results) {
+        if (!first) ss << ", ";
+        ss << result;
+        first = false;
+      }
+      ss << end_delim;
+      return ss.str();
+    } else {
+      return ParseContent(ident, content);
+    }
+  }
+}
+
+}  // namespace ber
+
 namespace {
 
 // Many strings in the PKCS#11 interface are fixed-width, blank-padded, no null terminator.
@@ -504,7 +703,13 @@ string to_object_class(unsigned char* p, int len) {
   CK_OBJECT_CLASS val = *(CK_OBJECT_CLASS*)p;
   return object_class_name(val);
 }
+
 }  // namespace
+
+string BERDecode(CK_BYTE_PTR p, int len) {
+  ber::DataPiece data(string((char*)p, len));
+  return BERDecodeTLV(&data);
+}
 
 #define VN(x)  {x, #x, &hex_data}
 #define VNA(x) {x, #x, &to_ascii}
@@ -515,7 +720,8 @@ string to_object_class(unsigned char* p, int len) {
 #define VNM(x) {x, #x, &to_mechanism_type}
 #define VNC(x) {x, #x, &to_certificate_type}
 #define VNO(x) {x, #x, &to_object_class}
-#define VNN(x) {x, #x, &hex_data}  // DER-encoding
+#define VNN(x) {x, #x, &BERDecode}  // DER-encoding
+#define VNV(x) {x, #x, &BERDecode}  // BER-encoding
 const struct attr_val_name attribute_info[] = {
   VNO(CKA_CLASS),
   VNA(CKA_LABEL),
@@ -527,12 +733,12 @@ const struct attr_val_name attribute_info[] = {
   VNB(CKA_TOKEN),
   VNB(CKA_PRIVATE),
   VNA(CKA_APPLICATION),
-  VN(CKA_VALUE),
+  VNV(CKA_VALUE),
   VNN(CKA_OBJECT_ID),
   VNN(CKA_ISSUER),
   VNN(CKA_SERIAL_NUMBER),
   VNN(CKA_AC_ISSUER),
-  VN(CKA_ATTR_TYPES),
+  VNV(CKA_ATTR_TYPES),
   VNB(CKA_TRUSTED),
   VNU(CKA_CERTIFICATE_CATEGORY),
   VNU(CKA_JAVA_MIDP_SECURITY_DOMAIN),

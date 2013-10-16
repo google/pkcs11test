@@ -450,9 +450,11 @@ namespace ber {
 class DataPiece {
  public:
   DataPiece(const string& str) : data((const CK_BYTE*)str.data()), len(str.size()) {}
+  DataPiece(const CK_BYTE* d, int l) : data(d), len(l) {}
   const CK_BYTE* data;
   int len;
   CK_BYTE ConsumeByte() {
+    assert(len > 0);
     CK_BYTE val = data[0];
     ++data;
     --len;
@@ -539,11 +541,17 @@ int ParseLength(DataPiece* dp) {
 
 // OIDs that we know a short name for.
 map <string, string> shortnames = {
-  { "oid2.5.4.3", "CN=" },
-  { "oid2.5.4.6", "C=" },
-  { "oid2.5.4.10", "O=" },
-  { "oid2.5.4.11", "OU=" },
+  { "oid2.5.4.3", "CN="},
+  { "oid2.5.4.6", "C="},
+  { "oid2.5.4.10", "O="},
+  { "oid2.5.4.11", "OU="},
   { "oid1.2.840.113549.1.9.1", "email=" },
+  { "oid1.2.840.113549.1.1.5", "sha1-with-rsa-signature="},
+  { "oid1.2.840.113549.1.1.1", "rsaEncryption="},
+  { "oid2.5.29.15", "keyUsage="},
+  { "oid2.5.29.19", "basicConstraints="},
+  { "oid2.5.29.31", "cRLDistributionPoints="},
+  { "oid2.5.29.37", "extKeyUsage="},
 };
 
 string ObjectIdentifier(const DataPiece& dp) {
@@ -586,6 +594,7 @@ string ParseContent(const Identifier& ident, const DataPiece& content) {
     case Identifier::UNIVERSAL_STRING:
     case Identifier::CHARACTER_STRING:
     case Identifier::BMPSTRING:
+    case Identifier::UTCTIME:
       return "'" + string((const char*)content.data, content.len) + "'";
     // TODO(drysdale): add other types, check all strings work.
     default:
@@ -707,7 +716,7 @@ string to_object_class(unsigned char* p, int len) {
 }  // namespace
 
 string BERDecode(CK_BYTE_PTR p, int len) {
-  ber::DataPiece data(string((char*)p, len));
+  ber::DataPiece data(p, len);
   return BERDecodeTLV(&data);
 }
 

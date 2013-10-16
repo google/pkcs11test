@@ -66,7 +66,8 @@ TEST_F(PKCS11Test, FailedTermination) {
 }
 
 TEST_F(PKCS11Test, GetInfo) {
-  CK_INFO info = {0};
+  CK_INFO info;
+  memset(&info, 0, sizeof(info));
   EXPECT_CKR_OK(g_fns->C_GetInfo(&info));
   if (g_verbose) cout << info_description(&info) << endl;
   EXPECT_LE(2, info.cryptokiVersion.major);
@@ -78,7 +79,8 @@ TEST_F(PKCS11Test, GetInfoFail) {
 }
 
 TEST(Init, GetInfoNoInit) {
-  CK_INFO info = {0};
+  CK_INFO info;
+  memset(&info, 0, sizeof(info));
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetInfo(&info));
 }
 

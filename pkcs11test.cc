@@ -1,4 +1,5 @@
 // C headers
+#include <string.h>
 #include <unistd.h>
 #include <dlfcn.h>
 
@@ -120,7 +121,8 @@ int main(int argc, char* argv[]) {
     cerr << "Failed to C_Initialize (" << rv_name(rv) << ")" << endl;
     exit(1);
   }
-  CK_SLOT_INFO slot_info = {0};
+  CK_SLOT_INFO slot_info;
+  memset(&slot_info, 0, sizeof(slot_info));
   rv = g_fns->C_GetSlotInfo(g_slot_id, &slot_info);
   if (rv != CKR_OK) {
     cerr << "Failed to get slot info (" << rv_name(rv) << ") for slot " << g_slot_id << endl;
@@ -130,7 +132,8 @@ int main(int argc, char* argv[]) {
     cerr << "Slot " << g_slot_id << " has no token present." << endl;
     exit(1);
   }
-  CK_TOKEN_INFO token = {0};
+  CK_TOKEN_INFO token;
+  memset(&token, 0, sizeof(token));
   rv = g_fns->C_GetTokenInfo(g_slot_id, &token);
   if (rv != CKR_OK) {
     cerr << "Failed to get token info (" << rv_name(rv) << ") for token in slot " << g_slot_id << endl;

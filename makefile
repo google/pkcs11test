@@ -8,7 +8,7 @@ test_chaps: pkcs11test
 dump_opencryptoki: pkcs11test
 	OPENCRYPTOKI_DEBUG_FILE=opencryptoki.out ./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki -v --gtest_filter=*.Enumerate* -s 1
 
-CXXFLAGS+=-I pkcs11 -g -std=c++0x
+CXXFLAGS+=-I pkcs11 -g -std=c++0x -Wall
 GTEST_DIR=gtest-1.6.0
 GTEST_INCS=-I$(GTEST_DIR)/include -I$(GTEST_DIR)
 OBJECTS=pkcs11test.o pkcs11-describe.o globals.o init.o slot.o session.o object.o login.o rng.o tookan.o

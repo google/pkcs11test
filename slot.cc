@@ -24,12 +24,14 @@ TEST_F(PKCS11Test, EnumerateSlots) {
   unique_ptr<CK_SLOT_ID, freer> slot((CK_SLOT_ID*)malloc(slot_count * sizeof(CK_SLOT_ID)));
   // Retrieve slot list.
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, slot.get(), &slot_count));
-  for (int ii = 0; ii < slot_count; ii++) {
-    CK_SLOT_INFO slot_info = {0};
+  for (int ii = 0; ii < (int)slot_count; ii++) {
+    CK_SLOT_INFO slot_info;
+    memset(&slot_info, 0, sizeof(slot_info));
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot.get()[ii], &slot_info));
     if (g_verbose) cout << "slot[" << ii << "] = " << (unsigned int)slot.get()[ii] << " = " << slot_description(&slot_info) << endl;
     if (slot_info.flags & CKF_TOKEN_PRESENT) {
-      CK_TOKEN_INFO token_info = {0};
+      CK_TOKEN_INFO token_info;
+      memset(&token_info, 0, sizeof(token_info));
       EXPECT_CKR_OK(g_fns->C_GetTokenInfo(slot.get()[ii], &token_info));
       if (g_verbose) cout << "  " << token_description(&token_info) << endl;
     }
@@ -41,7 +43,7 @@ TEST_F(PKCS11Test, EnumerateMechanisms) {
   EXPECT_CKR_OK(g_fns->C_GetMechanismList(g_slot_id, NULL_PTR, &mechanism_count));
   unique_ptr<CK_MECHANISM_TYPE, freer> mechanism((CK_MECHANISM_TYPE_PTR)malloc(mechanism_count * sizeof(CK_MECHANISM_TYPE)));
   EXPECT_CKR_OK(g_fns->C_GetMechanismList(g_slot_id, mechanism.get(), &mechanism_count));
-  for (int ii = 0; ii < mechanism_count; ii++) {
+  for (int ii = 0; ii < (int)mechanism_count; ii++) {
     const CK_MECHANISM_TYPE mechanism_type = mechanism.get()[ii];
     CK_MECHANISM_INFO mechanism_info;
     EXPECT_CKR_OK(g_fns->C_GetMechanismInfo(g_slot_id, mechanism_type, &mechanism_info));
@@ -89,14 +91,14 @@ TEST_F(PKCS11Test, GetSlotList) {
   unique_ptr<CK_SLOT_ID, freer> all_slots((CK_SLOT_ID*)malloc(slot_count * sizeof(CK_SLOT_ID)));
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, all_slots.get(), &slot_count));
   set<CK_SLOT_ID> all_slots_set;
-  for (int ii = 0; ii < slot_count; ++ii) all_slots_set.insert(all_slots.get()[ii]);
+  for (int ii = 0; ii < (int)slot_count; ++ii) all_slots_set.insert(all_slots.get()[ii]);
 
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_TRUE, NULL_PTR, &slot_count));
   unique_ptr<CK_SLOT_ID, freer> token_slots((CK_SLOT_ID*)malloc(slot_count * sizeof(CK_SLOT_ID)));
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_TRUE, token_slots.get(), &slot_count));
 
   // Every slot with a token should appear in the list of all slots.
-  for (int ii = 0; ii < slot_count; ++ii) {
+  for (int ii = 0; ii < (int)slot_count; ++ii) {
     EXPECT_EQ(1, all_slots_set.count(token_slots.get()[ii]));
   }
 }
@@ -118,14 +120,16 @@ TEST_F(PKCS11Test, GetSlotListFailArgumentsBad) {
 }
 
 TEST_F(PKCS11Test, GetSlotInfoFail) {
-  CK_SLOT_INFO slot_info = {0};
+  CK_SLOT_INFO slot_info;
+  memset(&slot_info, 0, sizeof(slot_info));
   EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetSlotInfo(INVALID_SLOT_ID, &slot_info));
   CK_RV rv = g_fns->C_GetSlotInfo(g_slot_id, nullptr);
   EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
 }
 
 TEST_F(PKCS11Test, GetTokenInfoFail) {
-  CK_TOKEN_INFO token_info = {0};
+  CK_TOKEN_INFO token_info;
+  memset(&token_info, 0, sizeof(token_info));
   EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetTokenInfo(INVALID_SLOT_ID, &token_info));
   EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetTokenInfo(g_slot_id, nullptr));
 }
@@ -163,9 +167,11 @@ TEST(Slot, NoInit) {
   // Check nothing works if C_Initialize has not been called.
   CK_ULONG slot_count;
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetSlotList(CK_FALSE, NULL_PTR, &slot_count));
-  CK_SLOT_INFO slot_info = {0};
+  CK_SLOT_INFO slot_info;
+  memset(&slot_info, 0, sizeof(slot_info));
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetSlotInfo(g_slot_id, &slot_info));
-  CK_TOKEN_INFO token_info = {0};
+  CK_TOKEN_INFO token_info;
+  memset(&token_info, 0, sizeof(token_info));
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GetTokenInfo(g_slot_id, &token_info));
   CK_SLOT_ID slot_id = -1;
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot_id, NULL_PTR));

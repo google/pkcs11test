@@ -610,6 +610,7 @@ string BERDecodeTLV(DataPiece* dp) {
   int length = ParseLength(dp);
   if (length == -1) {
     // TODO(drysdale): cope with indefinite length
+    return "<error: indefinite length>";
   } else {
     DataPiece content = *dp;
     content.len = length;

@@ -4,6 +4,10 @@ test_opencryptoki: pkcs11test
 test_chaps: pkcs11test
 	./pkcs11test -m libchaps.so -l /usr/lib
 
+# Run the specific tests that dump token contents
+dump_opencryptoki: pkcs11test
+	OPENCRYPTOKI_DEBUG_FILE=opencryptoki.out ./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki -v --gtest_filter=*.Enumerate* -s 1
+
 CXXFLAGS+=-I pkcs11 -g -std=c++0x
 GTEST_DIR=gtest-1.6.0
 GTEST_INCS=-I$(GTEST_DIR)/include -I$(GTEST_DIR)

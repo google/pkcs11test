@@ -115,8 +115,7 @@ TEST_F(PKCS11Test, GetSlotListFailTooSmall) {
 }
 
 TEST_F(PKCS11Test, GetSlotListFailArgumentsBad) {
-  // TODO(drysdale): reinstate (dumps core on OpenCryptoKi)
-  // EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR));
 }
 
 TEST_F(PKCS11Test, GetSlotInfoFail) {

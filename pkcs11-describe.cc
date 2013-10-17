@@ -446,7 +446,6 @@ string object_class_name(CK_OBJECT_CLASS val) {
 }
 
 namespace ber {
-
 class DataPiece {
  public:
   DataPiece(const string& str) : data((const CK_BYTE*)str.data()), len(str.size()) {}
@@ -514,7 +513,13 @@ Identifier ParseIdentifier(DataPiece* dp) {
   identifier.tag = (id & 0x1F);
   if (identifier.tag == 0x1F) {
     // Long form tag number
-    // TODO(drysdale): add parsing loop
+    CK_BYTE bb;
+    identifier.tag = 0;
+    do {
+      bb = dp->ConsumeByte();
+      identifier.tag <<= 7;
+      identifier.tag += (bb & 0x7f);
+    } while (bb & 0x80);
   }
   return identifier;
 }
@@ -602,51 +607,63 @@ string ParseContent(const Identifier& ident, const DataPiece& content) {
   }
 }
 
+// Consume a TLV from dp, update dp to remove it, and return the result.
 string BERDecodeTLV(DataPiece* dp) {
-  if (dp->len == 0) return "";
-  if (dp->len < 2) return "<error>";
-
+  if (dp->len == 0) return "<error>";
   Identifier ident = ParseIdentifier(dp);
+  if (ident.tag == Identifier::EOC) return "EOC";
   int length = ParseLength(dp);
-  if (length == -1) {
-    // TODO(drysdale): cope with indefinite length
-    return "<error: indefinite length>";
+  if (!ident.constructed) {
+    assert(length != -1); // no way to spot the end of a primitive
+    // Parse and consume the primitive value.
+    DataPiece content = *dp;
+    content.len = length;
+    string result = ParseContent(ident, content);
+    dp->len -= length;
+    dp->data += length;
+    return result;
+  }
+
+  // Value is itself made up of TLVs.
+  stringstream ss;
+  char end_delim;
+  if (ident.tag == Identifier::SET_OF) {
+    ss << '{';
+    end_delim = '}';
+  } else if (ident.tag == Identifier::SEQUENCE_OF) {
+    ss << '[';
+    end_delim = ']';
   } else {
+    ss << '(';
+    end_delim = ')';
+  }
+  bool first = true;
+
+  if (length == -1) {
+    // Indefinite length: consume TLVs until EOC reached.
+    while (true) {
+      string result = BERDecodeTLV(dp);
+      if (result == "EOC") break;
+      if (!first) ss << ", ";
+      first = false;
+      ss << result;
+    }
+  } else {
+    // Definite length: consume TLVs until length exhausted
     DataPiece content = *dp;
     content.len = length;
     // Consume the value regardless
     dp->len -= length;
     dp->data += length;
-    if (ident.constructed) {
-      // Value is itself made up of TLVs
-      vector<string> results;
-      while (content.len > 0) {
-        results.push_back(BERDecodeTLV(&content));
-      }
-      stringstream ss;
-      char end_delim;
-      if (ident.tag == Identifier::SET_OF) {
-        ss << '{';
-        end_delim = '}';
-      } else if (ident.tag == Identifier::SEQUENCE_OF) {
-        ss << '[';
-        end_delim = ']';
-      } else {
-        ss << '(';
-        end_delim = ')';
-      }
-      bool first = true;
-      for (const string& result : results) {
-        if (!first) ss << ", ";
-        ss << result;
-        first = false;
-      }
-      ss << end_delim;
-      return ss.str();
-    } else {
-      return ParseContent(ident, content);
+    while (content.len > 0) {
+      string result = BERDecodeTLV(&content);
+      if (!first) ss << ", ";
+      first = false;
+      ss << result;
     }
   }
+  ss << end_delim;
+  return ss.str();
 }
 
 }  // namespace ber
@@ -718,7 +735,9 @@ string to_object_class(unsigned char* p, int len) {
 
 string BERDecode(CK_BYTE_PTR p, int len) {
   ber::DataPiece data(p, len);
-  return BERDecodeTLV(&data);
+  string result = BERDecodeTLV(&data);
+  assert(data.len == 0);  // expect to consume all data
+  return result;
 }
 
 #define VN(x)  {x, #x, &hex_data}

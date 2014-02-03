@@ -11,7 +11,7 @@ dump_opencryptoki: pkcs11test
 CXXFLAGS+=-I pkcs11 -g -std=c++0x -Wall
 GTEST_DIR=gtest-1.6.0
 GTEST_INCS=-I$(GTEST_DIR)/include -I$(GTEST_DIR)
-OBJECTS=pkcs11test.o pkcs11-describe.o globals.o init.o slot.o session.o object.o login.o rng.o tookan.o keypair.o
+OBJECTS=pkcs11test.o pkcs11-describe.o globals.o init.o slot.o session.o object.o login.o rng.o tookan.o keypair.o cipher.o
 
 pkcs11test: $(OBJECTS) libgtest.a
 	$(CXX) -g $(GTEST_INCS) -o $@ $(OBJECTS) -ldl libgtest.a -lpthread

@@ -201,16 +201,18 @@ inline std::ostream& operator<<(std::ostream& os, const ObjectAttributes& attrob
 class SecretKey {
  public:
   // Create a secret key with the given list of (boolean) attributes set to true.
-  SecretKey(CK_SESSION_HANDLE session, std::vector<CK_ATTRIBUTE_TYPE>& attr_types)
+  SecretKey(CK_SESSION_HANDLE session, std::vector<CK_ATTRIBUTE_TYPE>& attr_types,
+            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN)
     : session_(session), attrs_(attr_types), key_(INVALID_OBJECT_HANDLE) {
-    CK_MECHANISM mechanism = {CKM_DES_KEY_GEN, NULL_PTR, 0};
+    CK_MECHANISM mechanism = {keygen_mechanism, NULL_PTR, 0};
     EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
                                        attrs_.data(), attrs_.size(),
                                        &key_));
   }
-  SecretKey(CK_SESSION_HANDLE session, const ObjectAttributes& attrs)
+  SecretKey(CK_SESSION_HANDLE session, const ObjectAttributes& attrs,
+            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN)
     : session_(session), attrs_(attrs), key_(INVALID_OBJECT_HANDLE) {
-    CK_MECHANISM mechanism = {CKM_DES_KEY_GEN, NULL_PTR, 0};
+    CK_MECHANISM mechanism = {keygen_mechanism, NULL_PTR, 0};
     EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
                                        attrs_.data(), attrs_.size(),
                                        &key_));

@@ -802,7 +802,7 @@ const struct attr_val_name attribute_info[] = {
   VN(CKA_PRIME_BITS),
   VN(CKA_SUBPRIME_BITS),
   VN(CKA_VALUE_BITS),
-  VN(CKA_VALUE_LEN),
+  VNU(CKA_VALUE_LEN),
   VNB(CKA_EXTRACTABLE),
   VNB(CKA_LOCAL),
   VNB(CKA_NEVER_EXTRACTABLE),

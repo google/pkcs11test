@@ -175,9 +175,9 @@ class SecretKeyTest : public ReadOnlySessionTest {
  private:
   vector<CK_ATTRIBUTE_TYPE> attrs_;
   SecretKey key_;
-  CK_MECHANISM_TYPE mode_;
-  int blocksize_;
-  bool emits_iv_;
+  const CK_MECHANISM_TYPE mode_;
+  const int blocksize_;
+  const bool emits_iv_;
   unique_ptr<CK_BYTE, freer> iv_;
   unique_ptr<CK_BYTE, freer> plaintext_;
   CK_MECHANISM mechanism_;

@@ -172,6 +172,7 @@ typedef LoginSession<CKF_SERIAL_SESSION, CKU_USER> ROUserSession;
 typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_USER> RWUserSession;
 typedef LoginSession<(CKF_SERIAL_SESSION|CKF_RW_SESSION), CKU_SO> RWSOSession;
 
+// Encapsulate a set of CK_ATTRIBUTES in a class.
 class ObjectAttributes {
  public:
   ObjectAttributes() {
@@ -211,27 +212,10 @@ inline std::ostream& operator<<(std::ostream& os, const ObjectAttributes& attrob
 class SecretKey {
  public:
   // Create a secret key with the given list of (boolean) attributes set to true.
-  SecretKey(CK_SESSION_HANDLE session, std::vector<CK_ATTRIBUTE_TYPE>& attr_types,
-            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN,
-            int keylen = -1)
-    : session_(session), attrs_(attr_types), key_(INVALID_OBJECT_HANDLE) {
-    InitKey(keygen_mechanism, keylen);
-  }
   SecretKey(CK_SESSION_HANDLE session, const ObjectAttributes& attrs,
             CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN,
             int keylen = -1)
     : session_(session), attrs_(attrs), key_(INVALID_OBJECT_HANDLE) {
-    InitKey(keygen_mechanism, keylen);
-  }
-  ~SecretKey() {
-    if (key_ != INVALID_OBJECT_HANDLE) {
-      EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, key_));
-    }
-  }
-  bool valid() const { return (key_ != INVALID_OBJECT_HANDLE); }
-  CK_OBJECT_HANDLE handle() const { return key_; }
- private:
-  void InitKey(CK_MECHANISM_TYPE keygen_mechanism, int keylen) {
     if (keylen > 0) {
       CK_ULONG len = keylen;
       CK_ATTRIBUTE valuelen = {CKA_VALUE_LEN, &len, sizeof(CK_ULONG)};
@@ -242,6 +226,14 @@ class SecretKey {
                                        attrs_.data(), attrs_.size(),
                                        &key_));
   }
+  ~SecretKey() {
+    if (key_ != INVALID_OBJECT_HANDLE) {
+      EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, key_));
+    }
+  }
+  bool valid() const { return (key_ != INVALID_OBJECT_HANDLE); }
+  CK_OBJECT_HANDLE handle() const { return key_; }
+ private:
   CK_SESSION_HANDLE session_;
   ObjectAttributes attrs_;
   CK_OBJECT_HANDLE key_;
@@ -251,10 +243,10 @@ class KeyPair {
  public:
   // Create a keypair with the given lists of (boolean) attributes set to true.
   KeyPair(CK_SESSION_HANDLE session,
-          std::vector<CK_ATTRIBUTE_TYPE>& public_attr_types,
-          std::vector<CK_ATTRIBUTE_TYPE>& private_attr_types)
+          const ObjectAttributes& public_attrs,
+          const ObjectAttributes& private_attrs)
     : session_(session),
-      public_attrs_(public_attr_types), private_attrs_(private_attr_types),
+      public_attrs_(public_attrs), private_attrs_(private_attrs),
       public_key_(INVALID_OBJECT_HANDLE), private_key_(INVALID_OBJECT_HANDLE) {
     CK_ULONG modulus_bits = 1024;
     CK_ATTRIBUTE modulus = {CKA_MODULUS_BITS, &modulus_bits, sizeof(modulus_bits)};

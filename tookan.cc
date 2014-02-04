@@ -22,7 +22,7 @@ TEST_F(ReadWriteSessionTest, TookanAttackA1) {
   rv = g_fns->C_WrapKey(session_, &wrap_mechanism, k2.handle(), k1.handle(), data, &data_len);
   EXPECT_TRUE(rv == CKR_KEY_NOT_WRAPPABLE ||
               rv == CKR_KEY_UNEXTRACTABLE ||
-              rv == CKR_FUNCTION_NOT_SUPPORTED);
+              rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
 
   if (rv == CKR_OK) {
     // Use k2 to decrypt the result, giving contents of k1.
@@ -52,7 +52,7 @@ TEST_F(RWEitherSessionTest, TookanAttackA2) {
   rv = g_fns->C_WrapKey(session_, &wrap_mechanism, k2.public_handle(), k1.handle(), data, &data_len);
   EXPECT_TRUE(rv == CKR_KEY_NOT_WRAPPABLE ||
               rv == CKR_KEY_UNEXTRACTABLE ||
-              rv == CKR_FUNCTION_NOT_SUPPORTED);
+              rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
 
   if (rv == CKR_OK) {
     // Use k2 to decrypt the result, giving contents of k1.

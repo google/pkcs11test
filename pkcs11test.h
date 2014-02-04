@@ -18,13 +18,23 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <cstdlib>
 
 namespace pkcs11 {
 
 // Deleter for std::unique_ptr that handles C's malloc'ed memory.
 struct freer {
-  void operator()(void* p) { free(p); }
+  void operator()(void* p) { std::free(p); }
 };
+
+// Allocate a block of memory filled with random values.
+inline std::unique_ptr<CK_BYTE, freer> randmalloc(size_t size) {
+  unsigned char* p = static_cast<unsigned char*>(malloc(size));
+  for (size_t ii = 0; ii < size; ++ii) {
+    p[ii] = (std::rand() % 256);  // Not cryptographically safe.
+  }
+  return std::unique_ptr<CK_BYTE, freer>(p);
+}
 
 namespace test {
 
@@ -202,20 +212,16 @@ class SecretKey {
  public:
   // Create a secret key with the given list of (boolean) attributes set to true.
   SecretKey(CK_SESSION_HANDLE session, std::vector<CK_ATTRIBUTE_TYPE>& attr_types,
-            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN)
+            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN,
+            int keylen = -1)
     : session_(session), attrs_(attr_types), key_(INVALID_OBJECT_HANDLE) {
-    CK_MECHANISM mechanism = {keygen_mechanism, NULL_PTR, 0};
-    EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
-                                       attrs_.data(), attrs_.size(),
-                                       &key_));
+    InitKey(keygen_mechanism, keylen);
   }
   SecretKey(CK_SESSION_HANDLE session, const ObjectAttributes& attrs,
-            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN)
+            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN,
+            int keylen = -1)
     : session_(session), attrs_(attrs), key_(INVALID_OBJECT_HANDLE) {
-    CK_MECHANISM mechanism = {keygen_mechanism, NULL_PTR, 0};
-    EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
-                                       attrs_.data(), attrs_.size(),
-                                       &key_));
+    InitKey(keygen_mechanism, keylen);
   }
   ~SecretKey() {
     if (key_ != INVALID_OBJECT_HANDLE) {
@@ -225,6 +231,17 @@ class SecretKey {
   bool valid() const { return (key_ != INVALID_OBJECT_HANDLE); }
   CK_OBJECT_HANDLE handle() const { return key_; }
  private:
+  void InitKey(CK_MECHANISM_TYPE keygen_mechanism, int keylen) {
+    if (keylen > 0) {
+      CK_ULONG len = keylen;
+      CK_ATTRIBUTE valuelen = {CKA_VALUE_LEN, &len, sizeof(CK_ULONG)};
+      attrs_.push_back(valuelen);
+    }
+    CK_MECHANISM mechanism = {keygen_mechanism, NULL_PTR, 0};
+    EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
+                                       attrs_.data(), attrs_.size(),
+                                       &key_));
+  }
   CK_SESSION_HANDLE session_;
   ObjectAttributes attrs_;
   CK_OBJECT_HANDLE key_;

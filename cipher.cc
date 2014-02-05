@@ -21,7 +21,7 @@ class SecretKeyTest : public ReadOnlySessionTest {
       emits_iv_(emits_iv),
       iv_(randmalloc(blocksize_)),
       plaintext_(randmalloc(kNumBlocks * blocksize_)),
-      mechanism_({mode_, (emits_iv_ ? iv_.get() : NULL_PTR), (emits_iv_ ? blocksize_ : 0)}) {
+      mechanism_({mode_, (emits_iv_ ? iv_.get() : NULL_PTR), (emits_iv_ ? (CK_ULONG)blocksize_ : 0)}) {
     if (g_verbose && emits_iv_) cout << "IV: " << hex_data(iv_.get(), blocksize_) << endl;
     if (g_verbose) cout << "PT: " << hex_data(plaintext_.get(), kNumBlocks * blocksize_) << endl;
   }

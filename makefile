@@ -1,8 +1,9 @@
+SLOT_ID ?= 0
 all: pkcs11test
 test_opencryptoki: pkcs11test
-	OPENCRYPTOKI_DEBUG_FILE=opencryptoki.out ./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki
+	OPENCRYPTOKI_DEBUG_FILE=opencryptoki.out ./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki -s $(SLOT_ID)
 test_chaps: pkcs11test
-	./pkcs11test -m libchaps.so -l /usr/lib
+	./pkcs11test -m libchaps.so -l /usr/lib -s $(SLOT_ID)
 
 # Run the specific tests that dump token contents
 dump_opencryptoki: pkcs11test
@@ -17,7 +18,7 @@ pkcs11test: $(OBJECTS) libgtest.a
 	$(CXX) -g $(GTEST_INCS) -o $@ $(OBJECTS) -ldl libgtest.a -lpthread
 
 gtest-all.o:
-	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c ${GTEST_DIR}/src/gtest-all.cc
+	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc
 libgtest.a: gtest-all.o
 	$(AR) -rv libgtest.a gtest-all.o
 

@@ -1,9 +1,10 @@
 PKCS11TEST
 ==========
 
-This repository holds a test suite for the
-[PKCS #11](http://www.emc.com/emc-plus/rsa-labs/standards-initiatives/pkcs-11-cryptographic-token-interface-standard.htm)
-API.  To build the test program on Linux, just run `make`.
+This repository holds a test suite for, and is therefore derived from, the
+[RSA Security Inc. PKCS #11 Cryptographic Token Interface (Cryptoki)](http://www.emc.com/emc-plus/rsa-labs/standards-initiatives/pkcs-11-cryptographic-token-interface-standard.htm).
+
+To build the test program on Linux, just run `make`.
 
 Test Options
 ------------

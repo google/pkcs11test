@@ -9,18 +9,18 @@ test_chaps: pkcs11test
 dump_opencryptoki: pkcs11test
 	OPENCRYPTOKI_DEBUG_FILE=opencryptoki.out ./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki -v --gtest_filter=*.Enumerate* -s 1
 
-CXXFLAGS+=-I pkcs11 -g -std=c++0x -Wall
 GTEST_DIR=gtest-1.6.0
-GTEST_INCS=-I$(GTEST_DIR)/include -I$(GTEST_DIR)
+GTEST_INC=-isystem $(GTEST_DIR)/include
+CXXFLAGS+=-Ipkcs11  $(GTEST_INC) -g -std=c++0x -Wall
 OBJECTS=pkcs11test.o pkcs11-describe.o globals.o init.o slot.o session.o object.o login.o rng.o tookan.o keypair.o cipher.o digest.o
 
 pkcs11test: $(OBJECTS) libgtest.a
 	$(CXX) -g $(GTEST_INCS) -o $@ $(OBJECTS) -ldl libgtest.a -lpthread
 
 gtest-all.o:
-	$(CXX) -I$(GTEST_DIR)/include -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc
+	$(CXX) $(CXXFLAGS) -I$(GTEST_DIR) -c $(GTEST_DIR)/src/gtest-all.cc
 libgtest.a: gtest-all.o
 	$(AR) -rv libgtest.a gtest-all.o
 
 clean:
-	rm -rf pkcs11test $(OBJECTS) gtest-all.o libgtest.a
+	rm -rf pkcs11test $(OBJECTS) gtest-all.o libgtest.a opencryptoki.out

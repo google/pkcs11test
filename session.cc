@@ -41,7 +41,10 @@ TEST_F(ReadWriteSessionTest, SessionInfo) {
 TEST_F(ReadWriteSessionTest, DISABLED_GetSetOperationState) {
   CK_ULONG len;
   CK_RV rv = g_fns->C_GetOperationState(session_, NULL_PTR, &len);
-  if (rv == CKR_FUNCTION_NOT_SUPPORTED) return;
+  if (rv == CKR_FUNCTION_NOT_SUPPORTED) {
+    TEST_SKIPPED("GetOperationState not supported");
+    return;
+  }
 
   // No state => OPERATION_NOT_INITIALIZED
   EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED, rv);

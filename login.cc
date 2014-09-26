@@ -23,7 +23,7 @@ namespace test {
 // This test may induce the PIN to be locked out.
 TEST_F(ReadOnlySessionTest, UserLoginWrongPIN) {
   if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
-    if (g_verbose) cout << "Skipping test that requires login" << endl;
+    TEST_SKIPPED("Login required");
     return;
   }
   EXPECT_CKR(CKR_PIN_INCORRECT, g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)"simply-wrong", 12));
@@ -34,18 +34,18 @@ TEST_F(ReadOnlySessionTest, UserLoginWrongPIN) {
 
 TEST_F(ReadOnlySessionTest, SOLoginFail) {
   if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
-    if (g_verbose) cout << "Skipping test that requires login" << endl;
+    TEST_SKIPPED("Login required");
     return;
   }
   // Can't login as SO in read-only session.
   EXPECT_CKR(CKR_SESSION_READ_ONLY_EXISTS,
-            g_fns->C_Login(session_, CKU_SO, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin)));
+             g_fns->C_Login(session_, CKU_SO, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin)));
 }
 
 
 TEST_F(ROUserSessionTest, UserLoginAlreadyLoggedIn) {
   EXPECT_CKR(CKR_USER_ALREADY_LOGGED_IN,
-            g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+             g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
 }
 
 TEST_F(RWUserSessionTest, SOLoginFail) {
@@ -57,7 +57,7 @@ TEST_F(RWUserSessionTest, SOLoginFail) {
 
 TEST_F(RWSOSessionTest, UserLoginFail) {
   EXPECT_CKR(CKR_USER_ANOTHER_ALREADY_LOGGED_IN,
-            g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+             g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
 }
 
 }  // namespace test

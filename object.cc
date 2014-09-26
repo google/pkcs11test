@@ -125,7 +125,7 @@ TEST_F(ReadOnlySessionTest, EnumerateObjects) {
 
 TEST_F(ROUserSessionTest, EnumerateObjects) {
   if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
-    if (g_verbose) cout << "Skipping test that requires login" << endl;
+    TEST_SKIPPED("Login required");
     return;
   }
   EnumerateObjects(session_);

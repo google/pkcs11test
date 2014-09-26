@@ -152,7 +152,10 @@ TEST_F(PKCS11Test, WaitForSlotEvent) {
   CK_SLOT_ID slot_id = -1;
   // Ask twice without blocking, to clear any pending event.
   CK_RV rv = g_fns->C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot_id, NULL_PTR);
-  if (rv == CKR_FUNCTION_NOT_SUPPORTED) return;
+  if (rv == CKR_FUNCTION_NOT_SUPPORTED) {
+    TEST_SKIPPED("WaitForSlotEvent not supported");
+    return;
+  }
   EXPECT_CKR(CKR_NO_EVENT, g_fns->C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot_id, NULL_PTR));
 }
 
@@ -206,7 +209,7 @@ TEST(Slot, NoInit) {
 
 TEST_F(PKCS11Test, TokenInit) {
   if (!g_init_token) {
-    if (g_verbose) cout << "Skipping token initialization test" << endl;
+    TEST_SKIPPED("Destructive token re-initialization not performed");
     return;
   }
   if (g_token_flags & CKF_PROTECTED_AUTHENTICATION_PATH) {
@@ -258,7 +261,7 @@ TEST_F(PKCS11Test, TokenInit) {
 
 TEST_F(PKCS11Test, TokenInitPinIncorrect) {
   if (!g_init_token) {
-    if (g_verbose) cout << "Skipping token initialization test" << endl;
+    TEST_SKIPPED("Destructive token re-initialization not performed");
     return;
   }
   const char* wrong_pin = "wrong";
@@ -267,7 +270,7 @@ TEST_F(PKCS11Test, TokenInitPinIncorrect) {
 
 TEST_F(PKCS11Test, TokenInitInvalidSlot) {
   if (!g_init_token) {
-    if (g_verbose) cout << "Skipping token initialization test" << endl;
+    TEST_SKIPPED("Destructive token re-initialization not performed");
     return;
   }
   EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_InitToken(INVALID_SLOT_ID, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin), g_token_label));
@@ -275,7 +278,7 @@ TEST_F(PKCS11Test, TokenInitInvalidSlot) {
 
 TEST_F(ReadOnlySessionTest, TokenInitWithSession) {
   if (!g_init_token) {
-    if (g_verbose) cout << "Skipping token initialization test" << endl;
+    TEST_SKIPPED("Destructive token re-initialization not performed");
     return;
   }
   EXPECT_CKR(CKR_SESSION_EXISTS, g_fns->C_InitToken(g_slot_id, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin), g_token_label));

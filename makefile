@@ -1,12 +1,14 @@
 all: pkcs11test
+
+SLOT_ID ?= 0
 test_opencryptoki: pkcs11test
-	OPENCRYPTOKI_DEBUG_FILE=opencryptoki.out ./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki
+	./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki -s ${SLOT_ID}
 test_chaps: pkcs11test
 	./pkcs11test -m libchaps.so.0 -l /usr/lib
 
 # Run the specific tests that dump token contents
 dump_opencryptoki: pkcs11test
-	OPENCRYPTOKI_DEBUG_FILE=opencryptoki.out ./pkcs11test -m libopencryptoki.so -l /usr/lib/x86_64-linux-gnu/opencryptoki -v --gtest_filter=*.Enumerate* -s 1
+	./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki -v --gtest_filter=*.Enumerate* -s ${SLOT_ID}
 
 GTEST_DIR=gtest-1.6.0
 GTEST_INC=-isystem $(GTEST_DIR)/include

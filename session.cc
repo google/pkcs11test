@@ -38,7 +38,7 @@ TEST_F(ReadWriteSessionTest, SessionInfo) {
   if (g_verbose) cout << session_info_description(&session_info) << endl;
 }
 
-TEST_F(ReadWriteSessionTest, DISABLED_GetSetOperationState) {
+TEST_F(ReadWriteSessionTest, GetSetOperationState) {
   CK_ULONG len;
   CK_RV rv = g_fns->C_GetOperationState(session_, NULL_PTR, &len);
   if (rv == CKR_FUNCTION_NOT_SUPPORTED) {

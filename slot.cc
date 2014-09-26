@@ -128,8 +128,7 @@ TEST_F(PKCS11Test, GetSlotListFailTooSmall) {
   }
 }
 
-// TODO(drysdale): re-enable this with some way to bypass OpenCryptoKi's crash here.
-TEST_F(PKCS11Test, DISABLED_GetSlotListFailArgumentsBad) {
+TEST_F(PKCS11Test, GetSlotListFailArgumentsBad) {
   EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR));
 }
 

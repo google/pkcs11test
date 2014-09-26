@@ -1,0 +1,21 @@
+#!/bin/sh
+FILTERS=
+ARGS=
+for arg in "$@"
+do
+    echo $arg
+    case $arg in
+        -*) ARGS="$ARGS $arg" ;;
+        *)
+            if [ -z $FILTERS ]; then
+                FILTERS=$arg
+            else
+                FILTERS="$FILTERS:$arg"
+            fi
+            ;;
+    esac
+done
+if [ ! -z $FILTERS ]; then
+    ARGS="$ARGS --gtest_filter=$FILTERS"
+fi
+./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki -s 0 $ARGS

@@ -55,8 +55,7 @@ TEST_F(ReadWriteSessionTest, DISABLED_GetSetOperationState) {
 
   CK_MECHANISM mechanism = {CKM_DES_ECB, NULL_PTR, 0};
   rv = g_fns->C_EncryptInit(session_, &mechanism, key.handle());
-  EXPECT_CKR_OK(rv);
-  if (rv != CKR_OK) return;
+  ASSERT_CKR_OK(rv);
 
   rv = g_fns->C_GetOperationState(session_, NULL_PTR, &len);
   if (rv != CKR_STATE_UNSAVEABLE) {
@@ -66,7 +65,7 @@ TEST_F(ReadWriteSessionTest, DISABLED_GetSetOperationState) {
     EXPECT_CKR_OK(rv);
     if (rv == CKR_OK) {
       EXPECT_CKR_OK(g_fns->C_SetOperationState(session_, state.get(), len, 0, 0));
-  }
+    }
   }
 }
 

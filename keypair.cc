@@ -38,20 +38,17 @@ TEST_F(KeyPairTest, EncryptDecrypt) {
   // First encrypt the data with the public key.
   CK_MECHANISM mechanism = {CKM_RSA_PKCS, NULL_PTR, 0};
   CK_RV rv = g_fns->C_EncryptInit(session_, &mechanism, keypair_.public_handle());
-  EXPECT_CKR_OK(rv);
-  if (rv != CKR_OK) return;
+  ASSERT_CKR_OK(rv);
 
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   rv = g_fns->C_Encrypt(session_, plaintext, plaintext_len, ciphertext, &ciphertext_len);
-  EXPECT_CKR_OK(rv);
+  ASSERT_CKR_OK(rv);
   EXPECT_EQ(128, ciphertext_len);
-  if (rv != CKR_OK) return;
 
   // Now decrypt the data with the private key.
   rv = g_fns->C_DecryptInit(session_, &mechanism, keypair_.private_handle());
-  EXPECT_CKR_OK(rv);
-  if (rv != CKR_OK) return;
+  ASSERT_CKR_OK(rv);
 
   CK_BYTE recovered_plaintext[1024];
   CK_ULONG recovered_plaintext_len = sizeof(plaintext);

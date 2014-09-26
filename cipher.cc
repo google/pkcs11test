@@ -43,21 +43,18 @@ class SecretKeyTest : public ReadOnlySessionTest {
   void TestEncryptDecrypt() {
     // First encrypt the data.
     CK_RV rv = g_fns->C_EncryptInit(session_, &mechanism_, key_.handle());
-    EXPECT_CKR_OK(rv);
-    if (rv != CKR_OK) return;
+    ASSERT_CKR_OK(rv);
 
     CK_BYTE ciphertext[1024];
     CK_ULONG ciphertext_len = sizeof(ciphertext);
     rv = g_fns->C_Encrypt(session_, plaintext_.get(), kNumBlocks * blocksize_, ciphertext, &ciphertext_len);
-    EXPECT_CKR_OK(rv);
+    ASSERT_CKR_OK(rv);
     EXPECT_EQ(kNumBlocks * blocksize_, ciphertext_len);
-    if (rv != CKR_OK) return;
     if (g_verbose) cout << "CT: " << hex_data(ciphertext, ciphertext_len) << endl;
 
     // Now decrypt the data.
     rv = g_fns->C_DecryptInit(session_, &mechanism_, key_.handle());
-    EXPECT_CKR_OK(rv);
-    if (rv != CKR_OK) return;
+    ASSERT_CKR_OK(rv);
 
     CK_BYTE recovered_plaintext[1024];
     CK_ULONG recovered_plaintext_len = sizeof(recovered_plaintext);
@@ -71,8 +68,7 @@ class SecretKeyTest : public ReadOnlySessionTest {
   void TestEncryptDecryptParts() {
     // First encrypt the data block by block.
     CK_RV rv = g_fns->C_EncryptInit(session_, &mechanism_, key_.handle());
-    EXPECT_CKR_OK(rv);
-    if (rv != CKR_OK) return;
+    ASSERT_CKR_OK(rv);
 
     CK_BYTE ciphertext[1024];
     CK_ULONG ciphertext_bufsize = sizeof(ciphertext);
@@ -85,9 +81,8 @@ class SecretKeyTest : public ReadOnlySessionTest {
       rv = g_fns->C_EncryptUpdate(session_,
                                   plaintext_.get() + block * blocksize_, blocksize_,
                                   part, &part_len);
-      EXPECT_CKR_OK(rv);
+      ASSERT_CKR_OK(rv);
       EXPECT_EQ(blocksize_, part_len);
-      if (rv != CKR_OK) return;
       if (g_verbose) cout << "CT[" << block << "]: " << hex_data(part, part_len) << endl;
       ciphertext_len += part_len;
     }
@@ -100,8 +95,7 @@ class SecretKeyTest : public ReadOnlySessionTest {
 
     // Now decrypt the data.
     rv = g_fns->C_DecryptInit(session_, &mechanism_, key_.handle());
-    EXPECT_CKR_OK(rv);
-    if (rv != CKR_OK) return;
+    ASSERT_CKR_OK(rv);
 
     CK_BYTE recovered_plaintext[1024];
     CK_ULONG recovered_plaintext_bufsize = sizeof(recovered_plaintext);

@@ -86,6 +86,7 @@ int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
 
   // Retrieve PKCS module location.
+  bool explicit_slotid = false;
   int opt;
   const char* module_name = nullptr;
   const char* module_path = nullptr;
@@ -105,6 +106,7 @@ int main(int argc, char* argv[]) {
         break;
       case 's':
         g_slot_id = atoi(optarg);
+        explicit_slotid = true;
         break;
       case 'u':
         g_user_pin = optarg;
@@ -128,13 +130,27 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  // Determine the characteristics of the specified token/slot.
   CK_RV rv;
   rv = g_fns->C_Initialize(NULL_PTR);
   if (rv != CKR_OK) {
     cerr << "Failed to C_Initialize (" << rv_name(rv) << ")" << endl;
     exit(1);
   }
+
+  if (!explicit_slotid) {
+    // No slot specified; OK if there's only one accessible slot.
+    CK_SLOT_ID slots[2];
+    CK_ULONG slot_count = 2;
+    rv = g_fns->C_GetSlotList(CK_TRUE, slots, &slot_count);
+    if (rv == CKR_OK && slot_count == 1) {
+      g_slot_id = slots[0];
+    } else {
+      cerr << "Multiple slots with tokens available; specify one with -s" << endl;
+      exit(1);
+    }
+  }
+
+  // Determine the characteristics of the specified token/slot.
   CK_SLOT_INFO slot_info;
   memset(&slot_info, 0, sizeof(slot_info));
   rv = g_fns->C_GetSlotInfo(g_slot_id, &slot_info);

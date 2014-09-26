@@ -68,7 +68,51 @@ TEST(Init, InitArgsInternalLocks) {
   EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
 }
 
-// TODO(drysdale): add the other two cases (function pointers supplied, flag set+not-set)
+namespace {
+CK_RV MutexCreate(CK_VOID_PTR_PTR ppMutex) {
+  return CKR_OK;
+}
+CK_RV MutexDestroy(CK_VOID_PTR pMutex) {
+  return CKR_OK;
+}
+CK_RV MutexLock(CK_VOID_PTR pMutex) {
+  return CKR_OK;
+}
+CK_RV MutexUnlock(CK_VOID_PTR pMutex) {
+  return CKR_OK;
+}
+}  // namespace
+
+TEST(Init, InitArgsMyLocks) {
+  CK_C_INITIALIZE_ARGS init_args = {0};
+  init_args.CreateMutex = MutexCreate;
+  init_args.DestroyMutex = MutexDestroy;
+  init_args.LockMutex = MutexLock;
+  init_args.UnlockMutex = MutexUnlock;
+  CK_RV rv = g_fns->C_Initialize(&init_args);
+  if (rv == CKR_CANT_LOCK) {
+    TEST_SKIPPED("Application-provided locking functions not supported");
+    return;
+  }
+  EXPECT_CKR_OK(rv);
+  EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
+}
+
+TEST(Init, InitArgsMyOrInternalLocks) {
+  CK_C_INITIALIZE_ARGS init_args = {0};
+  init_args.CreateMutex = MutexCreate;
+  init_args.DestroyMutex = MutexDestroy;
+  init_args.LockMutex = MutexLock;
+  init_args.UnlockMutex = MutexUnlock;
+  init_args.flags = CKF_OS_LOCKING_OK;
+  CK_RV rv = g_fns->C_Initialize(&init_args);
+  if (rv == CKR_CANT_LOCK) {
+    TEST_SKIPPED("Application-provided locking functions not supported");
+    return;
+  }
+  EXPECT_CKR_OK(rv);
+  EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
+}
 
 // From here on, wrap Initialize/Finalize in a fixture.
 TEST_F(PKCS11Test, InitNestedFail) {

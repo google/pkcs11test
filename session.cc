@@ -59,12 +59,16 @@ TEST_F(ReadWriteSessionTest, GetSetOperationState) {
 
   rv = g_fns->C_GetOperationState(session_, NULL_PTR, &len);
   if (rv != CKR_STATE_UNSAVEABLE) {
-    EXPECT_CKR(CKR_BUFFER_TOO_SMALL, rv);
+    EXPECT_CKR(CKR_OK, rv);
     unique_ptr<CK_BYTE, freer> state((CK_BYTE*)malloc(len));
     rv = g_fns->C_GetOperationState(session_, state.get(), &len);
     EXPECT_CKR_OK(rv);
     if (rv == CKR_OK) {
-      EXPECT_CKR_OK(g_fns->C_SetOperationState(session_, state.get(), len, 0, 0));
+      rv = g_fns->C_SetOperationState(session_, state.get(), len, 0, 0);
+      if (rv == CKR_KEY_NEEDED) {
+        rv = g_fns->C_SetOperationState(session_, state.get(), len, key.handle(), 0);
+      }
+      EXPECT_CKR_OK(rv);
     }
   }
 }

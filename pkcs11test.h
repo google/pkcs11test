@@ -58,6 +58,14 @@ namespace test {
 // Value to use for invalid object handles.
 #define INVALID_OBJECT_HANDLE 77777
 
+// Mark a test case as being skipped for a reason.
+void TestSkipped(const char *testcase, const char *test, const std::string& reason);
+#define TEST_SKIPPED(reason) \
+  do { \
+    const ::testing::TestInfo* const info = ::testing::UnitTest::GetInstance()->current_test_info(); \
+    TestSkipped(info->test_case_name(), info->name(), reason);          \
+  } while (0)
+
 // Additional macros for checking the return value of a PKCS#11 function.
 struct CK_RV_ {
   CK_RV_(CK_RV rv) : rv_(rv) {}

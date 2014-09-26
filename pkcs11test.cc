@@ -21,6 +21,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
+#include <map>
 
 // Local headers
 #include "pkcs11test.h"
@@ -29,7 +31,32 @@ using namespace std;  // So sue me
 
 namespace pkcs11 {
 namespace test {
+
+typedef vector<string> TestList;
+typedef map<string, TestList*> SkippedTestMap;
+static SkippedTestMap skipped_tests;
+void TestSkipped(const char *testcase, const char *test, const string& reason) {
+  if (skipped_tests.find(reason) == skipped_tests.end()) {
+    skipped_tests[reason] = new TestList;
+  }
+  string testname(testcase);
+  testname += ".";
+  testname += test;
+  skipped_tests[reason]->push_back(testname);
+}
+
 namespace {
+
+void ShowSkippedTests(ostream& os) {
+  for (SkippedTestMap::iterator skiplist = skipped_tests.begin();
+       skiplist != skipped_tests.end(); ++skiplist) {
+    os << "Following tests were skipped because: " << skiplist->first << endl;
+    for (size_t ii = 0; ii < skiplist->second->size(); ++ii) {
+      const string& testname((*skiplist->second)[ii]);
+      os << "  " << testname << endl;
+    }
+  }
+}
 
 void usage() {
   cerr << "  -m name : name of PKCS#11 library" << endl;
@@ -186,5 +213,7 @@ int main(int argc, char* argv[]) {
     testing::GTEST_FLAG(filter) = filter;
   }
 
-  return RUN_ALL_TESTS();
+  int rc = RUN_ALL_TESTS();
+  ShowSkippedTests(cerr);
+  return rc;
 }

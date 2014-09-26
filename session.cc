@@ -30,12 +30,34 @@ TEST_F(ReadOnlySessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
+  EXPECT_EQ(CKS_RO_PUBLIC_SESSION, session_info.state);
+
+  // Logging in changes the state.
+  EXPECT_CKR_OK(g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
+  EXPECT_EQ(CKS_RO_USER_FUNCTIONS, session_info.state);
+
+  // Log out again
+  EXPECT_CKR_OK(g_fns->C_Logout(session_));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
+  EXPECT_EQ(CKS_RO_PUBLIC_SESSION, session_info.state);
 }
 
 TEST_F(ReadWriteSessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
+  EXPECT_EQ(CKS_RW_PUBLIC_SESSION, session_info.state);
+
+  // Logging in changes the state.
+  EXPECT_CKR_OK(g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
+  EXPECT_EQ(CKS_RW_USER_FUNCTIONS, session_info.state);
+
+  // Log out again
+  EXPECT_CKR_OK(g_fns->C_Logout(session_));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
+  EXPECT_EQ(CKS_RW_PUBLIC_SESSION, session_info.state);
 }
 
 TEST_F(ReadWriteSessionTest, GetSetOperationState) {

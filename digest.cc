@@ -35,8 +35,8 @@ class DigestTest : public ReadOnlySessionTest {
 
   string TestDigest() {
     CK_RV rv = g_fns->C_DigestInit(session_, &mechanism_);
-    EXPECT_CKR_OK(rv);
     if (rv == CKR_MECHANISM_INVALID) return "unimplemented";
+    EXPECT_CKR_OK(rv);
     CK_BYTE buffer[512];
     CK_ULONG digest_len = sizeof(buffer);
     EXPECT_CKR_OK(g_fns->C_Digest(session_, data_.get(), datalen_, buffer, &digest_len));
@@ -47,8 +47,8 @@ class DigestTest : public ReadOnlySessionTest {
 
   string TestDigestUpdate() {
     CK_RV rv = g_fns->C_DigestInit(session_, &mechanism_);
-    EXPECT_CKR_OK(rv);
     if (rv == CKR_MECHANISM_INVALID) return "unimplemented";
+    EXPECT_CKR_OK(rv);
     const int kChunkSize = 10;
     CK_BYTE_PTR p = data_.get();
     int dataleft = datalen_;
@@ -108,6 +108,9 @@ class Sha256DigestTest : public DigestTest {
 TEST_F(Sha256DigestTest, Digest) {
   string d1 = TestDigest();
   string d2 = TestDigestUpdate();
+  if (d1 == "unimplemented" || d2 == "unimplemented") {
+    TEST_SKIPPED("SHA-256 not implemented");
+  }
   EXPECT_EQ(hex_data(d1), hex_data(d2));
 }
 

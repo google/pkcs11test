@@ -18,4 +18,4 @@ done
 if [ ! -z $FILTERS ]; then
     ARGS="$ARGS --gtest_filter=$FILTERS"
 fi
-./pkcs11test -m libchaps.so.0 -l /usr/lib -u 111111 $ARGS
+./pkcs11test -m libchaps.so.0 -l /usr/lib -u 111111 -X $ARGS

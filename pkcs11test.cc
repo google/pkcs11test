@@ -80,6 +80,7 @@ void usage() {
   cerr << "  -m name : name of PKCS#11 library" << endl;
   cerr << "  -l path : path to PKCS#11 library" << endl;
   cerr << "  -s id   : slot ID to perform tests against" << endl;
+  cerr << "  -X      : skip tests requiring SO login" << endl;
   cerr << "  -v      : verbose output" << endl;
   cerr << "  -u pwd  : user PIN/password" << endl;
   cerr << "  -o pwd  : security officer PIN/password" << endl;
@@ -135,13 +136,16 @@ int main(int argc, char* argv[]) {
   int opt;
   const char* module_name = nullptr;
   const char* module_path = nullptr;
-  while ((opt = getopt(argc, argv, "vIl:m:s:u:o:h")) != -1) {
+  while ((opt = getopt(argc, argv, "vIXl:m:s:u:o:h")) != -1) {
     switch (opt) {
       case 'v':
         g_verbose = true;
         break;
       case 'I':
         g_init_token = true;
+        break;
+      case 'X':
+        g_so_tests = false;
         break;
       case 'l':
         module_path = optarg;

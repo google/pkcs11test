@@ -39,12 +39,20 @@ TEST_F(ReadOnlySessionTest, UserLoginInvalid) {
 }
 
 TEST_F(ReadOnlySessionTest, SOLoginFail) {
+  if (!g_so_tests) {
+    TEST_SKIPPED("No SO login available");
+    return;
+  }
   // Can't login as SO in read-only session.
   EXPECT_CKR(CKR_SESSION_READ_ONLY_EXISTS,
              g_fns->C_Login(session_, CKU_SO, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin)));
 }
 
 TEST_F(ReadWriteSessionTest, ReadOnlySessionSOLoginFail) {
+  if (!g_so_tests) {
+    TEST_SKIPPED("No SO login available");
+    return;
+  }
   // Open a second, read-only session
   CK_SESSION_HANDLE session;
   CK_FLAGS flags = CKF_SERIAL_SESSION;
@@ -79,6 +87,10 @@ TEST_F(RWUserSessionTest, LogoutInvalid) {
 }
 
 TEST_F(ReadWriteSessionTest, SOLogin) {
+  if (!g_so_tests) {
+    TEST_SKIPPED("No SO login available");
+    return;
+  }
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   CK_STATE original_state = session_info.state;

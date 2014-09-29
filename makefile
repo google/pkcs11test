@@ -4,7 +4,7 @@ SLOT_ID ?= 0
 test_opencryptoki: pkcs11test
 	./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki -s ${SLOT_ID}
 test_chaps: pkcs11test
-	./pkcs11test -m libchaps.so.0 -l /usr/lib -u 111111
+	./pkcs11test -m libchaps.so.0 -l /usr/lib -u 111111 -X
 
 # Run the specific tests that dump token contents
 dump_opencryptoki: pkcs11test

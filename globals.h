@@ -29,6 +29,8 @@ extern CK_FUNCTION_LIST_PTR g_fns;
 extern CK_SLOT_ID g_slot_id;
 // Whether to emit verbose information.
 extern bool g_verbose;
+// Whether to perform tests that require SO login.
+extern bool g_so_tests;
 // Whether to perform tests that initialize the token.  These wipe any existing
 // token contents, so need to be explicitly enabled.
 extern bool g_init_token;

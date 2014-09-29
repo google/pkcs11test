@@ -20,6 +20,7 @@ namespace test {
 CK_FUNCTION_LIST_PTR g_fns = nullptr;
 CK_SLOT_ID g_slot_id = 0;
 bool g_verbose = false;
+bool g_so_tests = true;
 bool g_init_token = false;
 CK_FLAGS g_token_flags;
 CK_UTF8CHAR g_token_label[32];

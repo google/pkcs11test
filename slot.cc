@@ -39,7 +39,8 @@ TEST_F(PKCS11Test, EnumerateSlots) {
   // Retrieve slot list.
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, slot.get(), &slot_count));
   for (int ii = 0; ii < (int)slot_count; ii++) {
-    EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotInfo(slot.get()[ii], nullptr));
+    CK_RV rv = g_fns->C_GetSlotInfo(slot.get()[ii], nullptr);
+    EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
     CK_SLOT_INFO slot_info;
     memset(&slot_info, 0, sizeof(slot_info));
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot.get()[ii], &slot_info));

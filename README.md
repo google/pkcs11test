@@ -1,10 +1,14 @@
 PKCS11TEST
 ==========
 
+**Warning** Do not run this test suite against a PKCS#11 token that contains real data; some of the tests may erase or
+  permanently lock the token.
+
 This repository holds a test suite for, and is therefore derived from, the
 [RSA Security Inc. PKCS #11 Cryptographic Token Interface (Cryptoki)](http://www.emc.com/emc-plus/rsa-labs/standards-initiatives/pkcs-11-cryptographic-token-interface-standard.htm).
 
 To build the test program on Linux, just run `make`.
+
 
 Test Options
 ------------

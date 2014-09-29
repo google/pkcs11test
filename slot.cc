@@ -39,20 +39,59 @@ TEST_F(PKCS11Test, EnumerateSlots) {
   // Retrieve slot list.
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, slot.get(), &slot_count));
   for (int ii = 0; ii < (int)slot_count; ii++) {
+    EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotInfo(slot.get()[ii], nullptr));
     CK_SLOT_INFO slot_info;
     memset(&slot_info, 0, sizeof(slot_info));
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot.get()[ii], &slot_info));
     if (g_verbose) cout << "slot[" << ii << "] = " << (unsigned int)slot.get()[ii] << " = " << slot_description(&slot_info) << endl;
     EXPECT_SPACE_PADDED(slot_info.slotDescription);
     EXPECT_SPACE_PADDED(slot_info.manufacturerID);
+    CK_FLAGS all_slot_flags = (CKF_TOKEN_PRESENT|CKF_REMOVABLE_DEVICE|CKF_HW_SLOT);
+    EXPECT_EQ(0, slot_info.flags & ~all_slot_flags);
     if (slot_info.flags & CKF_TOKEN_PRESENT) {
+      EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetTokenInfo(slot.get()[ii], nullptr));
       CK_TOKEN_INFO token_info;
       memset(&token_info, 0, sizeof(token_info));
       EXPECT_CKR_OK(g_fns->C_GetTokenInfo(slot.get()[ii], &token_info));
+      if (g_verbose) cout << "  " << token_description(&token_info) << endl;
       EXPECT_SPACE_PADDED(token_info.label);
       EXPECT_SPACE_PADDED(token_info.manufacturerID);
+      EXPECT_SPACE_PADDED(token_info.model);
       EXPECT_SPACE_PADDED(token_info.serialNumber);
-      if (g_verbose) cout << "  " << token_description(&token_info) << endl;
+      CK_FLAGS all_token_flags = (CKF_RNG|CKF_WRITE_PROTECTED|CKF_LOGIN_REQUIRED|CKF_USER_PIN_INITIALIZED|
+                                  CKF_RESTORE_KEY_NOT_NEEDED|CKF_CLOCK_ON_TOKEN|CKF_PROTECTED_AUTHENTICATION_PATH|
+                                  CKF_DUAL_CRYPTO_OPERATIONS|CKF_TOKEN_INITIALIZED|CKF_SECONDARY_AUTHENTICATION|
+                                  CKF_USER_PIN_COUNT_LOW|CKF_USER_PIN_FINAL_TRY|CKF_USER_PIN_LOCKED|
+                                  CKF_USER_PIN_TO_BE_CHANGED|CKF_SO_PIN_COUNT_LOW|CKF_SO_PIN_FINAL_TRY|
+                                  CKF_SO_PIN_LOCKED|CKF_SO_PIN_TO_BE_CHANGED);
+      EXPECT_EQ(0, token_info.flags & ~all_token_flags);
+      if (g_token_flags & CKF_CLOCK_ON_TOKEN) {
+        // Check for well-formed date
+        // PKCS#11 s9.2: represented in the format YYYYMMDDhhmmssxx.
+        int year = GetInteger(token_info.utcTime + 0, 4);
+        EXPECT_LE(1900, year);
+        EXPECT_GE(2100, year);
+        int month = GetInteger(token_info.utcTime + 4, 2);
+        EXPECT_LE(1, month);
+        EXPECT_GE(12, month);
+        int day = GetInteger(token_info.utcTime + 6, 2);
+        EXPECT_LE(1, day);
+        EXPECT_GE(31, day);
+        int hour = GetInteger(token_info.utcTime + 8, 2);
+        EXPECT_LE(0, hour);
+        EXPECT_GE(23, hour);
+        int min = GetInteger(token_info.utcTime + 10, 2);
+        EXPECT_LE(0, min);
+        EXPECT_GE(59, min);
+        int sec = GetInteger(token_info.utcTime + 12, 2);
+        EXPECT_LE(0, sec);
+        EXPECT_GE(60, sec);  // Could be a leap second.
+        int reserved = GetInteger(token_info.utcTime + 14, 2);
+        EXPECT_EQ(0, reserved);
+      }
+    } else {
+      CK_TOKEN_INFO token_info;
+      EXPECT_CKR(CKR_TOKEN_NOT_PRESENT, g_fns->C_GetTokenInfo(slot.get()[ii], &token_info));
     }
   }
 }
@@ -119,6 +158,7 @@ TEST_F(PKCS11Test, GetSlotList) {
   // Every slot with a token should appear in the list of all slots.
   for (int ii = 0; ii < (int)slot_count; ++ii) {
     EXPECT_EQ(1, all_slots_set.count(token_slots.get()[ii]));
+    EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotInfo(token_slots.get()[ii], NULL));
   }
 }
 
@@ -127,9 +167,21 @@ TEST_F(PKCS11Test, GetSlotListFailTooSmall) {
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, NULL_PTR, &slot_count));
   if (slot_count > 1) {
     unique_ptr<CK_SLOT_ID, freer> all_slots((CK_SLOT_ID*)malloc(slot_count * sizeof(CK_SLOT_ID)));
-    CK_ULONG new_slot_count = (slot_count - 1);
-    EXPECT_CKR(CKR_BUFFER_TOO_SMALL, g_fns->C_GetSlotList(CK_FALSE, all_slots.get(), &new_slot_count));
-    EXPECT_EQ(slot_count, new_slot_count);
+    CK_ULONG new_count = (slot_count - 1);
+    EXPECT_CKR(CKR_BUFFER_TOO_SMALL, g_fns->C_GetSlotList(CK_FALSE, all_slots.get(), &new_count));
+    EXPECT_EQ(slot_count, new_count);
+  }
+}
+
+TEST_F(PKCS11Test, GetSlotListTooLarge) {
+  CK_ULONG slot_count;
+  EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, NULL_PTR, &slot_count));
+  if (slot_count > 1) {
+    // Over-allocate space.
+    CK_ULONG new_count = slot_count + 3;
+    unique_ptr<CK_SLOT_ID, freer> all_slots((CK_SLOT_ID*)malloc(new_count * sizeof(CK_SLOT_ID)));
+    EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, all_slots.get(), &new_count));
+    EXPECT_EQ(slot_count, new_count);
   }
 }
 
@@ -163,20 +215,46 @@ TEST_F(PKCS11Test, WaitForSlotEvent) {
   EXPECT_CKR(CKR_NO_EVENT, g_fns->C_WaitForSlotEvent(CKF_DONT_BLOCK, &slot_id, NULL_PTR));
 }
 
+TEST_F(PKCS11Test, GetMechanismListFailInvalid) {
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetMechanismList(g_slot_id, NULL_PTR, NULL_PTR));
+}
+
+TEST_F(PKCS11Test, GetMechanismListFailInvalidSlot) {
+  CK_ULONG mechanism_count;
+  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetMechanismList(INVALID_SLOT_ID, NULL_PTR, &mechanism_count));
+}
+
 TEST_F(PKCS11Test, GetMechanismListFailTooSmall) {
   CK_ULONG mechanism_count;
   EXPECT_CKR_OK(g_fns->C_GetMechanismList(g_slot_id, NULL_PTR, &mechanism_count));
   if (mechanism_count > 1) {
     unique_ptr<CK_MECHANISM_TYPE, freer> mechanism((CK_MECHANISM_TYPE_PTR)malloc(mechanism_count * sizeof(CK_MECHANISM_TYPE)));
-    CK_ULONG new_mechanism_count = mechanism_count - 1;
-    EXPECT_CKR(CKR_BUFFER_TOO_SMALL, g_fns->C_GetMechanismList(g_slot_id, mechanism.get(), &new_mechanism_count));
-    EXPECT_EQ(mechanism_count, new_mechanism_count);
+    CK_ULONG new_count = mechanism_count - 1;
+    EXPECT_CKR(CKR_BUFFER_TOO_SMALL, g_fns->C_GetMechanismList(g_slot_id, mechanism.get(), &new_count));
+    EXPECT_EQ(mechanism_count, new_count);
+  }
+}
+
+TEST_F(PKCS11Test, GetMechanismListTooLarge) {
+  CK_ULONG mechanism_count;
+  EXPECT_CKR_OK(g_fns->C_GetMechanismList(g_slot_id, NULL_PTR, &mechanism_count));
+  if (mechanism_count > 1) {
+    // Over-allocate space.
+    CK_ULONG new_count = mechanism_count + 3;
+    unique_ptr<CK_MECHANISM_TYPE, freer> mechanism((CK_MECHANISM_TYPE_PTR)malloc(new_count * sizeof(CK_MECHANISM_TYPE)));
+    EXPECT_CKR(CKR_OK, g_fns->C_GetMechanismList(g_slot_id, mechanism.get(), &new_count));
+    EXPECT_EQ(mechanism_count, new_count);
   }
 }
 
 TEST_F(PKCS11Test, GetMechanismInfoInvalid) {
   CK_MECHANISM_INFO mechanism_info;
   EXPECT_CKR(CKR_MECHANISM_INVALID, g_fns->C_GetMechanismInfo(g_slot_id, CKM_VENDOR_DEFINED + 1, &mechanism_info));
+}
+
+TEST_F(PKCS11Test, GetMechanismInfoInvalidSlot) {
+  CK_MECHANISM_INFO mechanism_info;
+  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_GetMechanismInfo(INVALID_SLOT_ID, CKM_RSA_PKCS_KEY_PAIR_GEN, &mechanism_info));
 }
 
 TEST_F(PKCS11Test, GetMechanismInfoFail) {

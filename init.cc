@@ -31,6 +31,12 @@ TEST(Init, Simple) {
   EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
 }
 
+TEST(Init, DoubleFinalize) {
+  EXPECT_CKR_OK(g_fns->C_Initialize(NULL_PTR));
+  EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_Finalize(NULL_PTR));
+}
+
 TEST(Init, UnexpectedFinalize) {
   EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_Finalize(NULL_PTR));
 }
@@ -149,7 +155,7 @@ TEST(Init, GetInfoNoInit) {
 TEST_F(PKCS11Test, GetFunctionList) {
   CK_FUNCTION_LIST_PTR fns;
   EXPECT_CKR_OK(g_fns->C_GetFunctionList(&fns));
-  EXPECT_EQ(fns, g_fns);
+  EXPECT_EQ(0, memcmp(g_fns, fns, sizeof(CK_FUNCTION_LIST)));
 }
 
 TEST_F(PKCS11Test, GetFunctionListFail) {

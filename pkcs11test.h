@@ -82,6 +82,9 @@ inline std::ostream& operator<<(std::ostream& os, const CK_RV_& wrv) {
 #define ASSERT_CKR(expected, actual) ASSERT_EQ(CK_RV_(expected), CK_RV_(actual))
 #define ASSERT_CKR_OK(val) ASSERT_CKR(CKR_OK, (val))
 
+void CheckSpacePadded(const CK_UTF8CHAR *field, int len);
+#define EXPECT_SPACE_PADDED(field) CheckSpacePadded(field, sizeof(field))
+
 // Test case that handles Initialize/Finalize
 class PKCS11Test : public ::testing::Test {
  public:

@@ -43,10 +43,15 @@ TEST_F(PKCS11Test, EnumerateSlots) {
     memset(&slot_info, 0, sizeof(slot_info));
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot.get()[ii], &slot_info));
     if (g_verbose) cout << "slot[" << ii << "] = " << (unsigned int)slot.get()[ii] << " = " << slot_description(&slot_info) << endl;
+    EXPECT_SPACE_PADDED(slot_info.slotDescription);
+    EXPECT_SPACE_PADDED(slot_info.manufacturerID);
     if (slot_info.flags & CKF_TOKEN_PRESENT) {
       CK_TOKEN_INFO token_info;
       memset(&token_info, 0, sizeof(token_info));
       EXPECT_CKR_OK(g_fns->C_GetTokenInfo(slot.get()[ii], &token_info));
+      EXPECT_SPACE_PADDED(token_info.label);
+      EXPECT_SPACE_PADDED(token_info.manufacturerID);
+      EXPECT_SPACE_PADDED(token_info.serialNumber);
       if (g_verbose) cout << "  " << token_description(&token_info) << endl;
     }
   }

@@ -13,11 +13,12 @@
 // limitations under the License.
 
 // C headers
-#include <string.h>
-#include <unistd.h>
 #include <dlfcn.h>
+#include <unistd.h>
 
 // C++ headers
+#include <cctype>
+#include <cstring>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -31,6 +32,14 @@ using namespace std;  // So sue me
 
 namespace pkcs11 {
 namespace test {
+
+void CheckSpacePadded(const CK_UTF8CHAR *field, int len) {
+  for (int ii = 0; ii < len; ii++) {
+    EXPECT_TRUE(isprint(field[ii]));
+    EXPECT_NE('\0', field[ii]);
+    if (field[ii] == '\0') return;
+  }
+}
 
 typedef vector<string> TestList;
 typedef map<string, TestList*> SkippedTestMap;

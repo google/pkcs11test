@@ -28,7 +28,7 @@ const char* g_reset_user_pin = "12345678";
 const char* g_so_pin = "sososo";
 const char* g_reset_so_pin = "87654321";
 
-// Taken from table 34, section 12 of PKCS#11 spec.
+// PKCS#11 s12 table 34: Mechanisms vs. Functions
 std::set<CK_MECHANISM_TYPE> encrypt_decrypt_mechanisms = {
   CKM_RSA_PKCS,
   CKM_RSA_PKCS_OAEP,

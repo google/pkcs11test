@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-// Tests to cover slot and token management functions (PKCS#11 s11.5):
+//
+// PKCS#11 s11.5: Slot and token management functions
 //   C_GetSlotList
 //   C_GetSlotInfo
 //   C_GetTokenInfo

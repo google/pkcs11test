@@ -41,6 +41,7 @@ string hex_data(CK_BYTE_PTR p, int len) {
 }
 
 string rv_name(CK_RV val) {
+  // PKCS#11 s11.1: Function return values
   switch (val) {
     case CKR_OK: return "CKR_OK";
     case CKR_CANCEL: return "CKR_CANCEL";
@@ -894,6 +895,7 @@ string attribute_description(CK_ATTRIBUTE_PTR attr) {
 
 
 string info_description(CK_INFO_PTR info) {
+  // PKCS#11 s9.1: General information
   if (info == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "CK_INFO {.cryptokiVersion="
@@ -909,6 +911,7 @@ string info_description(CK_INFO_PTR info) {
 }
 
 string function_list_description(CK_FUNCTION_LIST_PTR fns) {
+  // PKCS#11 s9.6: Function types
   if (fns == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "{" << endl << "  .version="
@@ -954,6 +957,7 @@ string flag_names(unsigned long val, ...) {
 }  // namespace
 
 string slot_description(CK_SLOT_INFO_PTR slot) {
+  // PKCS#11 s9.2: Slot and token types
   stringstream ss;
   ss <<"CK_SLOT_INFO {";
   ss << ".slotDescription='" << ck_char(slot->slotDescription, 32) << "', ";
@@ -961,6 +965,7 @@ string slot_description(CK_SLOT_INFO_PTR slot) {
   ss << ".hardwareVersion="
      << static_cast<int>(slot->hardwareVersion.major) << "."
      << static_cast<int>(slot->hardwareVersion.minor) << ", ";
+  // Table 10: Slot Information Flags
   ss << ".flags=" << flag_names(slot->flags,
                                 FLAG_VAL_NAME(CKF_TOKEN_PRESENT),
                                 FLAG_VAL_NAME(CKF_REMOVABLE_DEVICE),
@@ -973,12 +978,14 @@ string slot_description(CK_SLOT_INFO_PTR slot) {
 }
 
 string token_description(CK_TOKEN_INFO_PTR token) {
+  // PKCS#11 s9.2: Slot and token types
   if (token == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "CK_TOKEN_INFO {.label='" << ck_char(token->label, 32) << "', ";
   ss << ".manufacturerID='" << ck_char(token->manufacturerID, 32) << "', ";
   ss << ".model='" << ck_char(token->model, 16) << "', ";
   ss << ".serialNumber=" << ck_char(token->serialNumber, 16) << "', ";
+  // Table 11: Token information flags
   ss << ".flags=" << flag_names(token->flags,
                                 FLAG_VAL_NAME(CKF_RNG),
                                 FLAG_VAL_NAME(CKF_WRITE_PROTECTED),
@@ -1019,6 +1026,7 @@ string token_description(CK_TOKEN_INFO_PTR token) {
 }
 
 string session_info_description(CK_SESSION_INFO_PTR session) {
+  // PKCS#11 s9.3: Session types
   if (session == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "CK_SESSION_INFO {.slotID=" << (unsigned int)session->slotID << ", ";
@@ -1036,6 +1044,7 @@ string session_info_description(CK_SESSION_INFO_PTR session) {
 }
 
 string mechanism_info_description(CK_MECHANISM_INFO_PTR mechanism) {
+  // PKCS#11 s9.5: Data types for mechanisms
   if (mechanism == NULL_PTR) return "<nullptr>";
   stringstream ss;
   ss << "CK_MECHANISM_INFO {.ulMinKeySize=" << (unsigned int)mechanism->ulMinKeySize << ", ";

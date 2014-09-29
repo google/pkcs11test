@@ -30,6 +30,8 @@ TEST_F(ReadOnlySessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
+  // PKCS#11 s6.7.1: When the session is initially opened, it is in [..] the "R/O Public Session" if the application has
+  // no previously open sessions that are logged in
   EXPECT_EQ(CKS_RO_PUBLIC_SESSION, session_info.state);
 
   // Logging in changes the state.
@@ -47,6 +49,8 @@ TEST_F(ReadWriteSessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
+  // PKCS#11 s6.7.2: When the session is initially opened, it is in [..] the "R/W Public Session" if the application has
+  // no previously open sessions that are logged in
   EXPECT_EQ(CKS_RW_PUBLIC_SESSION, session_info.state);
 
   // Logging in changes the state.

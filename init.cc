@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Tests to cover the 4 general purpose functions (PKCS#11 s11.4):
+// PKCS#11 s11.4: General-purpose functions
 //   C_Initialize
 //   C_Finalize
 //   C_GetFunctionList
@@ -37,6 +37,8 @@ TEST(Init, UnexpectedFinalize) {
 
 TEST(Init, InitArgsBadReserved) {
   CK_C_INITIALIZE_ARGS init_args = {0};
+  // PKCS#11 s11.4: The value of pReserved thereby obtained must be NULL_PTR; it it's not, then C_Initialize should
+  // return with the value CKR_ARGUMENTS_BAD.
   init_args.pReserved = (void*)1;
   EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_Initialize(&init_args));
 }

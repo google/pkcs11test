@@ -39,8 +39,6 @@ TEST_F(PKCS11Test, EnumerateSlots) {
   // Retrieve slot list.
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, slot.get(), &slot_count));
   for (int ii = 0; ii < (int)slot_count; ii++) {
-    CK_RV rv = g_fns->C_GetSlotInfo(slot.get()[ii], nullptr);
-    EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
     CK_SLOT_INFO slot_info;
     memset(&slot_info, 0, sizeof(slot_info));
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot.get()[ii], &slot_info));
@@ -50,7 +48,6 @@ TEST_F(PKCS11Test, EnumerateSlots) {
     CK_FLAGS all_slot_flags = (CKF_TOKEN_PRESENT|CKF_REMOVABLE_DEVICE|CKF_HW_SLOT);
     EXPECT_EQ(0, slot_info.flags & ~all_slot_flags);
     if (slot_info.flags & CKF_TOKEN_PRESENT) {
-      EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetTokenInfo(slot.get()[ii], nullptr));
       CK_TOKEN_INFO token_info;
       memset(&token_info, 0, sizeof(token_info));
       EXPECT_CKR_OK(g_fns->C_GetTokenInfo(slot.get()[ii], &token_info));
@@ -90,9 +87,6 @@ TEST_F(PKCS11Test, EnumerateSlots) {
         int reserved = GetInteger(token_info.utcTime + 14, 2);
         EXPECT_EQ(0, reserved);
       }
-    } else {
-      CK_TOKEN_INFO token_info;
-      EXPECT_CKR(CKR_TOKEN_NOT_PRESENT, g_fns->C_GetTokenInfo(slot.get()[ii], &token_info));
     }
   }
 }
@@ -150,8 +144,21 @@ TEST_F(PKCS11Test, GetSlotList) {
   unique_ptr<CK_SLOT_ID, freer> all_slots((CK_SLOT_ID*)malloc(slot_count * sizeof(CK_SLOT_ID)));
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_FALSE, all_slots.get(), &slot_count));
   set<CK_SLOT_ID> all_slots_set;
-  for (int ii = 0; ii < (int)slot_count; ++ii) all_slots_set.insert(all_slots.get()[ii]);
+  for (int ii = 0; ii < (int)slot_count; ++ii) {
+    CK_SLOT_ID slot_id = all_slots.get()[ii];
+    all_slots_set.insert(slot_id);
 
+    CK_RV rv = g_fns->C_GetSlotInfo(slot_id, nullptr);
+    EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
+
+    CK_SLOT_INFO slot_info;
+    EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot_id, &slot_info));
+
+    if (!(slot_info.flags & CKF_TOKEN_PRESENT)) {
+      CK_TOKEN_INFO token_info;
+      EXPECT_CKR(CKR_TOKEN_NOT_PRESENT, g_fns->C_GetTokenInfo(slot_id, &token_info));
+    }
+  }
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_TRUE, NULL_PTR, &slot_count));
   unique_ptr<CK_SLOT_ID, freer> token_slots((CK_SLOT_ID*)malloc(slot_count * sizeof(CK_SLOT_ID)));
   EXPECT_CKR_OK(g_fns->C_GetSlotList(CK_TRUE, token_slots.get(), &slot_count));
@@ -159,7 +166,8 @@ TEST_F(PKCS11Test, GetSlotList) {
   // Every slot with a token should appear in the list of all slots.
   for (int ii = 0; ii < (int)slot_count; ++ii) {
     EXPECT_EQ(1, all_slots_set.count(token_slots.get()[ii]));
-    EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotInfo(token_slots.get()[ii], NULL));
+    EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotInfo(token_slots.get()[ii], nullptr));
+    EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetTokenInfo(token_slots.get()[ii], nullptr));
   }
 }
 

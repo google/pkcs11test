@@ -33,12 +33,12 @@ using namespace std;  // So sue me
 namespace pkcs11 {
 namespace test {
 
-void CheckSpacePadded(const CK_UTF8CHAR *field, int len) {
+bool IsSpacePadded(const CK_UTF8CHAR *field, int len) {
   for (int ii = 0; ii < len; ii++) {
-    EXPECT_TRUE(isprint(field[ii]));
-    EXPECT_NE('\0', field[ii]);
-    if (field[ii] == '\0') return;
+    if (!isprint(field[ii])) return false;
+    if (field[ii] == '\0') return false;
   }
+  return true;
 }
 
 int GetInteger(const CK_CHAR *val, int len) {

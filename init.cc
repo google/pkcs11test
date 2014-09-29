@@ -136,8 +136,8 @@ TEST_F(PKCS11Test, GetInfo) {
   memset(&info, 0, sizeof(info));
   EXPECT_CKR_OK(g_fns->C_GetInfo(&info));
   if (g_verbose) cout << info_description(&info) << endl;
-  EXPECT_SPACE_PADDED(info.manufacturerID);
-  EXPECT_SPACE_PADDED(info.libraryDescription);
+  EXPECT_TRUE(IS_SPACE_PADDED(info.manufacturerID));
+  EXPECT_TRUE(IS_SPACE_PADDED(info.libraryDescription));
   EXPECT_LE(2, info.cryptokiVersion.major);
 }
 

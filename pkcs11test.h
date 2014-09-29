@@ -82,8 +82,8 @@ inline std::ostream& operator<<(std::ostream& os, const CK_RV_& wrv) {
 #define ASSERT_CKR(expected, actual) ASSERT_EQ(CK_RV_(expected), CK_RV_(actual))
 #define ASSERT_CKR_OK(val) ASSERT_CKR(CKR_OK, (val))
 
-void CheckSpacePadded(const CK_UTF8CHAR *field, int len);
-#define EXPECT_SPACE_PADDED(field) CheckSpacePadded(field, sizeof(field))
+bool IsSpacePadded(const CK_UTF8CHAR *field, int len);
+#define IS_SPACE_PADDED(field) IsSpacePadded(field, sizeof(field))
 int GetInteger(const CK_CHAR *val, int len);
 
 // Test case that handles Initialize/Finalize

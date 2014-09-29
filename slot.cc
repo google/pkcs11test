@@ -44,8 +44,8 @@ TEST_F(PKCS11Test, EnumerateSlots) {
     memset(&slot_info, 0, sizeof(slot_info));
     EXPECT_CKR_OK(g_fns->C_GetSlotInfo(slot.get()[ii], &slot_info));
     if (g_verbose) cout << "slot[" << ii << "] = " << (unsigned int)slot.get()[ii] << " = " << slot_description(&slot_info) << endl;
-    EXPECT_SPACE_PADDED(slot_info.slotDescription);
-    EXPECT_SPACE_PADDED(slot_info.manufacturerID);
+    EXPECT_TRUE(IS_SPACE_PADDED(slot_info.slotDescription));
+    EXPECT_TRUE(IS_SPACE_PADDED(slot_info.manufacturerID));
     CK_FLAGS all_slot_flags = (CKF_TOKEN_PRESENT|CKF_REMOVABLE_DEVICE|CKF_HW_SLOT);
     EXPECT_EQ(0, slot_info.flags & ~all_slot_flags);
     if (slot_info.flags & CKF_TOKEN_PRESENT) {
@@ -54,10 +54,10 @@ TEST_F(PKCS11Test, EnumerateSlots) {
       memset(&token_info, 0, sizeof(token_info));
       EXPECT_CKR_OK(g_fns->C_GetTokenInfo(slot.get()[ii], &token_info));
       if (g_verbose) cout << "  " << token_description(&token_info) << endl;
-      EXPECT_SPACE_PADDED(token_info.label);
-      EXPECT_SPACE_PADDED(token_info.manufacturerID);
-      EXPECT_SPACE_PADDED(token_info.model);
-      EXPECT_SPACE_PADDED(token_info.serialNumber);
+      EXPECT_TRUE(IS_SPACE_PADDED(token_info.label));
+      EXPECT_TRUE(IS_SPACE_PADDED(token_info.manufacturerID));
+      EXPECT_TRUE(IS_SPACE_PADDED(token_info.model));
+      EXPECT_TRUE(IS_SPACE_PADDED(token_info.serialNumber));
       CK_FLAGS all_token_flags = (CKF_RNG|CKF_WRITE_PROTECTED|CKF_LOGIN_REQUIRED|CKF_USER_PIN_INITIALIZED|
                                   CKF_RESTORE_KEY_NOT_NEEDED|CKF_CLOCK_ON_TOKEN|CKF_PROTECTED_AUTHENTICATION_PATH|
                                   CKF_DUAL_CRYPTO_OPERATIONS|CKF_TOKEN_INITIALIZED|CKF_SECONDARY_AUTHENTICATION|

@@ -8,7 +8,7 @@ test_chaps: pkcs11test
 
 # Run the specific tests that dump token contents
 dump_opencryptoki: pkcs11test
-	./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki --gtest_filter=*.Enumerate* -s ${SLOT_ID}
+	./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki --gtest_filter=*.Enumerate* -s ${SLOT_ID} -v
 
 GTEST_DIR=gtest-1.6.0
 GTEST_INC=-isystem $(GTEST_DIR)/include

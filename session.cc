@@ -11,6 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// PKCS#11 s11.6: Session management functions
+//   C_OpenSession
+//   C_CloseSession
+//   C_CloseAllSessions
+//   C_GetSessionInfo
+//   C_GetOperationState
+//   C_SetOperationState
 
 #include <cstdlib>
 #include "pkcs11test.h"
@@ -20,18 +28,138 @@ using namespace std;  // So sue me
 namespace pkcs11 {
 namespace test {
 
-TEST_F(PKCS11Test, ParallelSessionUnsupported) {
+TEST_F(PKCS11Test, OpenSessionUnsupportedNonSerial) {
   // No CKF_SERIAL_SESSION => not supported
   CK_SESSION_HANDLE session;
   EXPECT_CKR(CKR_SESSION_PARALLEL_NOT_SUPPORTED, g_fns->C_OpenSession(g_slot_id, 0, NULL_PTR, NULL_PTR, &session));
+}
+
+TEST_F(PKCS11Test, OpenSessionInvalidSlot) {
+  CK_FLAGS flags = CKF_SERIAL_SESSION;
+  CK_SESSION_HANDLE session;
+  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_OpenSession(INVALID_SLOT_ID, flags, NULL_PTR, NULL_PTR, &session));
+}
+
+TEST_F(PKCS11Test, OpenSessionInvalid) {
+  CK_FLAGS flags = CKF_SERIAL_SESSION;
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, NULL_PTR));
+}
+
+TEST_F(PKCS11Test, ClosedSessionErrors) {
+  CK_FLAGS flags = CKF_SERIAL_SESSION;
+  CK_SESSION_HANDLE session;
+  EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session));
+  EXPECT_CKR_OK(g_fns->C_CloseSession(session));
+  CK_SESSION_INFO session_info;
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session, &session_info));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_CloseSession(session));
+}
+
+TEST_F(PKCS11Test, ParallelSessions) {
+  CK_FLAGS ro_flags = CKF_SERIAL_SESSION;
+  CK_FLAGS rw_flags = CKF_SERIAL_SESSION | CKF_RW_SESSION;
+  CK_SESSION_HANDLE session1;
+  CK_SESSION_HANDLE session2;
+  CK_SESSION_HANDLE session3;
+  EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, ro_flags, NULL_PTR, NULL_PTR, &session1));
+  EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, ro_flags, NULL_PTR, NULL_PTR, &session2));
+  EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, rw_flags, NULL_PTR, NULL_PTR, &session3));
+
+  CK_SESSION_INFO session1_info;
+  CK_SESSION_INFO session2_info;
+  CK_SESSION_INFO session3_info;
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session1, &session1_info));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session2, &session2_info));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session3, &session3_info));
+  CK_STATE original_state1 = session1_info.state;
+  CK_STATE original_state2 = session2_info.state;
+  CK_STATE original_state3 = session3_info.state;
+  if (!(g_token_flags & CKF_PROTECTED_AUTHENTICATION_PATH)) {
+    // PKCS#11 s6.7.1: When the session is initially opened, it is in [..] the "R/O Public Session" if the application
+    // has no previously open sessions that are logged in
+    EXPECT_EQ(CKS_RO_PUBLIC_SESSION, session1_info.state);
+    EXPECT_EQ(CKS_RO_PUBLIC_SESSION, session2_info.state);
+    EXPECT_EQ(CKS_RW_PUBLIC_SESSION, session3_info.state);
+  } else {
+    // PKCS#11 s9.2: Token has a "protected authentication path", whereby a user can log into the token without passing
+    // a PIN through the Cryptoki library, so initial state might be logged in.
+  }
+
+  // Login relative to one session changes all session states.
+  EXPECT_CKR_OK(g_fns->C_Login(session1, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
+
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session1, &session1_info));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session2, &session2_info));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session3, &session3_info));
+  EXPECT_EQ(CKS_RO_USER_FUNCTIONS, session1_info.state);
+  EXPECT_EQ(CKS_RO_USER_FUNCTIONS, session2_info.state);
+  EXPECT_EQ(CKS_RW_USER_FUNCTIONS, session3_info.state);
+
+  // Logout relative to one session changes all session states.
+  EXPECT_CKR_OK(g_fns->C_Logout(session3));
+
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session1, &session1_info));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session2, &session2_info));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session3, &session3_info));
+  EXPECT_EQ(original_state1, session1_info.state);
+  EXPECT_EQ(original_state2, session2_info.state);
+  EXPECT_EQ(original_state3, session3_info.state);
+
+  // Close one session leaves the others intact.
+  EXPECT_CKR_OK(g_fns->C_CloseSession(session2));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session1, &session1_info));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session2, &session2_info));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session3, &session3_info));
+
+  EXPECT_CKR(CKR_SLOT_ID_INVALID, g_fns->C_CloseAllSessions(INVALID_SLOT_ID));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session1, &session1_info));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session2, &session2_info));
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session3, &session3_info));
+
+  EXPECT_CKR_OK(g_fns->C_CloseAllSessions(g_slot_id));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session1, &session1_info));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session2, &session2_info));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session3, &session3_info));
+
+  EXPECT_CKR_OK(g_fns->C_CloseAllSessions(g_slot_id));
+}
+
+TEST_F(ReadOnlySessionTest, InvalidSessionInfo) {
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSessionInfo(session_, NULL_PTR));
+  CK_SESSION_INFO session_info;
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(INVALID_SESSION_HANDLE, &session_info));
+}
+
+TEST_F(ReadWriteSessionTest, InvalidSessionInfo) {
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSessionInfo(session_, NULL_PTR));
+  CK_SESSION_INFO session_info;
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(INVALID_SESSION_HANDLE, &session_info));
+}
+
+TEST_F(ReadOnlySessionTest, CloseSessionInvalid) {
+  // PKCS#11 11.16: Legacy function which should simply return the value CKR_FUNCTION_NOT_PARALLEL.
+  EXPECT_CKR(CKR_FUNCTION_NOT_PARALLEL, g_fns->C_GetFunctionStatus(session_));
+  EXPECT_CKR(CKR_FUNCTION_NOT_PARALLEL, g_fns->C_CancelFunction(session_));
+
+  EXPECT_EQ(CKR_SESSION_HANDLE_INVALID, g_fns->C_CloseSession(INVALID_SESSION_HANDLE));
+}
+
+TEST_F(ReadWriteSessionTest, CloseSessionInvalid) {
+  // PKCS#11 11.16: Legacy function which should simply return the value CKR_FUNCTION_NOT_PARALLEL.
+  EXPECT_CKR(CKR_FUNCTION_NOT_PARALLEL, g_fns->C_GetFunctionStatus(session_));
+  EXPECT_CKR(CKR_FUNCTION_NOT_PARALLEL, g_fns->C_CancelFunction(session_));
+
+  EXPECT_EQ(CKR_SESSION_HANDLE_INVALID, g_fns->C_CloseSession(INVALID_SESSION_HANDLE));
 }
 
 TEST_F(ReadOnlySessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
-  CK_STATE original_state = session_info.state;
+  EXPECT_EQ(g_slot_id, session_info.slotID);
+  EXPECT_EQ(CKF_SERIAL_SESSION, session_info.flags);
 
+  CK_STATE original_state = session_info.state;
   if (!(g_token_flags & CKF_PROTECTED_AUTHENTICATION_PATH)) {
     // PKCS#11 s6.7.1: When the session is initially opened, it is in [..] the "R/O Public Session" if the application
     // has no previously open sessions that are logged in
@@ -56,6 +184,9 @@ TEST_F(ReadWriteSessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
+  EXPECT_EQ(g_slot_id, session_info.slotID);
+  EXPECT_EQ(CKF_SERIAL_SESSION|CKF_RW_SESSION, session_info.flags);
+
   CK_STATE original_state = session_info.state;
   if (!(g_token_flags & CKF_PROTECTED_AUTHENTICATION_PATH)) {
     // PKCS#11 s6.7.2: When the session is initially opened, it is in [..] the "R/W Public Session" if the application

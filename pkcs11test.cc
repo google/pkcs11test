@@ -41,6 +41,15 @@ void CheckSpacePadded(const CK_UTF8CHAR *field, int len) {
   }
 }
 
+int GetInteger(const CK_CHAR *val, int len) {
+  char buffer[32];
+  if (len > 31) return -2;
+  if (len <= 0) return -1;
+  memcpy(buffer, val, len);
+  buffer[len] = '\0';
+  return strtol(buffer, nullptr, 10);
+}
+
 typedef vector<string> TestList;
 typedef map<string, TestList*> SkippedTestMap;
 static SkippedTestMap skipped_tests;

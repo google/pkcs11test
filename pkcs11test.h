@@ -84,6 +84,7 @@ inline std::ostream& operator<<(std::ostream& os, const CK_RV_& wrv) {
 
 void CheckSpacePadded(const CK_UTF8CHAR *field, int len);
 #define EXPECT_SPACE_PADDED(field) CheckSpacePadded(field, sizeof(field))
+int GetInteger(const CK_CHAR *val, int len);
 
 // Test case that handles Initialize/Finalize
 class PKCS11Test : public ::testing::Test {

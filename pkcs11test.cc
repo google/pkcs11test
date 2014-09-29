@@ -42,12 +42,14 @@ bool IsSpacePadded(const CK_UTF8CHAR *field, int len) {
 }
 
 int GetInteger(const CK_CHAR *val, int len) {
-  char buffer[32];
-  if (len > 31) return -2;
   if (len <= 0) return -1;
-  memcpy(buffer, val, len);
-  buffer[len] = '\0';
-  return strtol(buffer, nullptr, 10);
+  int value = 0;
+  for (int ii = 0; ii < len; ii++) {
+    if (val[ii] < '0' || val[ii] > '9') return -1;
+    int digit = val[ii] - '0';
+    value = (value * 10) + digit;
+  }
+  return value;
 }
 
 typedef vector<string> TestList;

@@ -30,9 +30,16 @@ TEST_F(ReadOnlySessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
-  // PKCS#11 s6.7.1: When the session is initially opened, it is in [..] the "R/O Public Session" if the application has
-  // no previously open sessions that are logged in
-  EXPECT_EQ(CKS_RO_PUBLIC_SESSION, session_info.state);
+  CK_STATE original_state = session_info.state;
+
+  if (!(g_token_flags & CKF_PROTECTED_AUTHENTICATION_PATH)) {
+    // PKCS#11 s6.7.1: When the session is initially opened, it is in [..] the "R/O Public Session" if the application
+    // has no previously open sessions that are logged in
+    EXPECT_EQ(CKS_RO_PUBLIC_SESSION, session_info.state);
+  } else {
+    // PKCS#11 s9.2: Token has a "protected authentication path", whereby a user can log into the token without passing
+    // a PIN through the Cryptoki library, so initial state might be logged in.
+  }
 
   // Logging in changes the state.
   EXPECT_CKR_OK(g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
@@ -42,16 +49,22 @@ TEST_F(ReadOnlySessionTest, SessionInfo) {
   // Log out again
   EXPECT_CKR_OK(g_fns->C_Logout(session_));
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
-  EXPECT_EQ(CKS_RO_PUBLIC_SESSION, session_info.state);
+  EXPECT_EQ(original_state, session_info.state);
 }
 
 TEST_F(ReadWriteSessionTest, SessionInfo) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   if (g_verbose) cout << session_info_description(&session_info) << endl;
-  // PKCS#11 s6.7.2: When the session is initially opened, it is in [..] the "R/W Public Session" if the application has
-  // no previously open sessions that are logged in
-  EXPECT_EQ(CKS_RW_PUBLIC_SESSION, session_info.state);
+  CK_STATE original_state = session_info.state;
+  if (!(g_token_flags & CKF_PROTECTED_AUTHENTICATION_PATH)) {
+    // PKCS#11 s6.7.2: When the session is initially opened, it is in [..] the "R/W Public Session" if the application
+    // has no previously open sessions that are logged in
+    EXPECT_EQ(CKS_RW_PUBLIC_SESSION, session_info.state);
+  } else {
+    // PKCS#11 s9.2: Token has a "protected authentication path", whereby a user can log into the token without passing
+    // a PIN through the Cryptoki library, so initial state might be logged in.
+  }
 
   // Logging in changes the state.
   EXPECT_CKR_OK(g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
@@ -61,7 +74,7 @@ TEST_F(ReadWriteSessionTest, SessionInfo) {
   // Log out again
   EXPECT_CKR_OK(g_fns->C_Logout(session_));
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
-  EXPECT_EQ(CKS_RW_PUBLIC_SESSION, session_info.state);
+  EXPECT_EQ(original_state, session_info.state);
 }
 
 TEST_F(ReadWriteSessionTest, GetSetOperationState) {

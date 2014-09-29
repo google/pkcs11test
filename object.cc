@@ -32,7 +32,7 @@ string hex_decode(string hex_value) {
     } else if (c >= 'a' && c <= 'f') {
       nibble = 10 + (c - 'a');
     } else if (c >= 'A' && c <= 'F') {
-      nibble = 10 + (c - 'a');
+      nibble = 10 + (c - 'A');
     } else {
       exit(1);
     }
@@ -52,21 +52,21 @@ TEST(BERDecode, DERDecode) {
                        "3119"  // universal,constructed,SET_OF,len=0x19
                          "3017"  // universal,constructed,SEQUENCE_OF,len=0x17
                            "0603"  // universal,primitive,OID,len=3
-                             "55040b"  // value=2.5.4.11
+                             "55040b"  // value=2.5.4.11 ("OU")
                            "1310" // universal,primitive,PrintableString,len=0x10
                              "476f6f676c6520436f72706f72617465"  // "Google Corporate"
                        "3113"
                          "3011"
                            "0603"
-                             "55040a"
+                             "55040a"  // value=2.5.4.10 ("O")
                            "130a"
-                             "476f6f676c6520496e63"
+                             "476f6f676c6520496e63" // "Google Inc"
                        "310b"
                          "3009"
                            "0603"
-                             "550406"
+                             "550406"  // value=2.5.4.6 ("C")
                            "1302"
-                             "5553"
+                             "5553"  // "US"
                        "3117"
                          "3015"
                            "0609"
@@ -76,7 +76,7 @@ TEST(BERDecode, DERDecode) {
                        "311f"
                          "301d"
                            "0603"
-                             "550403"
+                             "550403" // value=2.5.4.3 ("CN")
                            "1316"
                              "443441453532423946393841203a3043443931363134";
   string value = hex_decode(hex_value);
@@ -85,7 +85,7 @@ TEST(BERDecode, DERDecode) {
 }
 
 TEST(BERDecode, DERDecodeLongTag) {
-  string hex_value = ("df8028"  // private,primitive,tag=40
+  string hex_value = ("DF8028"  // private,primitive,tag=40
                       "04"  // len=4
                       "01020304");
   string value = hex_decode(hex_value);

@@ -11,6 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// PKCS#11 s11.7: Object management functions
+//   C_CreateObject
+//   C_CopyObject
+//   C_DestroyObject
+//   C_GetObjectSize
+//   C_GetAttributeValue
+//   C_SetAttributeValue
+//   C_FindObjectsInit
+//   C_FindObjects
+//   C_FindObjectsFinal
 
 #include <cstdlib>
 #include "pkcs11test.h"
@@ -129,6 +140,243 @@ TEST_F(ROUserSessionTest, EnumerateObjects) {
     return;
   }
   EnumerateObjects(session_);
+}
+
+TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
+  // Create a data object.
+  CK_OBJECT_CLASS data_class = CKO_DATA;
+  CK_BBOOL bfalse = CK_FALSE;
+  CK_UTF8CHAR app[] = "pkcs11test";
+  CK_BYTE data[] = { 0xDE, 0xAD, 0xBE, 0xEF};
+  CK_UTF8CHAR label[] = "OldLabel";
+  CK_ATTRIBUTE attrs[] = {
+    {CKA_CLASS, &data_class, sizeof(data_class)},
+    {CKA_TOKEN, &bfalse, sizeof(bfalse)},  // Session object
+    {CKA_APPLICATION, app, sizeof(app)},
+    {CKA_VALUE, data, sizeof(data)},
+    {CKA_LABEL, label, 8},
+  };
+  CK_ULONG num_attrs = sizeof(attrs) / sizeof(attrs[0]);
+  CK_OBJECT_HANDLE object;
+  ASSERT_CKR_OK(g_fns->C_CreateObject(session_, attrs, num_attrs, &object));
+
+  CK_ULONG object_size;
+  EXPECT_CKR_OK(g_fns->C_GetObjectSize(session_, object, &object_size));
+
+  CK_OBJECT_HANDLE object2;
+  EXPECT_CKR_OK(g_fns->C_CopyObject(session_, object, attrs, 0, &object2));
+
+  CK_ULONG object2_size;
+  EXPECT_CKR_OK(g_fns->C_GetObjectSize(session_, object, &object2_size));
+  EXPECT_EQ(object_size, object2_size);
+
+  // Check each attribute in turn.
+  CK_BYTE buffer[256];
+  for (size_t ii = 0; ii < num_attrs; ii++) {
+    CK_ATTRIBUTE get_attr = {attrs[ii].type, buffer, sizeof(buffer)};
+    EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, object2, &get_attr, 1));
+    EXPECT_EQ(attrs[ii].type, get_attr.type);
+    EXPECT_EQ(buffer, get_attr.pValue);
+    EXPECT_EQ(attrs[ii].ulValueLen, get_attr.ulValueLen);
+    EXPECT_EQ(0, memcmp(buffer, attrs[ii].pValue, attrs[ii].ulValueLen));
+  }
+  // Check another attribute is absent.
+  CK_ATTRIBUTE get_attr = {CKA_CERTIFICATE_TYPE, buffer, sizeof(buffer)};
+  EXPECT_CKR(CKR_ATTRIBUTE_TYPE_INVALID,
+             g_fns->C_GetAttributeValue(session_, object2, &get_attr, 1));
+  EXPECT_EQ((CK_ULONG)-1, get_attr.ulValueLen);
+
+  // Set a new attribute on the original object.
+  CK_UTF8CHAR new_label[] = "NewLabel";
+  CK_ATTRIBUTE set_attr = {CKA_LABEL, new_label, 8};
+  EXPECT_CKR_OK(g_fns->C_SetAttributeValue(session_, object, &set_attr, 1));
+
+  // Unaffected on the copy, changed on the original.
+  get_attr.type = CKA_LABEL;
+  get_attr.ulValueLen = sizeof(buffer);
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, object2, &get_attr, 1));
+  EXPECT_EQ(8, get_attr.ulValueLen);
+  EXPECT_EQ(0, memcmp(label, get_attr.pValue, 5));
+
+  get_attr.ulValueLen = sizeof(buffer);
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, object, &get_attr, 1));
+  EXPECT_EQ(8, get_attr.ulValueLen);
+  EXPECT_EQ(0, memcmp(new_label, get_attr.pValue, 5));
+
+  EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object2));
+  EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object));
+}
+
+TEST_F(ReadWriteSessionTest, CreateObjectInvalid) {
+  CK_OBJECT_CLASS data_class = CKO_DATA;
+  CK_BBOOL bfalse = CK_FALSE;
+  CK_UTF8CHAR app[] = "pkcs11test";
+  CK_BYTE data[] = { 0xDE, 0xAD, 0xBE, 0xEF};
+  CK_ATTRIBUTE attrs[] = {
+    {CKA_CLASS, &data_class, sizeof(data_class)},
+    {CKA_TOKEN, &bfalse, sizeof(bfalse)},
+    {CKA_APPLICATION, app, sizeof(app)},
+    {CKA_VALUE, data, sizeof(data)},
+  };
+  CK_OBJECT_HANDLE object;
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_CreateObject(INVALID_SESSION_HANDLE, attrs, sizeof(attrs)/sizeof(attrs[0]), &object));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_CreateObject(session_, attrs, sizeof(attrs)/sizeof(attrs[0]), NULL_PTR));
+  CK_RV rv = g_fns->C_CreateObject(session_, NULL_PTR, sizeof(attrs)/sizeof(attrs[0]), &object);
+  EXPECT_TRUE(rv == CKR_TEMPLATE_INCOMPLETE || rv == CKR_ARGUMENTS_BAD);
+  rv = g_fns->C_CreateObject(session_, attrs, 0, &object);
+  EXPECT_TRUE(rv == CKR_TEMPLATE_INCOMPLETE || rv == CKR_ARGUMENTS_BAD);
+}
+
+class DataObjectTest : public ReadWriteSessionTest {
+ public:
+  DataObjectTest() : object_(CK_INVALID_HANDLE) {
+    CK_OBJECT_CLASS data_class = CKO_DATA;
+    CK_BBOOL bfalse = CK_FALSE;
+    CK_UTF8CHAR app[] = "pkcs11test";
+    CK_BYTE data[] = { 0xDE, 0xAD, 0xBE, 0xEF};
+    CK_UTF8CHAR label[] = "Label";
+    CK_ATTRIBUTE attrs[] = {
+      {CKA_CLASS, &data_class, sizeof(data_class)},
+      {CKA_TOKEN, &bfalse, sizeof(bfalse)},
+      {CKA_APPLICATION, app, sizeof(app)},
+      {CKA_VALUE, data, sizeof(data)},
+      {CKA_LABEL, label, 5},
+    };
+    EXPECT_CKR_OK(g_fns->C_CreateObject(session_, attrs, sizeof(attrs)/sizeof(attrs[0]), &object_));
+  }
+  ~DataObjectTest() {
+    if (object_ != CK_INVALID_HANDLE) {
+      EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object_));
+    }
+  }
+ protected:
+    CK_OBJECT_HANDLE object_;
+};
+
+TEST_F(DataObjectTest, CopyDestroyObjectInvalid) {
+  CK_ULONG object_size;
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_GetObjectSize(INVALID_SESSION_HANDLE, object_, &object_size));
+  EXPECT_CKR(CKR_OBJECT_HANDLE_INVALID,
+             g_fns->C_GetObjectSize(session_, INVALID_OBJECT_HANDLE, &object_size));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_GetObjectSize(session_, object_, NULL_PTR));
+
+  CK_ATTRIBUTE attr;
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_CopyObject(session_, object_, &attr, 0, NULL_PTR));
+  CK_OBJECT_HANDLE object2;
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_CopyObject(session_, object_, NULL, 1, &object2));
+  CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
+  CK_ATTRIBUTE attrs2[] = {
+    {CKA_CLASS, &key_class, sizeof(key_class)},
+  };
+  EXPECT_CKR(CKR_ATTRIBUTE_READ_ONLY,
+             g_fns->C_CopyObject(session_, object_, attrs2, 1, &object2));
+
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_DestroyObject(INVALID_SESSION_HANDLE, object_));
+  EXPECT_CKR(CKR_OBJECT_HANDLE_INVALID, g_fns->C_DestroyObject(session_, INVALID_OBJECT_HANDLE));
+}
+
+TEST_F(DataObjectTest, GetSetAttributeInvalid) {
+  CK_BYTE buffer[256];
+  CK_ATTRIBUTE get_attr = {CKA_LABEL, buffer, sizeof(buffer)};
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_GetAttributeValue(INVALID_SESSION_HANDLE, object_, &get_attr, 1));
+  EXPECT_CKR(CKR_OBJECT_HANDLE_INVALID,
+             g_fns->C_GetAttributeValue(session_, INVALID_OBJECT_HANDLE, &get_attr, 1));
+  CK_RV rv = g_fns->C_GetAttributeValue(session_, object_, NULL_PTR, 1);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_TEMPLATE_INCOMPLETE);
+
+  CK_UTF8CHAR new_label[] = "NewLabel";
+  CK_ATTRIBUTE set_attr = {CKA_LABEL, new_label, 8};
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_SetAttributeValue(INVALID_SESSION_HANDLE, object_, &set_attr, 1));
+  EXPECT_CKR(CKR_OBJECT_HANDLE_INVALID,
+             g_fns->C_SetAttributeValue(session_, INVALID_OBJECT_HANDLE, &set_attr, 1));
+
+  CK_OBJECT_CLASS key_class = CKO_PUBLIC_KEY;
+  CK_ATTRIBUTE set_attr_ro = {CKA_CLASS, &key_class, sizeof(key_class)};
+  EXPECT_CKR(CKR_ATTRIBUTE_READ_ONLY,
+             g_fns->C_SetAttributeValue(session_, object_, &set_attr_ro, 1));
+}
+
+TEST_F(DataObjectTest, FindObject) {
+  CK_OBJECT_CLASS data_class = CKO_DATA;
+  CK_UTF8CHAR app[] = "pkcs11test";
+  CK_UTF8CHAR label[] = "Label";
+  CK_ATTRIBUTE attrs[] = {
+    {CKA_CLASS, &data_class, sizeof(data_class)},
+    {CKA_APPLICATION, app, sizeof(app)},
+    {CKA_LABEL, label, 5},
+  };
+  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session_, attrs, 3));
+  CK_OBJECT_HANDLE object[5];
+  CK_ULONG count;
+  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+  EXPECT_EQ(1, count);
+  EXPECT_EQ(object_, object[0]);
+  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+  EXPECT_EQ(0, count);
+  EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session_));
+}
+
+TEST_F(DataObjectTest, FindNoObject) {
+  CK_OBJECT_CLASS data_class = CKO_DATA;
+  CK_UTF8CHAR app[] = "pkcs11test";
+  CK_UTF8CHAR label[] = "LabelSuffix";
+  CK_ATTRIBUTE attrs[] = {
+    {CKA_CLASS, &data_class, sizeof(data_class)},
+    {CKA_APPLICATION, app, sizeof(app)},
+    {CKA_LABEL, label, 11},
+  };
+  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session_, attrs, 3));
+  CK_OBJECT_HANDLE object[5];
+  CK_ULONG count;
+  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+  EXPECT_EQ(0, count);
+  EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session_));
+}
+
+TEST_F(DataObjectTest, FindObjectInvalid) {
+  CK_OBJECT_CLASS data_class = CKO_DATA;
+  CK_UTF8CHAR app[] = "pkcs11test";
+  CK_UTF8CHAR label[] = "Label";
+  CK_ATTRIBUTE attrs[] = {
+    {CKA_CLASS, &data_class, sizeof(data_class)},
+    {CKA_APPLICATION, app, sizeof(app)},
+    {CKA_LABEL, label, 5},
+  };
+
+  // Find before initialization
+  CK_OBJECT_HANDLE object[5];
+  CK_ULONG count;
+  EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
+             g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_FindObjectsInit(INVALID_SESSION_HANDLE, attrs, 3));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_FindObjectsInit(session_, NULL_PTR, 3));
+  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session_, attrs, 3));
+
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_FindObjects(INVALID_SESSION_HANDLE, object, sizeof(object), &count));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_FindObjects(session_, NULL_PTR, 1, &count));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_FindObjects(session_, object, sizeof(object), NULL_PTR));
+
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_FindObjectsFinal(INVALID_SESSION_HANDLE));
+  EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session_));
+
+  // Find after finalization
+  EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
+             g_fns->C_FindObjects(session_, object, sizeof(object), &count));
 }
 
 }  // namespace test

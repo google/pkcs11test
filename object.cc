@@ -26,11 +26,16 @@
 #include <cstdlib>
 #include "pkcs11test.h"
 
+#include <set>
+#include <vector>
+
 using namespace std;  // So sue me
 
 namespace pkcs11 {
 namespace test {
 namespace {
+
+CK_BYTE deadbeef[] = { 0xDE, 0xAD, 0xBE, 0xEF};
 
 string hex_decode(string hex_value) {
   bool high_nibble = true;
@@ -112,7 +117,27 @@ TEST(BERDecode, DERDecodeIndefiniteLength) {
   EXPECT_EQ("[01]", BERDecode((CK_BYTE_PTR)value.data(), value.size()));
 }
 
+set<CK_OBJECT_HANDLE> GetObjects(CK_SESSION_HANDLE session, int stride) {
+  set<CK_OBJECT_HANDLE> results;
+  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session, NULL_PTR, 0));
+  while (true) {
+    vector<CK_OBJECT_HANDLE> objects(stride);
+    CK_ULONG object_count;
+    EXPECT_CKR_OK(g_fns->C_FindObjects(session, objects.data(), stride, &object_count));
+    if (object_count == 0) break;
+    for (size_t ii = 0; ii < object_count; ii++) {
+      results.insert(objects[ii]);
+    }
+  }
+  EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session));
+  return results;
+}
+
 void EnumerateObjects(CK_SESSION_HANDLE session) {
+  // First check session state.
+  CK_SESSION_INFO session_info;
+  EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session, &session_info));
+
   EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session, NULL_PTR, 0));
   while (true) {
     CK_OBJECT_HANDLE object;
@@ -124,9 +149,17 @@ void EnumerateObjects(CK_SESSION_HANDLE session) {
     if (g_verbose) cout << "  object x" << setw(8) << setfill('0') << hex << (unsigned int)object
                         << " (size=" << (int)object_size << ")" << endl;
     if (g_verbose) cout << object_description(g_fns, session, object);
+    if (session_info.state == CKS_RO_PUBLIC_SESSION || session_info.state == CKS_RW_PUBLIC_SESSION) {
+      // Not logged in, so should not see private objects.
+      CK_BBOOL is_private;
+      CK_ATTRIBUTE get_attr = {CKA_PRIVATE, &is_private, sizeof(is_private)};
+      EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session, object, &get_attr, 1));
+      EXPECT_EQ(CK_FALSE, is_private);
+    }
   }
   EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session));
 }
+
 
 }  // namespace
 
@@ -142,18 +175,43 @@ TEST_F(ROUserSessionTest, EnumerateObjects) {
   EnumerateObjects(session_);
 }
 
+TEST_F(ReadWriteSessionTest, EnumerateObjects) {
+  EnumerateObjects(session_);
+}
+
+TEST_F(RWUserSessionTest, EnumerateObjects) {
+  if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
+    TEST_SKIPPED("Login required");
+    return;
+  }
+  EnumerateObjects(session_);
+}
+
+TEST_F(ReadOnlySessionTest, ConsistentObjects) {
+  // Shouldn't matter whether we retrieve the objects one at a time or in bigger lumps.
+  set<CK_OBJECT_HANDLE> objs1 = GetObjects(session_, 1);
+  set<CK_OBJECT_HANDLE> objs2 = GetObjects(session_, 1024);
+  EXPECT_EQ(objs1, objs2);
+}
+
+TEST_F(ReadWriteSessionTest, ConsistentObjects) {
+  // Shouldn't matter whether we retrieve the objects one at a time or in bigger lumps.
+  set<CK_OBJECT_HANDLE> objs1 = GetObjects(session_, 1);
+  set<CK_OBJECT_HANDLE> objs2 = GetObjects(session_, 1024);
+  EXPECT_EQ(objs1, objs2);
+}
+
 TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
   // Create a data object.
   CK_OBJECT_CLASS data_class = CKO_DATA;
   CK_BBOOL bfalse = CK_FALSE;
   CK_UTF8CHAR app[] = "pkcs11test";
-  CK_BYTE data[] = { 0xDE, 0xAD, 0xBE, 0xEF};
   CK_UTF8CHAR label[] = "OldLabel";
   CK_ATTRIBUTE attrs[] = {
     {CKA_CLASS, &data_class, sizeof(data_class)},
     {CKA_TOKEN, &bfalse, sizeof(bfalse)},  // Session object
     {CKA_APPLICATION, app, sizeof(app)},
-    {CKA_VALUE, data, sizeof(data)},
+    {CKA_VALUE, deadbeef, sizeof(deadbeef)},
     {CKA_LABEL, label, 8},
   };
   CK_ULONG num_attrs = sizeof(attrs) / sizeof(attrs[0]);
@@ -211,12 +269,11 @@ TEST_F(ReadWriteSessionTest, CreateObjectInvalid) {
   CK_OBJECT_CLASS data_class = CKO_DATA;
   CK_BBOOL bfalse = CK_FALSE;
   CK_UTF8CHAR app[] = "pkcs11test";
-  CK_BYTE data[] = { 0xDE, 0xAD, 0xBE, 0xEF};
   CK_ATTRIBUTE attrs[] = {
     {CKA_CLASS, &data_class, sizeof(data_class)},
     {CKA_TOKEN, &bfalse, sizeof(bfalse)},
     {CKA_APPLICATION, app, sizeof(app)},
-    {CKA_VALUE, data, sizeof(data)},
+    {CKA_VALUE, deadbeef, sizeof(deadbeef)},
   };
   CK_OBJECT_HANDLE object;
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
@@ -235,13 +292,12 @@ class DataObjectTest : public ReadWriteSessionTest {
     CK_OBJECT_CLASS data_class = CKO_DATA;
     CK_BBOOL bfalse = CK_FALSE;
     CK_UTF8CHAR app[] = "pkcs11test";
-    CK_BYTE data[] = { 0xDE, 0xAD, 0xBE, 0xEF};
     CK_UTF8CHAR label[] = "Label";
     CK_ATTRIBUTE attrs[] = {
       {CKA_CLASS, &data_class, sizeof(data_class)},
       {CKA_TOKEN, &bfalse, sizeof(bfalse)},
       {CKA_APPLICATION, app, sizeof(app)},
-      {CKA_VALUE, data, sizeof(data)},
+      {CKA_VALUE, deadbeef, sizeof(deadbeef)},
       {CKA_LABEL, label, 5},
     };
     EXPECT_CKR_OK(g_fns->C_CreateObject(session_, attrs, sizeof(attrs)/sizeof(attrs[0]), &object_));
@@ -281,6 +337,40 @@ TEST_F(DataObjectTest, CopyDestroyObjectInvalid) {
   EXPECT_CKR(CKR_OBJECT_HANDLE_INVALID, g_fns->C_DestroyObject(session_, INVALID_OBJECT_HANDLE));
 }
 
+TEST_F(DataObjectTest, GetMultipleAttributes) {
+  CK_BYTE buffer[128];
+  CK_BYTE buffer2[128];
+  CK_OBJECT_CLASS data_class;
+  CK_BBOOL token;
+  CK_ATTRIBUTE get_attrs[] = {
+    {CKA_LABEL, buffer, sizeof(buffer)},
+    {CKA_CLASS, &data_class, sizeof(data_class)},
+    {CKA_TOKEN, &token, sizeof(token)},
+    {CKA_VALUE, buffer2, sizeof(buffer2)},
+  };
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, object_, get_attrs, sizeof(get_attrs) / sizeof(get_attrs[0])));
+  EXPECT_EQ(CKO_DATA, data_class);
+  EXPECT_EQ(CK_FALSE, token);
+  EXPECT_EQ(5, get_attrs[0].ulValueLen);
+  EXPECT_EQ(0, memcmp("Label", buffer, 5));
+  EXPECT_EQ(4, get_attrs[3].ulValueLen);
+  EXPECT_EQ(0, memcmp(deadbeef, buffer2, 4));
+}
+
+TEST_F(DataObjectTest, GetMultipleAttributesInvalid) {
+  CK_BYTE buffer[128];
+  CK_OBJECT_CLASS data_class;
+  CK_ATTRIBUTE get_attrs[] = {
+    {CKA_CLASS, &data_class, sizeof(data_class)},
+    {999, buffer, sizeof(buffer)},
+  };
+  EXPECT_CKR(CKR_ATTRIBUTE_TYPE_INVALID,
+             g_fns->C_GetAttributeValue(session_, object_, get_attrs, sizeof(get_attrs) / sizeof(get_attrs[0])));
+  // Even though the overall return code was failure, still expect the valid attribute to have a result.
+  EXPECT_EQ(CKO_DATA, data_class);
+  EXPECT_EQ((CK_ULONG)-1, get_attrs[1].ulValueLen);
+}
+
 TEST_F(DataObjectTest, GetSetAttributeInvalid) {
   CK_BYTE buffer[256];
   CK_ATTRIBUTE get_attr = {CKA_LABEL, buffer, sizeof(buffer)};
@@ -290,6 +380,9 @@ TEST_F(DataObjectTest, GetSetAttributeInvalid) {
              g_fns->C_GetAttributeValue(session_, INVALID_OBJECT_HANDLE, &get_attr, 1));
   CK_RV rv = g_fns->C_GetAttributeValue(session_, object_, NULL_PTR, 1);
   EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_TEMPLATE_INCOMPLETE);
+  get_attr.ulValueLen = 1;
+  EXPECT_CKR(CKR_BUFFER_TOO_SMALL,
+             g_fns->C_GetAttributeValue(session_, object_, &get_attr, 1));
 
   CK_UTF8CHAR new_label[] = "NewLabel";
   CK_ATTRIBUTE set_attr = {CKA_LABEL, new_label, 8};
@@ -359,8 +452,10 @@ TEST_F(DataObjectTest, FindObjectInvalid) {
 
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_FindObjectsInit(INVALID_SESSION_HANDLE, attrs, 3));
+  /* TODO: reinstate when this doesn't trigger SEGV in OpenCryptoKi
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_FindObjectsInit(session_, NULL_PTR, 3));
+  */
   EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session_, attrs, 3));
 
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,

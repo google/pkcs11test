@@ -31,6 +31,31 @@ TEST(Init, Simple) {
   EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));
 }
 
+TEST(Init, Uninitialized) {
+  // Nothing should work if the library hasn't been initialized.
+
+  CK_FLAGS flags = CKF_SERIAL_SESSION;
+  CK_SESSION_HANDLE session;
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED,
+             g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_CloseSession(1));
+
+  CK_MECHANISM mechanism;
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_EncryptInit(1, &mechanism, 1));
+
+  CK_OBJECT_CLASS data_class = CKO_DATA;
+  CK_ATTRIBUTE attrs[] = {
+    {CKA_CLASS, &data_class, sizeof(data_class)},
+  };
+  CK_ULONG num_attrs = sizeof(attrs) / sizeof(attrs[0]);
+  CK_OBJECT_HANDLE object;
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED,
+             g_fns->C_CreateObject(1, attrs, num_attrs, &object));
+
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED,
+             g_fns->C_FindObjectsInit(1, attrs, num_attrs));
+}
+
 TEST(Init, DoubleFinalize) {
   EXPECT_CKR_OK(g_fns->C_Initialize(NULL_PTR));
   EXPECT_CKR_OK(g_fns->C_Finalize(NULL_PTR));

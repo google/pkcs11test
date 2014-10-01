@@ -37,32 +37,6 @@ namespace {
 
 CK_BYTE deadbeef[] = { 0xDE, 0xAD, 0xBE, 0xEF};
 
-string hex_decode(string hex_value) {
-  bool high_nibble = true;
-  stringstream ss;
-  int value = 0;
-  for (char c : hex_value) {
-    int nibble;
-    if (c >= '0' && c <= '9') {
-      nibble = c - '0';
-    } else if (c >= 'a' && c <= 'f') {
-      nibble = 10 + (c - 'a');
-    } else if (c >= 'A' && c <= 'F') {
-      nibble = 10 + (c - 'A');
-    } else {
-      exit(1);
-    }
-    if (high_nibble) {
-      value = (nibble << 4);
-    } else {
-      value |= nibble;
-      ss << static_cast<char>(value);
-    }
-    high_nibble = !high_nibble;
-  }
-  return ss.str();
-}
-
 TEST(BERDecode, DERDecode) {
   string hex_value = "3077"  // universal,constructed,SEQUENCE_OF,len=0x77
                        "3119"  // universal,constructed,SET_OF,len=0x19

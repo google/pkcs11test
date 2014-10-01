@@ -40,6 +40,32 @@ string hex_data(CK_BYTE_PTR p, int len) {
   return ss.str();
 }
 
+string hex_decode(string hex_value) {
+  bool high_nibble = true;
+  stringstream ss;
+  int value = 0;
+  for (char c : hex_value) {
+    int nibble;
+    if (c >= '0' && c <= '9') {
+      nibble = c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+      nibble = 10 + (c - 'a');
+    } else if (c >= 'A' && c <= 'F') {
+      nibble = 10 + (c - 'A');
+    } else {
+      exit(1);
+    }
+    if (high_nibble) {
+      value = (nibble << 4);
+    } else {
+      value |= nibble;
+      ss << static_cast<char>(value);
+    }
+    high_nibble = !high_nibble;
+  }
+  return ss.str();
+}
+
 string rv_name(CK_RV val) {
   // PKCS#11 s11.1: Function return values
   switch (val) {

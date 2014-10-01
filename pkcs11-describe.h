@@ -26,6 +26,7 @@ std::string hex_data(const CK_BYTE_PTR p, int len);
 inline std::string hex_data(std::string s) {
   return hex_data((CK_BYTE_PTR)(s.data()), s.length());
 }
+std::string hex_decode(std::string hex_value);
 std::string rv_name(CK_RV val);
 std::string user_type_name(CK_USER_TYPE val);
 std::string key_type_name(CK_KEY_TYPE val);

@@ -11,7 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+//
+// PKCS#11 s11.10: Message digesting functions
+//   C_DigestInit
+//   C_Digest
+//   C_DigestUpdate
+//   C_DigestKey
+//   C_DigestFinal
 #include <string>
 #include <cstdlib>
 #include "pkcs11test.h"

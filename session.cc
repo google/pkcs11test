@@ -19,6 +19,9 @@
 //   C_GetSessionInfo
 //   C_GetOperationState
 //   C_SetOperationState
+// PKCS#11 s11.16: Parallel function management functions
+//   C_GetFunctionStatus
+//   C_CancelFunction
 
 #include <cstdlib>
 #include "pkcs11test.h"
@@ -138,7 +141,7 @@ TEST_F(ReadWriteSessionTest, InvalidSessionInfo) {
 }
 
 TEST_F(ReadOnlySessionTest, CloseSessionInvalid) {
-  // PKCS#11 11.16: Legacy function which should simply return the value CKR_FUNCTION_NOT_PARALLEL.
+  // PKCS#11 s11.16: Legacy function which should simply return the value CKR_FUNCTION_NOT_PARALLEL.
   EXPECT_CKR(CKR_FUNCTION_NOT_PARALLEL, g_fns->C_GetFunctionStatus(session_));
   EXPECT_CKR(CKR_FUNCTION_NOT_PARALLEL, g_fns->C_CancelFunction(session_));
 
@@ -146,7 +149,7 @@ TEST_F(ReadOnlySessionTest, CloseSessionInvalid) {
 }
 
 TEST_F(ReadWriteSessionTest, CloseSessionInvalid) {
-  // PKCS#11 11.16: Legacy function which should simply return the value CKR_FUNCTION_NOT_PARALLEL.
+  // PKCS#11 s11.16: Legacy function which should simply return the value CKR_FUNCTION_NOT_PARALLEL.
   EXPECT_CKR(CKR_FUNCTION_NOT_PARALLEL, g_fns->C_GetFunctionStatus(session_));
   EXPECT_CKR(CKR_FUNCTION_NOT_PARALLEL, g_fns->C_CancelFunction(session_));
 

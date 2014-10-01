@@ -11,6 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// PKCS#11 s11.8: Encryption functions (on asymmetric keys)
+//   C_EncryptInit
+//   C_Encrypt
+//   C_EncryptUpdate
+//   C_EncryptFinal
+// PKCS#11 s11.9: Decryption functions (on asymmetric keys)
+//   C_DecryptInit
+//   C_Decrypt
+//   C_DecryptUpdate
+//   C_DecryptFinal
 
 #include "pkcs11test.h"
 

@@ -51,6 +51,11 @@ struct CipherInfo {
 map<CipherMode, CipherInfo> kCipherInfo = {
   {CipherMode({CKM_DES_KEY_GEN, CKM_DES_ECB}), CipherInfo({"DES-ECB", 8, false, -1})},
   {CipherMode({CKM_DES_KEY_GEN, CKM_DES_CBC}), CipherInfo({"DES-CBC", 8, true, -1})},
+  {CipherMode({CKM_DES3_KEY_GEN, CKM_DES3_ECB}), CipherInfo({"3DES-ECB", 8, false, -1})},
+  {CipherMode({CKM_DES3_KEY_GEN, CKM_DES3_CBC}), CipherInfo({"3DES-CBC", 8, true, -1})},
+  {CipherMode({CKM_IDEA_KEY_GEN, CKM_IDEA_ECB}), CipherInfo({"IDEA-ECB", 8, false, -1})},
+  {CipherMode({CKM_IDEA_KEY_GEN, CKM_IDEA_CBC}), CipherInfo({"IDEA-CBC", 8, true, -1})},
+  {CipherMode({CKM_AES_KEY_GEN, CKM_AES_ECB}), CipherInfo({"AES-ECB", 16, false, 16})},
   {CipherMode({CKM_AES_KEY_GEN, CKM_AES_CBC}), CipherInfo({"AES-CBC", 16, true, 16})},
 };
 
@@ -227,6 +232,9 @@ TEST_P(SecretKeyTest, EncryptDecryptErrors) {
 INSTANTIATE_TEST_CASE_P(Ciphers, SecretKeyTest,
                         ::testing::Values(CipherMode({CKM_DES_KEY_GEN, CKM_DES_ECB}),
                                           CipherMode({CKM_DES_KEY_GEN, CKM_DES_CBC}),
+                                          CipherMode({CKM_DES3_KEY_GEN, CKM_DES3_ECB}),
+                                          CipherMode({CKM_DES3_KEY_GEN, CKM_DES3_CBC}),
+                                          CipherMode({CKM_AES_KEY_GEN, CKM_AES_ECB}),
                                           CipherMode({CKM_AES_KEY_GEN, CKM_AES_CBC})));
 
 }  // namespace test

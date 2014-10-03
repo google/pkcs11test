@@ -193,10 +193,18 @@ int main(int argc, char* argv[]) {
     CK_SLOT_ID slots[2];
     CK_ULONG slot_count = 2;
     rv = g_fns->C_GetSlotList(CK_TRUE, slots, &slot_count);
-    if (rv == CKR_OK && slot_count == 1) {
-      g_slot_id = slots[0];
+    if (rv == CKR_OK) {
+      if (slot_count == 1) {
+        g_slot_id = slots[0];
+      } else if (slot_count == 0) {
+        cerr << "No slots with tokens available" << endl;
+        exit(1);
+      } else {
+        cerr << "Multiple slots with tokens available; specify one with -s" << endl;
+        exit(1);
+      }
     } else {
-      cerr << "Multiple slots with tokens available; specify one with -s" << endl;
+      cerr << "Failed to retrieve slot list" << endl;
       exit(1);
     }
   }

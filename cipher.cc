@@ -187,6 +187,9 @@ TEST_P(SecretKeyTest, EncryptDecryptErrors) {
   rv = g_fns->C_Encrypt(session_, plaintext_.get(), kNumBlocks * blocksize_, NULL_PTR, NULL_PTR);
   EXPECT_CKR(CKR_ARGUMENTS_BAD, rv);
 
+  // Error terminates the operation, so re-initialize.
+  rv = g_fns->C_EncryptInit(session_, &mechanism_, key_.handle());
+  EXPECT_CKR_OK(rv);
   CK_ULONG dummy_len = 0;
   EXPECT_CKR_OK(g_fns->C_Encrypt(session_, plaintext_.get(), kNumBlocks * blocksize_, NULL_PTR, &dummy_len));
   EXPECT_EQ(kNumBlocks * blocksize_, dummy_len);

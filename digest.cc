@@ -278,13 +278,11 @@ TEST_P(DigestTest, DigestInvalid) {
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_Digest(session_, data_.get(), datalen_, buffer, NULL_PTR));
 
-  /* TODO: reinstate
   // A call to C_Digest always terminates the active digest operation unless it
   // returns buffer-too-small/OK.
   CK_ULONG digest_len = sizeof(buffer);
   EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
              g_fns->C_Digest(session_, data_.get(), datalen_, buffer, &digest_len));
-  */
 }
 
 TEST_P(DigestTest, DigestFinalInvalid) {
@@ -303,12 +301,10 @@ TEST_P(DigestTest, DigestFinalInvalid) {
   EXPECT_CKR(CKR_OPERATION_ACTIVE,
              g_fns->C_DigestFinal(session_, buffer, &digest_len));
 
-  /* TODO: reinstate
   // A failed DigestFinal should always terminate the active digest operation.
   digest_len = sizeof(buffer);
   EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
              g_fns->C_Digest(session_, data_.get(), datalen_, buffer, &digest_len));
-  */
 }
 
 TEST_P(DigestTest, DigestUpdateNoInit) {

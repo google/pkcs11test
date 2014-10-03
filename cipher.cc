@@ -34,44 +34,38 @@ using namespace std;  // So sue me
 namespace pkcs11 {
 namespace test {
 
-struct CipherMode {
+struct CipherInfo {
   CK_MECHANISM_TYPE keygen;
   CK_MECHANISM_TYPE mode;
-};
-bool operator<(const CipherMode& left, const CipherMode& right) {
-  return tie(left.keygen, left.mode) < tie(right.keygen, right.mode);
-}
-struct CipherInfo {
-  string descr;
   int blocksize;
   bool has_iv;
   int keylen;
 };
 
-map<CipherMode, CipherInfo> kCipherInfo = {
-  {CipherMode({CKM_DES_KEY_GEN, CKM_DES_ECB}), CipherInfo({"DES-ECB", 8, false, -1})},
-  {CipherMode({CKM_DES_KEY_GEN, CKM_DES_CBC}), CipherInfo({"DES-CBC", 8, true, -1})},
-  {CipherMode({CKM_DES3_KEY_GEN, CKM_DES3_ECB}), CipherInfo({"3DES-ECB", 8, false, -1})},
-  {CipherMode({CKM_DES3_KEY_GEN, CKM_DES3_CBC}), CipherInfo({"3DES-CBC", 8, true, -1})},
-  {CipherMode({CKM_IDEA_KEY_GEN, CKM_IDEA_ECB}), CipherInfo({"IDEA-ECB", 8, false, -1})},
-  {CipherMode({CKM_IDEA_KEY_GEN, CKM_IDEA_CBC}), CipherInfo({"IDEA-CBC", 8, true, -1})},
-  {CipherMode({CKM_AES_KEY_GEN, CKM_AES_ECB}), CipherInfo({"AES-ECB", 16, false, 16})},
-  {CipherMode({CKM_AES_KEY_GEN, CKM_AES_CBC}), CipherInfo({"AES-CBC", 16, true, 16})},
+map<string, CipherInfo> kCipherInfo = {
+  {"DES-ECB", {CKM_DES_KEY_GEN, CKM_DES_ECB, 8, false, -1}},
+  {"DES-CBC", {CKM_DES_KEY_GEN, CKM_DES_CBC, 8, true, -1}},
+  {"3DES-ECB", {CKM_DES3_KEY_GEN, CKM_DES3_ECB, 8, false, -1}},
+  {"3DES-CBC", {CKM_DES3_KEY_GEN, CKM_DES3_CBC, 8, true, -1}},
+  {"IDEA-ECB", {CKM_IDEA_KEY_GEN, CKM_IDEA_ECB, 8, false, -1}},
+  {"IDEA-CBC", {CKM_IDEA_KEY_GEN, CKM_IDEA_CBC, 8, true, -1}},
+  {"AES-ECB", {CKM_AES_KEY_GEN, CKM_AES_ECB, 16, false, 16}},
+  {"AES-CBC", {CKM_AES_KEY_GEN, CKM_AES_CBC, 16, true, 16}},
 };
 
 class SecretKeyTest : public ReadOnlySessionTest,
-                      public ::testing::WithParamInterface<CipherMode> {
+                      public ::testing::WithParamInterface<string> {
  public:
   static const int kNumBlocks = 4;
   SecretKeyTest()
     : attrs_({CKA_ENCRYPT, CKA_DECRYPT}),
-      mode_(GetParam()),
-      key_(session_, attrs_, mode_.keygen, kCipherInfo[mode_].keylen),
-      blocksize_(kCipherInfo[mode_].blocksize),
-      emits_iv_(kCipherInfo[mode_].has_iv),
+      info_(kCipherInfo[GetParam()]),
+      key_(session_, attrs_, info_.keygen, info_.keylen),
+      blocksize_(info_.blocksize),
+      emits_iv_(info_.has_iv),
       iv_(randmalloc(blocksize_)),
       plaintext_(randmalloc(kNumBlocks * blocksize_)),
-      mechanism_({mode_.mode,
+      mechanism_({info_.mode,
                   (emits_iv_ ? iv_.get() : NULL_PTR),
                   (emits_iv_ ? (CK_ULONG)blocksize_ : 0)}) {
     if (g_verbose && emits_iv_) cout << "IV: " << hex_data(iv_.get(), blocksize_) << endl;
@@ -80,7 +74,7 @@ class SecretKeyTest : public ReadOnlySessionTest,
 
  protected:
   vector<CK_ATTRIBUTE_TYPE> attrs_;
-  CipherMode mode_;
+  CipherInfo info_;
   SecretKey key_;
   const int blocksize_;
   const bool emits_iv_;
@@ -233,12 +227,11 @@ TEST_P(SecretKeyTest, EncryptDecryptErrors) {
 }
 
 INSTANTIATE_TEST_CASE_P(Ciphers, SecretKeyTest,
-                        ::testing::Values(CipherMode({CKM_DES_KEY_GEN, CKM_DES_ECB}),
-                                          CipherMode({CKM_DES_KEY_GEN, CKM_DES_CBC}),
-                                          CipherMode({CKM_DES3_KEY_GEN, CKM_DES3_ECB}),
-                                          CipherMode({CKM_DES3_KEY_GEN, CKM_DES3_CBC}),
-                                          CipherMode({CKM_AES_KEY_GEN, CKM_AES_ECB}),
-                                          CipherMode({CKM_AES_KEY_GEN, CKM_AES_CBC})));
-
+                        ::testing::Values("DES-ECB",
+                                          "DES-CBC",
+                                          "3DES-ECB",
+                                          "3DES-CBC",
+                                          "AES-ECB",
+                                          "AES-CBC"));
 }  // namespace test
 }  // namespace pkcs11

@@ -31,6 +31,14 @@ using namespace std;  // So sue me
 namespace pkcs11 {
 namespace test {
 
+map<string, CK_MECHANISM_TYPE> kDigestType = {
+  {"MD5", CKM_MD5},
+  {"SHA-1", CKM_SHA_1},
+  {"SHA-256", CKM_SHA256},
+  {"SHA-384", CKM_SHA384},
+  {"SHA-512", CKM_SHA512},
+};
+
 map<CK_MECHANISM_TYPE, int> kDigestSize = {
   {CKM_MD5, 16},
   {CKM_SHA_1, 20},
@@ -84,11 +92,12 @@ TEST_F(ReadOnlySessionTest, DigestInitInvalid) {
 }
 
 class DigestTest : public ReadOnlySessionTest,
-                   public ::testing::WithParamInterface<CK_MECHANISM_TYPE> {
+                   public ::testing::WithParamInterface<string> {
  public:
   DigestTest()
-    : mechanism_({GetParam(), NULL_PTR, 0}),
-      digestsize_(kDigestSize[GetParam()]),
+    : mechanism_type_(kDigestType[GetParam()]),
+      mechanism_({mechanism_type_, NULL_PTR, 0}),
+      digestsize_(kDigestSize[mechanism_type_]),
       datalen_(std::rand() % 1024),
       data_(randmalloc(datalen_)) {
     if (g_verbose) cout << "DATA:  " << hex_data(data_.get(), min(40, datalen_))
@@ -141,6 +150,7 @@ class DigestTest : public ReadOnlySessionTest,
   }
 
  protected:
+  CK_MECHANISM_TYPE mechanism_type_;
   CK_MECHANISM mechanism_;
   const int digestsize_;
   const int datalen_;
@@ -344,7 +354,7 @@ TEST_P(DigestTest, DigestUpdateInvalid) {
 }
 
 TEST_P(DigestTest, TestVectors) {
-  map<string, string> test_vector = kTestVectors[GetParam()];
+  map<string, string> test_vector = kTestVectors[mechanism_type_];
   for (const auto& datum : test_vector) {
     const string& input = datum.first;
     const string& hex_expected = datum.second;
@@ -356,7 +366,7 @@ TEST_P(DigestTest, TestVectors) {
 }
 
 INSTANTIATE_TEST_CASE_P(Digests, DigestTest,
-                        ::testing::Values(CKM_MD5, CKM_SHA_1, CKM_SHA256, CKM_SHA384, CKM_SHA512));
+                        ::testing::Values("MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512"));
 
 }  // namespace test
 }  // namespace pkcs11

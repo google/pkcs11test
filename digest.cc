@@ -31,6 +31,7 @@ using namespace std;  // So sue me
 namespace pkcs11 {
 namespace test {
 
+namespace {
 map<string, CK_MECHANISM_TYPE> kDigestType = {
   {"MD5", CKM_MD5},
   {"SHA-1", CKM_SHA_1},
@@ -84,6 +85,8 @@ map<CK_MECHANISM_TYPE, map<string, string>> kTestVectors = {
        "204a8fc6dda82f0a0ced7beb8e08a41657c16ef468b228a8279be331a703c33596fd15c13b1b07f9aa1d3bea57789ca031ad85c7a71dd70354ec631238ca3445"},
     }},
 };
+
+}  // namespace
 
 TEST_F(ReadOnlySessionTest, DigestInitInvalid) {
   CK_MECHANISM mechanism = {999, NULL_PTR, 0};

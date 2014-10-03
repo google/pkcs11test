@@ -27,14 +27,17 @@
 
 #include <map>
 #include <string>
-#include <tuple>
+#include <vector>
 
 using namespace std;  // So sue me
 
 namespace pkcs11 {
 namespace test {
 
+namespace {
+
 struct CipherInfo {
+  CK_KEY_TYPE keytype;
   CK_MECHANISM_TYPE keygen;
   CK_MECHANISM_TYPE mode;
   int blocksize;
@@ -43,15 +46,30 @@ struct CipherInfo {
 };
 
 map<string, CipherInfo> kCipherInfo = {
-  {"DES-ECB", {CKM_DES_KEY_GEN, CKM_DES_ECB, 8, false, -1}},
-  {"DES-CBC", {CKM_DES_KEY_GEN, CKM_DES_CBC, 8, true, -1}},
-  {"3DES-ECB", {CKM_DES3_KEY_GEN, CKM_DES3_ECB, 8, false, -1}},
-  {"3DES-CBC", {CKM_DES3_KEY_GEN, CKM_DES3_CBC, 8, true, -1}},
-  {"IDEA-ECB", {CKM_IDEA_KEY_GEN, CKM_IDEA_ECB, 8, false, -1}},
-  {"IDEA-CBC", {CKM_IDEA_KEY_GEN, CKM_IDEA_CBC, 8, true, -1}},
-  {"AES-ECB", {CKM_AES_KEY_GEN, CKM_AES_ECB, 16, false, 16}},
-  {"AES-CBC", {CKM_AES_KEY_GEN, CKM_AES_CBC, 16, true, 16}},
+  {"DES-ECB", {CKK_DES, CKM_DES_KEY_GEN, CKM_DES_ECB, 8, false, -1}},
+  {"DES-CBC", {CKK_DES, CKM_DES_KEY_GEN, CKM_DES_CBC, 8, true, -1}},
+  {"3DES-ECB", {CKK_DES3, CKM_DES3_KEY_GEN, CKM_DES3_ECB, 8, false, -1}},
+  {"3DES-CBC", {CKK_DES3, CKM_DES3_KEY_GEN, CKM_DES3_CBC, 8, true, -1}},
+  {"IDEA-ECB", {CKK_IDEA, CKM_IDEA_KEY_GEN, CKM_IDEA_ECB, 8, false, -1}},
+  {"IDEA-CBC", {CKK_IDEA, CKM_IDEA_KEY_GEN, CKM_IDEA_CBC, 8, true, -1}},
+  {"AES-ECB", {CKK_AES, CKM_AES_KEY_GEN, CKM_AES_ECB, 16, false, 16}},
+  {"AES-CBC", {CKK_AES, CKM_AES_KEY_GEN, CKM_AES_CBC, 16, true, 16}},
 };
+
+struct TestData {
+  string key;  // Hex
+  string iv;  // Hex
+  string plaintext;  // Hex
+  string ciphertext;  // Hex
+};
+map<string, vector<TestData> > kTestVectors = {
+  { "DES-ECB", {{"8000000000000000", "", "0000000000000000", "95A8D72813DAA94D"},
+                {"4000000000000000", "", "0000000000000000", "0EEC1487DD8C26D5"}, }},
+  { "3DES-ECB", {{"800000000000000000000000000000000000000000000000", "", "0000000000000000", "95A8D72813DAA94D"},
+                 {"020202020202020202020202020202020202020202020202", "", "0202020202020202", "E127C2B61D98E6E2"}, }},
+};
+
+}  // namespace
 
 class SecretKeyTest : public ReadOnlySessionTest,
                       public ::testing::WithParamInterface<string> {
@@ -514,5 +532,51 @@ INSTANTIATE_TEST_CASE_P(Ciphers, SecretKeyTest,
                                           "3DES-CBC",
                                           "AES-ECB",
                                           "AES-CBC"));
+
+TEST_F(ReadOnlySessionTest, SecretKeyTestVectors) {
+  for (const auto& kv : kTestVectors) {
+    vector<TestData> testcases = kTestVectors[kv.first];
+    CipherInfo info = kCipherInfo[kv.first];
+    for (const TestData& testcase : kv.second) {
+      if (g_verbose) {
+        cout  << "KEY: " << testcase.key << endl;
+        if (info.has_iv) cout << "IV:  " << testcase.iv << endl;
+        cout  << "PT:  " << testcase.plaintext << endl;
+        cout  << "CT:  " << testcase.ciphertext << endl;
+      }
+      string key = hex_decode(testcase.key);
+      CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
+      CK_KEY_TYPE key_type = info.keytype;
+      vector<CK_ATTRIBUTE> attrs = {
+        {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+        {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+        {CKA_DECRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+        {CKA_CLASS, &key_class, sizeof(key_class)},
+        {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
+        {CKA_VALUE, (CK_VOID_PTR)key.data(), key.size()},
+      };
+      CK_OBJECT_HANDLE key_object;
+      ASSERT_CKR_OK(g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_object));
+
+      string iv = hex_decode(testcase.iv);
+      CK_MECHANISM mechanism = {info.mode,
+                                (info.has_iv ? (CK_BYTE_PTR)iv.data() : NULL_PTR),
+                                (info.has_iv ? (CK_ULONG)info.blocksize : 0)};
+      ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism, key_object));
+      string plaintext = hex_decode(testcase.plaintext);
+      CK_BYTE ciphertext[1024];
+      CK_ULONG ciphertext_len = sizeof(ciphertext);
+      ASSERT_CKR_OK(g_fns->C_Encrypt(session_,
+                                     (CK_BYTE_PTR)plaintext.data(), plaintext.size(),
+                                     ciphertext, &ciphertext_len));
+      string expected_ciphertext = hex_decode(testcase.ciphertext);
+      EXPECT_EQ(expected_ciphertext.size(), ciphertext_len);
+      EXPECT_EQ(0, memcmp(expected_ciphertext.data(),
+                          ciphertext,
+                          expected_ciphertext.size()));
+    }
+  }
+}
+
 }  // namespace test
 }  // namespace pkcs11

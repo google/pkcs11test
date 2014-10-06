@@ -404,6 +404,34 @@ TEST_P(SecretKeyTest, EncryptModePolicing2) {
                                     ciphertext, &ciphertext_len));
 }
 
+TEST_P(SecretKeyTest, EncryptInvalidIV) {
+  if (!emits_iv_) return;
+  CK_MECHANISM mechanism = {info_.mode, iv_.get(), (CK_ULONG)(blocksize_ - 1)};
+  EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
+             g_fns->C_EncryptInit(session_, &mechanism, key_.handle()));
+
+  /*
+  // TODO: reinstate
+  CK_MECHANISM mechanism2 = {info_.mode, NULL_PTR, (CK_ULONG)blocksize_};
+  EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
+             g_fns->C_EncryptInit(session_, &mechanism2, key_.handle()));
+  */
+}
+
+TEST_P(SecretKeyTest, DecryptInvalidIV) {
+  if (!emits_iv_) return;
+  CK_MECHANISM mechanism = {info_.mode, iv_.get(), (CK_ULONG)(blocksize_ - 1)};
+  EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
+             g_fns->C_DecryptInit(session_, &mechanism, key_.handle()));
+
+  /*
+  // TODO: reinstate
+  CK_MECHANISM mechanism2 = {info_.mode, NULL_PTR, (CK_ULONG)blocksize_};
+  EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
+             g_fns->C_DecryptInit(session_, &mechanism2, key_.handle()));
+  */
+}
+
 TEST_P(SecretKeyTest, DecryptUpdateErrors) {
   // First encrypt the data.
   CK_BYTE ciphertext[1024];

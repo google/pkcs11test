@@ -30,6 +30,8 @@ using namespace std;  // So sue me
 namespace pkcs11 {
 namespace test {
 
+namespace {
+
 class KeyPairTest : public ReadWriteSessionTest {
  public:
   KeyPairTest()
@@ -41,6 +43,8 @@ class KeyPairTest : public ReadWriteSessionTest {
   vector<CK_ATTRIBUTE_TYPE> private_attrs_;
   KeyPair keypair_;
 };
+
+}  // namespace
 
 TEST_F(KeyPairTest, EncryptDecrypt) {
   CK_BYTE plaintext[10];

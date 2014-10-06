@@ -114,7 +114,6 @@ class DigestTest : public ReadOnlySessionTest,
   DigestTest()
     : info_(kDigestInfo[GetParam()]),
       mechanism_({info_.type, NULL_PTR, 0}),
-      digestsize_(info_.size),
       datalen_(std::rand() % 1024),
       data_(randmalloc(datalen_)) {
     if (g_verbose) cout << "DATA:  " << hex_data(data_.get(), min(40, datalen_))
@@ -124,14 +123,8 @@ class DigestTest : public ReadOnlySessionTest,
   string PerformDigest(CK_BYTE_PTR data, CK_ULONG datalen) {
     string result = Digest(session_, &mechanism_, data, datalen);
     if (result != "unimplemented")
-      EXPECT_EQ(digestsize_, result.size());
+      EXPECT_EQ(info_.size, result.size());
     return result;
-  }
-  string PerformDigest() {
-    return PerformDigest(data_.get(), datalen_);
-  }
-  string PerformDigest(const string& data) {
-    return PerformDigest((CK_BYTE_PTR)data.data(), data.length());
   }
 
   string PerformDigestUpdate(CK_BYTE_PTR data, CK_ULONG datalen) {
@@ -153,18 +146,14 @@ class DigestTest : public ReadOnlySessionTest,
     CK_BYTE buffer[512];
     CK_ULONG digest_len = sizeof(buffer);
     EXPECT_CKR_OK(g_fns->C_DigestFinal(session_, buffer, &digest_len));
-    EXPECT_EQ(digestsize_, digest_len);
+    EXPECT_EQ(info_.size, digest_len);
     if (g_verbose) cout << "DIGEST: " << hex_data(buffer, digest_len) << endl;
     return string(reinterpret_cast<char*>(buffer), digest_len);
-  }
-  string PerformDigestUpdate() {
-    return PerformDigestUpdate(data_.get(), datalen_);
   }
 
  protected:
   DigestInfo info_;
   CK_MECHANISM mechanism_;
-  const int digestsize_;
   const int datalen_;
   unique_ptr<CK_BYTE, freer> data_;
 };
@@ -185,8 +174,8 @@ class DigestTest : public ReadOnlySessionTest,
     }
 
 TEST_P(DigestTest, CompareIncremental) {
-  string d1 = PerformDigest();
-  string d2 = PerformDigestUpdate();
+  string d1 = PerformDigest(data_.get(), datalen_);
+  string d2 = PerformDigestUpdate(data_.get(), datalen_);
   SKIP_IF_UNIMPLEMENTED(d1);
   EXPECT_EQ(hex_data(d1), hex_data(d2));
 }
@@ -255,14 +244,14 @@ TEST_P(DigestTest, DigestGetSpace) {
   CK_ULONG digest_len = 0;
   // Provide no buffer => get OK return code and the required length.
   EXPECT_CKR_OK(g_fns->C_Digest(session_, data_.get(), datalen_, NULL_PTR, &digest_len));
-  EXPECT_EQ(digestsize_, digest_len);
+  EXPECT_EQ(info_.size, digest_len);
 
   // Provide too-small buffer => get too-small return code and the required length.
   memset(buffer, 0xAB, sizeof(buffer));
   digest_len = 2;
   EXPECT_CKR(CKR_BUFFER_TOO_SMALL,
              g_fns->C_Digest(session_, data_.get(), datalen_, buffer, &digest_len));
-  EXPECT_EQ(digestsize_, digest_len);
+  EXPECT_EQ(info_.size, digest_len);
   // Buffer unaffected.
   EXPECT_EQ(0xAB, buffer[3]);
   EXPECT_EQ(0xAB, buffer[0]);
@@ -281,13 +270,13 @@ TEST_P(DigestTest, DigestFinalGetSpace) {
   CK_ULONG digest_len = 0;
   // Provide no buffer => get OK return code and the required length.
   EXPECT_CKR_OK(g_fns->C_DigestFinal(session_, NULL_PTR, &digest_len));
-  EXPECT_EQ(digestsize_, digest_len);
+  EXPECT_EQ(info_.size, digest_len);
 
   // Provide too-small buffer => get too-small return code and the required length.
   digest_len = 2;
   EXPECT_CKR(CKR_BUFFER_TOO_SMALL,
              g_fns->C_DigestFinal(session_, buffer, &digest_len));
-  EXPECT_EQ(digestsize_, digest_len);
+  EXPECT_EQ(info_.size, digest_len);
 
   EXPECT_CKR_OK(g_fns->C_DigestFinal(session_, buffer, &digest_len));
 }
@@ -332,7 +321,7 @@ TEST_P(DigestTest, DigestIntersperse) {
   // Complete digest and retrieve required length.
   CK_ULONG digest_len = 0;
   EXPECT_CKR_OK(g_fns->C_DigestFinal(session_, NULL_PTR, &digest_len));
-  EXPECT_EQ(digestsize_, digest_len);
+  EXPECT_EQ(info_.size, digest_len);
 
   // Attempt to finish with Digest; not allowed
   CK_BYTE buffer[512];
@@ -354,7 +343,7 @@ TEST_P(DigestTest, DigestFinalIntersperse) {
   // Digest and retrieve required length as a one-shot operation.
   CK_ULONG digest_len = 0;
   EXPECT_CKR_OK(g_fns->C_Digest(session_, data_.get(), datalen_, NULL_PTR, &digest_len));
-  EXPECT_EQ(digestsize_, digest_len);
+  EXPECT_EQ(info_.size, digest_len);
 
   // Attempt to finish with DigestFinal; not allowed.
   CK_BYTE buffer[512];

@@ -83,23 +83,19 @@ class SecretKeyTest : public ReadOnlySessionTest,
     : attrs_({CKA_ENCRYPT, CKA_DECRYPT}),
       info_(kCipherInfo[GetParam()]),
       key_(session_, attrs_, info_.keygen, info_.keylen),
-      blocksize_(info_.blocksize),
-      emits_iv_(info_.has_iv),
-      iv_(randmalloc(blocksize_)),
-      plaintext_(randmalloc(kNumBlocks * blocksize_)),
+      iv_(randmalloc(info_.blocksize)),
+      plaintext_(randmalloc(kNumBlocks * info_.blocksize)),
       mechanism_({info_.mode,
-                  (emits_iv_ ? iv_.get() : NULL_PTR),
-                  (emits_iv_ ? (CK_ULONG)blocksize_ : 0)}) {
-    if (g_verbose && emits_iv_) cout << "IV: " << hex_data(iv_.get(), blocksize_) << endl;
-    if (g_verbose) cout << "PT: " << hex_data(plaintext_.get(), kNumBlocks * blocksize_) << endl;
+                  (info_.has_iv ? iv_.get() : NULL_PTR),
+                  (info_.has_iv ? (CK_ULONG)info_.blocksize : 0)}) {
+    if (g_verbose && info_.has_iv) cout << "IV: " << hex_data(iv_.get(), info_.blocksize) << endl;
+    if (g_verbose) cout << "PT: " << hex_data(plaintext_.get(), kNumBlocks * info_.blocksize) << endl;
   }
 
  protected:
   vector<CK_ATTRIBUTE_TYPE> attrs_;
   CipherInfo info_;
   SecretKey key_;
-  const int blocksize_;
-  const bool emits_iv_;
   unique_ptr<CK_BYTE, freer> iv_;
   unique_ptr<CK_BYTE, freer> plaintext_;
   CK_MECHANISM mechanism_;
@@ -112,9 +108,9 @@ TEST_P(SecretKeyTest, EncryptDecrypt) {
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   ASSERT_CKR_OK(g_fns->C_Encrypt(session_,
-                                 plaintext_.get(), kNumBlocks * blocksize_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
                                  ciphertext, &ciphertext_len));
-  EXPECT_EQ(kNumBlocks * blocksize_, ciphertext_len);
+  EXPECT_EQ(kNumBlocks * info_.blocksize, ciphertext_len);
   if (g_verbose) cout << "CT: " << hex_data(ciphertext, ciphertext_len) << endl;
 
   // Now decrypt the data.
@@ -126,7 +122,7 @@ TEST_P(SecretKeyTest, EncryptDecrypt) {
                                  ciphertext, ciphertext_len,
                                  recovered_plaintext, &recovered_plaintext_len));
   if (g_verbose) cout << "PT: " << hex_data(recovered_plaintext, recovered_plaintext_len) << endl;
-  EXPECT_EQ(kNumBlocks * blocksize_, recovered_plaintext_len);
+  EXPECT_EQ(kNumBlocks * info_.blocksize, recovered_plaintext_len);
   EXPECT_EQ(0, memcmp(plaintext_.get(), recovered_plaintext, recovered_plaintext_len));
 }
 
@@ -138,23 +134,23 @@ TEST_P(SecretKeyTest, EncryptDecryptGetSpace) {
   CK_ULONG ciphertext_len = 0;
   // Provide no buffer => get OK return code and the required length.
   EXPECT_CKR_OK(g_fns->C_Encrypt(session_,
-                                 plaintext_.get(), kNumBlocks * blocksize_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
                                  NULL_PTR, &ciphertext_len));
-  EXPECT_EQ(kNumBlocks * blocksize_, ciphertext_len);
+  EXPECT_EQ(kNumBlocks * info_.blocksize, ciphertext_len);
 
   // Provide too-small buffer => get too-small return code and the required length.
-  ciphertext_len = (kNumBlocks * blocksize_) - 1;
+  ciphertext_len = (kNumBlocks * info_.blocksize) - 1;
   memset(ciphertext, 0xAB, sizeof(ciphertext));
   EXPECT_CKR(CKR_BUFFER_TOO_SMALL,
              g_fns->C_Encrypt(session_,
-                              plaintext_.get(), kNumBlocks * blocksize_,
+                              plaintext_.get(), kNumBlocks * info_.blocksize,
                               ciphertext, &ciphertext_len));
-  EXPECT_EQ(kNumBlocks * blocksize_, ciphertext_len);
+  EXPECT_EQ(kNumBlocks * info_.blocksize, ciphertext_len);
   EXPECT_EQ(0xAB, ciphertext[0]);  // buffer unaffected
 
   ciphertext_len = sizeof(ciphertext);
   EXPECT_CKR_OK(g_fns->C_Encrypt(session_,
-                                 plaintext_.get(), kNumBlocks * blocksize_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
                                  ciphertext, &ciphertext_len));
 
   // Now decrypt the data.
@@ -166,16 +162,16 @@ TEST_P(SecretKeyTest, EncryptDecryptGetSpace) {
   EXPECT_CKR_OK(g_fns->C_Decrypt(session_,
                                  ciphertext, ciphertext_len,
                                  NULL_PTR, &recovered_plaintext_len));
-  EXPECT_EQ(kNumBlocks * blocksize_, recovered_plaintext_len);
+  EXPECT_EQ(kNumBlocks * info_.blocksize, recovered_plaintext_len);
 
   // Provide too-small buffer => get too-small return code and the required length.
-  recovered_plaintext_len = (kNumBlocks * blocksize_) - 1;
+  recovered_plaintext_len = (kNumBlocks * info_.blocksize) - 1;
   memset(recovered_plaintext, 0xAB, sizeof(recovered_plaintext));
   EXPECT_CKR(CKR_BUFFER_TOO_SMALL,
              g_fns->C_Decrypt(session_,
                               ciphertext, ciphertext_len,
                               recovered_plaintext, &recovered_plaintext_len));
-  EXPECT_EQ(kNumBlocks * blocksize_, recovered_plaintext_len);
+  EXPECT_EQ(kNumBlocks * info_.blocksize, recovered_plaintext_len);
   EXPECT_EQ(0xAB, recovered_plaintext[0]);  // buffer unaffected
 
   recovered_plaintext_len = sizeof(recovered_plaintext);
@@ -195,21 +191,21 @@ TEST_P(SecretKeyTest, EncryptDecryptParts) {
   CK_BYTE_PTR part;
   CK_ULONG part_len;
   for (int block = 0; block < kNumBlocks; ++block) {
-    part = ciphertext + (block * blocksize_);
+    part = ciphertext + (block * info_.blocksize);
     part_len = ciphertext_bufsize - (part - ciphertext);
     ASSERT_CKR_OK(g_fns->C_EncryptUpdate(session_,
-                                         plaintext_.get() + block * blocksize_, blocksize_,
+                                         plaintext_.get() + block * info_.blocksize, info_.blocksize,
                                          part, &part_len));
-    EXPECT_EQ(blocksize_, part_len);
+    EXPECT_EQ(info_.blocksize, part_len);
     if (g_verbose) cout << "CT[" << block << "]: " << hex_data(part, part_len) << endl;
     ciphertext_len += part_len;
   }
-  part = ciphertext + (kNumBlocks * blocksize_);
+  part = ciphertext + (kNumBlocks * info_.blocksize);
   part_len = ciphertext_len - (part - ciphertext);
   EXPECT_CKR_OK(g_fns->C_EncryptFinal(session_, part, &part_len));
   EXPECT_EQ(0, part_len);
   ciphertext_len += part_len;
-  EXPECT_EQ(kNumBlocks * blocksize_, ciphertext_len);
+  EXPECT_EQ(kNumBlocks * info_.blocksize, ciphertext_len);
 
   // Now decrypt the data.
   ASSERT_CKR_OK(g_fns->C_DecryptInit(session_, &mechanism_, key_.handle()));
@@ -218,21 +214,21 @@ TEST_P(SecretKeyTest, EncryptDecryptParts) {
   CK_ULONG recovered_plaintext_bufsize = sizeof(recovered_plaintext);
   CK_ULONG recovered_plaintext_len = 0;
   for (int block = 0; block < kNumBlocks; ++block) {
-    part = recovered_plaintext + (block * blocksize_);
+    part = recovered_plaintext + (block * info_.blocksize);
     part_len = recovered_plaintext_bufsize - (part - recovered_plaintext);
     EXPECT_CKR_OK(g_fns->C_DecryptUpdate(session_,
-                                         ciphertext + (block * blocksize_), blocksize_,
+                                         ciphertext + (block * info_.blocksize), info_.blocksize,
                                          part, &part_len));
-    EXPECT_EQ(blocksize_, part_len);
+    EXPECT_EQ(info_.blocksize, part_len);
     if (g_verbose) cout << "PT[" << block << "]: " << hex_data(part, part_len) << endl;
     recovered_plaintext_len += part_len;
   }
-  part = recovered_plaintext + (kNumBlocks * blocksize_);
+  part = recovered_plaintext + (kNumBlocks * info_.blocksize);
   part_len = recovered_plaintext_bufsize - (part - recovered_plaintext);
   EXPECT_CKR_OK(g_fns->C_DecryptFinal(session_, part, &part_len));
   EXPECT_EQ(0, part_len);
   ciphertext_len += part_len;
-  EXPECT_EQ(kNumBlocks * blocksize_, recovered_plaintext_len);
+  EXPECT_EQ(kNumBlocks * info_.blocksize, recovered_plaintext_len);
 
   EXPECT_EQ(0, memcmp(plaintext_.get(), recovered_plaintext, recovered_plaintext_len));
 }
@@ -283,7 +279,7 @@ TEST_P(SecretKeyTest, EncryptErrors) {
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_Encrypt(session_,
-                              plaintext_.get(), kNumBlocks * blocksize_,
+                              plaintext_.get(), kNumBlocks * info_.blocksize,
                               NULL_PTR, NULL_PTR));
 
   CK_BYTE ciphertext[1024];
@@ -291,21 +287,21 @@ TEST_P(SecretKeyTest, EncryptErrors) {
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_Encrypt(INVALID_SESSION_HANDLE,
-                              plaintext_.get(), kNumBlocks * blocksize_,
+                              plaintext_.get(), kNumBlocks * info_.blocksize,
                               ciphertext, &ciphertext_len));
 
   ciphertext_len = sizeof(ciphertext);
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_Encrypt(session_,
-                              NULL_PTR, blocksize_,
+                              NULL_PTR, info_.blocksize,
                               ciphertext, &ciphertext_len));
 
   // Try to encrypt an incomplete block.
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
-  unique_ptr<CK_BYTE, freer> partial(randmalloc(blocksize_ - 1));
+  unique_ptr<CK_BYTE, freer> partial(randmalloc(info_.blocksize - 1));
   ciphertext_len = sizeof(ciphertext);
   CK_RV rv = g_fns->C_Encrypt(session_,
-                              partial.get(), blocksize_ - 1,
+                              partial.get(), info_.blocksize - 1,
                               ciphertext, &ciphertext_len);
   EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED);
 }
@@ -316,7 +312,7 @@ TEST_P(SecretKeyTest, DecryptErrors) {
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   ASSERT_CKR_OK(g_fns->C_Encrypt(session_,
-                                 plaintext_.get(), kNumBlocks * blocksize_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
                                  ciphertext, &ciphertext_len));
 
   // Variety of bad arguments to C_Decrypt.  Each error terminates the
@@ -338,15 +334,15 @@ TEST_P(SecretKeyTest, DecryptErrors) {
   plaintext_len = sizeof(plaintext);
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_Decrypt(session_,
-                              NULL_PTR, blocksize_,
+                              NULL_PTR, info_.blocksize,
                               plaintext, &plaintext_len));
 
   // Try to decrypt an incomplete block.
   EXPECT_CKR_OK(g_fns->C_DecryptInit(session_, &mechanism_, key_.handle()));
-  unique_ptr<CK_BYTE, freer> partial(randmalloc(blocksize_ - 1));
+  unique_ptr<CK_BYTE, freer> partial(randmalloc(info_.blocksize - 1));
   plaintext_len = sizeof(plaintext);
   CK_RV rv = g_fns->C_Decrypt(session_,
-                              partial.get(), blocksize_ - 1,
+                              partial.get(), info_.blocksize - 1,
                               plaintext, &plaintext_len);
   EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED);
 }
@@ -357,7 +353,7 @@ TEST_P(SecretKeyTest, EncryptUpdateErrors) {
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_EncryptUpdate(session_,
-                                    plaintext_.get(), kNumBlocks * blocksize_,
+                                    plaintext_.get(), kNumBlocks * info_.blocksize,
                                     NULL_PTR, NULL_PTR));
 
   CK_BYTE ciphertext[1024];
@@ -365,13 +361,13 @@ TEST_P(SecretKeyTest, EncryptUpdateErrors) {
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_EncryptUpdate(INVALID_SESSION_HANDLE,
-                                    plaintext_.get(), kNumBlocks * blocksize_,
+                                    plaintext_.get(), kNumBlocks * info_.blocksize,
                                     ciphertext, &ciphertext_len));
 
   ciphertext_len = sizeof(ciphertext);
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_EncryptUpdate(session_,
-                                    NULL_PTR, blocksize_,
+                                    NULL_PTR, info_.blocksize,
                                     ciphertext, &ciphertext_len));
 }
 
@@ -380,12 +376,12 @@ TEST_P(SecretKeyTest, EncryptModePolicing1) {
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR_OK(g_fns->C_EncryptUpdate(session_,
-                                       plaintext_.get(), kNumBlocks * blocksize_,
+                                       plaintext_.get(), kNumBlocks * info_.blocksize,
                                        ciphertext, &ciphertext_len));
   // Having started an incremental operation, a one-shot operation fails.
   EXPECT_CKR(CKR_OPERATION_ACTIVE,
              g_fns->C_Encrypt(session_,
-                              plaintext_.get(), kNumBlocks * blocksize_,
+                              plaintext_.get(), kNumBlocks * info_.blocksize,
                               ciphertext, &ciphertext_len));
 }
 
@@ -394,39 +390,39 @@ TEST_P(SecretKeyTest, EncryptModePolicing2) {
   CK_ULONG ciphertext_len = 0;
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR_OK(g_fns->C_Encrypt(session_,
-                                 plaintext_.get(), kNumBlocks * blocksize_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
                                  NULL_PTR, &ciphertext_len));
   // Having started a one-shot operation (but not yet retrieved its results),
   // an incremental operation fails.
   EXPECT_CKR(CKR_OPERATION_ACTIVE,
              g_fns->C_EncryptUpdate(session_,
-                                    plaintext_.get(), kNumBlocks * blocksize_,
+                                    plaintext_.get(), kNumBlocks * info_.blocksize,
                                     ciphertext, &ciphertext_len));
 }
 
 TEST_P(SecretKeyTest, EncryptInvalidIV) {
-  if (!emits_iv_) return;
-  CK_MECHANISM mechanism = {info_.mode, iv_.get(), (CK_ULONG)(blocksize_ - 1)};
+  if (!info_.has_iv) return;
+  CK_MECHANISM mechanism = {info_.mode, iv_.get(), (CK_ULONG)(info_.blocksize - 1)};
   EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
              g_fns->C_EncryptInit(session_, &mechanism, key_.handle()));
 
   /*
   // TODO: reinstate
-  CK_MECHANISM mechanism2 = {info_.mode, NULL_PTR, (CK_ULONG)blocksize_};
+  CK_MECHANISM mechanism2 = {info_.mode, NULL_PTR, (CK_ULONG)info_.blocksize};
   EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
              g_fns->C_EncryptInit(session_, &mechanism2, key_.handle()));
   */
 }
 
 TEST_P(SecretKeyTest, DecryptInvalidIV) {
-  if (!emits_iv_) return;
-  CK_MECHANISM mechanism = {info_.mode, iv_.get(), (CK_ULONG)(blocksize_ - 1)};
+  if (!info_.has_iv) return;
+  CK_MECHANISM mechanism = {info_.mode, iv_.get(), (CK_ULONG)(info_.blocksize - 1)};
   EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
              g_fns->C_DecryptInit(session_, &mechanism, key_.handle()));
 
   /*
   // TODO: reinstate
-  CK_MECHANISM mechanism2 = {info_.mode, NULL_PTR, (CK_ULONG)blocksize_};
+  CK_MECHANISM mechanism2 = {info_.mode, NULL_PTR, (CK_ULONG)info_.blocksize};
   EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
              g_fns->C_DecryptInit(session_, &mechanism2, key_.handle()));
   */
@@ -438,7 +434,7 @@ TEST_P(SecretKeyTest, DecryptUpdateErrors) {
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   ASSERT_CKR_OK(g_fns->C_EncryptUpdate(session_,
-                                       plaintext_.get(), kNumBlocks * blocksize_,
+                                       plaintext_.get(), kNumBlocks * info_.blocksize,
                                        ciphertext, &ciphertext_len));
 
   // Variety of bad arguments to C_DecryptUpdate.  Each error terminates the
@@ -460,7 +456,7 @@ TEST_P(SecretKeyTest, DecryptUpdateErrors) {
   plaintext_len = sizeof(plaintext);
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_DecryptUpdate(session_,
-                                    NULL_PTR, blocksize_,
+                                    NULL_PTR, info_.blocksize,
                                     plaintext, &plaintext_len));
 }
 
@@ -472,7 +468,7 @@ TEST_P(SecretKeyTest, EncryptFinalErrors1) {
   CK_ULONG output_len = sizeof(ciphertext) - (output - ciphertext);
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR_OK(g_fns->C_EncryptUpdate(session_,
-                                       plaintext_.get(), kNumBlocks * blocksize_,
+                                       plaintext_.get(), kNumBlocks * info_.blocksize,
                                        output, &output_len));
   output += output_len;
   output_len = sizeof(ciphertext) - (output - ciphertext);
@@ -486,7 +482,7 @@ TEST_P(SecretKeyTest, EncryptFinalErrors2) {
   CK_ULONG output_len = sizeof(ciphertext) - (output - ciphertext);
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR_OK(g_fns->C_EncryptUpdate(session_,
-                                       plaintext_.get(), kNumBlocks * blocksize_,
+                                       plaintext_.get(), kNumBlocks * info_.blocksize,
                                        output, &output_len));
   output += output_len;
   output_len = sizeof(ciphertext) - (output - ciphertext);
@@ -495,10 +491,10 @@ TEST_P(SecretKeyTest, EncryptFinalErrors2) {
                                    output, &output_len));
 
   // Try to encrypt an incomplete block.
-  unique_ptr<CK_BYTE, freer> partial(randmalloc(blocksize_ - 1));
+  unique_ptr<CK_BYTE, freer> partial(randmalloc(info_.blocksize - 1));
   output_len = sizeof(ciphertext) - (output - ciphertext);
   CK_RV rv = g_fns->C_EncryptUpdate(session_,
-                                    partial.get(), blocksize_ - 1,
+                                    partial.get(), info_.blocksize - 1,
                                     output, &output_len);
   if (rv == CKR_OK) {
     output += output_len;
@@ -516,7 +512,7 @@ TEST_P(SecretKeyTest, DecryptFinalErrors1) {
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   ASSERT_CKR_OK(g_fns->C_EncryptUpdate(session_,
-                                       plaintext_.get(), kNumBlocks * blocksize_,
+                                       plaintext_.get(), kNumBlocks * info_.blocksize,
                                        ciphertext, &ciphertext_len));
 
   // Variety of bad arguments to C_DecryptFinal.  Each error terminates the
@@ -540,7 +536,7 @@ TEST_P(SecretKeyTest, DecryptFinalErrors2) {
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   ASSERT_CKR_OK(g_fns->C_EncryptUpdate(session_,
-                                       plaintext_.get(), kNumBlocks * blocksize_,
+                                       plaintext_.get(), kNumBlocks * info_.blocksize,
                                        ciphertext, &ciphertext_len));
 
   CK_BYTE plaintext[1024];

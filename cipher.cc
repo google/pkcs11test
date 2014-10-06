@@ -126,6 +126,28 @@ TEST_P(SecretKeyTest, EncryptDecrypt) {
   EXPECT_EQ(0, memcmp(plaintext_.get(), recovered_plaintext, recovered_plaintext_len));
 }
 
+TEST_P(SecretKeyTest, EncryptFailDecrypt) {
+  CK_BYTE ciphertext[1024];
+  CK_ULONG ciphertext_len = sizeof(ciphertext);
+  ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
+  ASSERT_CKR_OK(g_fns->C_Encrypt(session_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
+                                 ciphertext, &ciphertext_len));
+
+  // Corrupt a byte.
+  ciphertext[0]++;
+
+  // Now decrypt the data.
+  CK_BYTE recovered_plaintext[1024];
+  CK_ULONG recovered_plaintext_len = sizeof(recovered_plaintext);
+  ASSERT_CKR_OK(g_fns->C_DecryptInit(session_, &mechanism_, key_.handle()));
+  EXPECT_CKR_OK(g_fns->C_Decrypt(session_,
+                                 ciphertext, ciphertext_len,
+                                 recovered_plaintext, &recovered_plaintext_len));
+  EXPECT_EQ(kNumBlocks * info_.blocksize, recovered_plaintext_len);
+  EXPECT_NE(0, memcmp(plaintext_.get(), recovered_plaintext, recovered_plaintext_len));
+}
+
 TEST_P(SecretKeyTest, EncryptDecryptGetSpace) {
   // First encrypt the data.
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));

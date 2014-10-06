@@ -241,8 +241,9 @@ TEST_P(DigestTest, DigestKeyInvalid) {
   g_fns->C_DigestFinal(session_, buffer, &digest_len);
 }
 
-TEST_P(DigestTest, DigestInvalidSession) {
-  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_DigestInit(INVALID_SESSION_HANDLE, &mechanism_));
+TEST_P(DigestTest, DigestInitInvalidSession) {
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_DigestInit(INVALID_SESSION_HANDLE, &mechanism_));
 }
 
 TEST_P(DigestTest, DigestGetSpace) {
@@ -269,7 +270,7 @@ TEST_P(DigestTest, DigestGetSpace) {
   EXPECT_CKR_OK(g_fns->C_Digest(session_, data_.get(), datalen_, buffer, &digest_len));
 }
 
-TEST_P(DigestTest, DigestUpdateGetSpace) {
+TEST_P(DigestTest, DigestFinalGetSpace) {
   CK_RV rv = g_fns->C_DigestInit(session_, &mechanism_);
   SKIP_IF_UNIMPLEMENTED_RV(rv);
   EXPECT_CKR_OK(rv);
@@ -312,12 +313,50 @@ TEST_P(DigestTest, DigestFinalInvalid) {
   SKIP_IF_UNIMPLEMENTED_RV(rv);
   EXPECT_CKR_OK(rv);
 
-  // Digest and retrieve required length.
+  CK_BYTE buffer[512];
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_DigestFinal(session_, buffer, NULL_PTR));
+
+  // An error terminates the operation
+  CK_ULONG digest_len = sizeof(buffer);
+  EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
+             g_fns->C_DigestFinal(session_, buffer, &digest_len));
+}
+
+TEST_P(DigestTest, DigestIntersperse) {
+  CK_RV rv = g_fns->C_DigestInit(session_, &mechanism_);
+  SKIP_IF_UNIMPLEMENTED_RV(rv);
+  EXPECT_CKR_OK(rv);
+  EXPECT_CKR_OK(g_fns->C_DigestUpdate(session_, data_.get(), 1));
+
+  // Complete digest and retrieve required length.
+  CK_ULONG digest_len = 0;
+  EXPECT_CKR_OK(g_fns->C_DigestFinal(session_, NULL_PTR, &digest_len));
+  EXPECT_EQ(digestsize_, digest_len);
+
+  // Attempt to finish with Digest; not allowed
+  CK_BYTE buffer[512];
+  digest_len = sizeof(buffer);
+  EXPECT_CKR(CKR_OPERATION_ACTIVE,
+             g_fns->C_Digest(session_, data_.get() + 1, datalen_ - 1, buffer, &digest_len));
+
+  // A failed Digest should always terminate the active digest operation.
+  digest_len = sizeof(buffer);
+  EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
+             g_fns->C_DigestFinal(session_, buffer, &digest_len));
+}
+
+TEST_P(DigestTest, DigestFinalIntersperse) {
+  CK_RV rv = g_fns->C_DigestInit(session_, &mechanism_);
+  SKIP_IF_UNIMPLEMENTED_RV(rv);
+  EXPECT_CKR_OK(rv);
+
+  // Digest and retrieve required length as a one-shot operation.
   CK_ULONG digest_len = 0;
   EXPECT_CKR_OK(g_fns->C_Digest(session_, data_.get(), datalen_, NULL_PTR, &digest_len));
   EXPECT_EQ(digestsize_, digest_len);
 
-  // Attempt to finish with DigestFinal is not allowed.
+  // Attempt to finish with DigestFinal; not allowed.
   CK_BYTE buffer[512];
   digest_len = sizeof(buffer);
   EXPECT_CKR(CKR_OPERATION_ACTIVE,
@@ -329,40 +368,50 @@ TEST_P(DigestTest, DigestFinalInvalid) {
              g_fns->C_Digest(session_, data_.get(), datalen_, buffer, &digest_len));
 }
 
+TEST_P(DigestTest, DigestNoInit) {
+  EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
+             g_fns->C_DigestUpdate(session_, data_.get(), 1));
+}
+
 TEST_P(DigestTest, DigestUpdateNoInit) {
   EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
              g_fns->C_DigestUpdate(session_, data_.get(), 1));
 }
 
-TEST_P(DigestTest, DigestUpdateInvalidSession) {
-  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_DigestInit(INVALID_SESSION_HANDLE, &mechanism_));
-}
-
-TEST_P(DigestTest, DigestUpdateInvalid) {
+TEST_P(DigestTest, DigestInvalidSession) {
   CK_RV rv = g_fns->C_DigestInit(session_, &mechanism_);
   SKIP_IF_UNIMPLEMENTED_RV(rv);
   EXPECT_CKR_OK(rv);
 
-  EXPECT_CKR_OK(g_fns->C_DigestUpdate(session_, data_.get(), 0));
-  EXPECT_CKR_OK(g_fns->C_DigestUpdate(session_, data_.get(), 1));
-
-  // Now we're in incremental mode, an attempt to all-at-once digest should fail.
   CK_BYTE buffer[512];
   CK_ULONG digest_len = sizeof(buffer);
-  EXPECT_CKR(CKR_OPERATION_ACTIVE,
-             g_fns->C_Digest(session_, data_.get(), datalen_, buffer, &digest_len));
-
-  digest_len = sizeof(buffer);
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
-             g_fns->C_DigestFinal(INVALID_SESSION_HANDLE, buffer, &digest_len));
+             g_fns->C_Digest(INVALID_SESSION_HANDLE, data_.get(), datalen_, buffer, &digest_len));
+}
 
-  digest_len = 1;
-  EXPECT_CKR(CKR_BUFFER_TOO_SMALL,
-             g_fns->C_DigestFinal(session_, buffer, &digest_len));
-  EXPECT_EQ(digestsize_, digest_len);
+TEST_P(DigestTest, DigestUpdateInvalidSession) {
+  CK_RV rv = g_fns->C_DigestInit(session_, &mechanism_);
+  SKIP_IF_UNIMPLEMENTED_RV(rv);
+  EXPECT_CKR_OK(rv);
 
-  digest_len = sizeof(buffer);
-  EXPECT_CKR_OK(g_fns->C_DigestFinal(session_, buffer, &digest_len));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_DigestUpdate(INVALID_SESSION_HANDLE, data_.get(), datalen_));
+}
+
+TEST_P(DigestTest, DigestUpdateZeroLen) {
+  CK_RV rv = g_fns->C_DigestInit(session_, &mechanism_);
+  SKIP_IF_UNIMPLEMENTED_RV(rv);
+  EXPECT_CKR_OK(rv);
+
+  // Spec does not indicate whether zero-length input is allowed.
+  rv = g_fns->C_DigestUpdate(session_, data_.get(), 0);
+  if (rv == CKR_OK) {
+    CK_BYTE buffer[512];
+    CK_ULONG digest_len = sizeof(buffer);
+    EXPECT_CKR_OK(g_fns->C_DigestFinal(session_, buffer, &digest_len));
+  } else {
+    EXPECT_CKR(CKR_ARGUMENTS_BAD, rv);
+  }
 }
 
 TEST_F(ReadOnlySessionTest, DigestTestVectors) {

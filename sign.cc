@@ -93,7 +93,7 @@ TEST_P(SignTest, SignVerify) {
   EXPECT_CKR_OK(g_fns->C_Sign(session_, data_.get(), datalen_, output, &output_len));
 
   ASSERT_CKR_OK(g_fns->C_VerifyInit(session_, &mechanism_, keypair_.public_handle()));
-  EXPECT_CKR_OK(g_fns->C_Verify(session_, data_.get(), datalen_,output, output_len));
+  EXPECT_CKR_OK(g_fns->C_Verify(session_, data_.get(), datalen_, output, output_len));
 }
 
 TEST_P(SignTest, SignFailVerify) {
@@ -109,10 +109,39 @@ TEST_P(SignTest, SignFailVerify) {
 
   ASSERT_CKR_OK(g_fns->C_VerifyInit(session_, &mechanism_, keypair_.public_handle()));
   EXPECT_CKR(CKR_SIGNATURE_INVALID,
-             g_fns->C_Verify(session_, data_.get(), datalen_,output, output_len));
+             g_fns->C_Verify(session_, data_.get(), datalen_, output, output_len));
 }
 
-// Skip CKM_RSA_PKCS as it has restrictions on data sizes (see PKCS#11 s12.1.6 table 37).
+TEST_F(ReadOnlySessionTest, DISABLED_SignVerifyRecover) {
+  vector<CK_ATTRIBUTE_TYPE> public_attrs = {CKA_VERIFY_RECOVER};
+  vector<CK_ATTRIBUTE_TYPE> private_attrs = {CKA_SIGN_RECOVER};
+  KeyPair keypair(session_, public_attrs, private_attrs);
+  const int datalen = 64;
+  unique_ptr<CK_BYTE, freer> data = randmalloc(datalen);
+  CK_MECHANISM mechanism = {CKM_RSA_PKCS, NULL_PTR, 0};
+
+  CK_RV rv = g_fns->C_SignRecoverInit(session_, &mechanism, keypair.private_handle());
+  if (rv == CKR_FUNCTION_NOT_SUPPORTED) {
+    TEST_SKIPPED("SignRecover not supported");
+    return;
+  }
+  ASSERT_CKR_OK(rv);
+  CK_BYTE output[2048];
+  CK_ULONG output_len = sizeof(output);
+  EXPECT_CKR_OK(g_fns->C_SignRecover(session_, data.get(), datalen, output, &output_len));
+  if (g_verbose) {
+    cout << "SignRecover on " << datalen << " bytes produced " << output_len << " bytes:" << endl;
+    cout << "  " << hex_data(output, output_len) << endl;
+  }
+
+  CK_BYTE recovered[2048];
+  CK_ULONG recovered_len = sizeof(recovered);
+  ASSERT_CKR_OK(g_fns->C_VerifyRecoverInit(session_, &mechanism, keypair.public_handle()));
+  ASSERT_CKR_OK(g_fns->C_VerifyRecover(session_, output, output_len, recovered, &recovered_len));
+  EXPECT_EQ(datalen, recovered_len);
+  EXPECT_EQ(0, memcmp(data.get(), recovered, datalen));
+}
+
 INSTANTIATE_TEST_CASE_P(Signatures, SignTest,
                         ::testing::Values("RSA",
                                           "MD5-RSA",

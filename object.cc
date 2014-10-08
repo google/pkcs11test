@@ -182,12 +182,11 @@ TEST_F(ReadWriteSessionTest, ConsistentObjects) {
 TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
   // Create a data object.
   CK_OBJECT_CLASS data_class = CKO_DATA;
-  CK_BBOOL bfalse = CK_FALSE;
   CK_UTF8CHAR app[] = "pkcs11test";
   CK_UTF8CHAR label[] = "OldLabel";
   CK_ATTRIBUTE attrs[] = {
     {CKA_CLASS, &data_class, sizeof(data_class)},
-    {CKA_TOKEN, &bfalse, sizeof(bfalse)},  // Session object
+    {CKA_TOKEN, &g_ck_false, sizeof(g_ck_false)},  // Session object
     {CKA_APPLICATION, app, sizeof(app)},
     {CKA_VALUE, deadbeef, sizeof(deadbeef)},
     {CKA_LABEL, label, 8},
@@ -260,11 +259,10 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
 
 TEST_F(ReadWriteSessionTest, CreateObjectInvalid) {
   CK_OBJECT_CLASS data_class = CKO_DATA;
-  CK_BBOOL bfalse = CK_FALSE;
   CK_UTF8CHAR app[] = "pkcs11test";
   CK_ATTRIBUTE attrs[] = {
     {CKA_CLASS, &data_class, sizeof(data_class)},
-    {CKA_TOKEN, &bfalse, sizeof(bfalse)},
+    {CKA_TOKEN, &g_ck_false, sizeof(g_ck_false)},  // Session object
     {CKA_APPLICATION, app, sizeof(app)},
     {CKA_VALUE, deadbeef, sizeof(deadbeef)},
   };
@@ -290,12 +288,11 @@ class DataObjectTest : public ReadWriteSessionTest {
  public:
   DataObjectTest() : object_(CK_INVALID_HANDLE) {
     CK_OBJECT_CLASS data_class = CKO_DATA;
-    CK_BBOOL bfalse = CK_FALSE;
     CK_UTF8CHAR app[] = "pkcs11test";
     CK_UTF8CHAR label[] = "Label";
     CK_ATTRIBUTE attrs[] = {
       {CKA_CLASS, &data_class, sizeof(data_class)},
-      {CKA_TOKEN, &bfalse, sizeof(bfalse)},
+      {CKA_TOKEN, &g_ck_false, sizeof(g_ck_false)},  // Session object
       {CKA_APPLICATION, app, sizeof(app)},
       {CKA_VALUE, deadbeef, sizeof(deadbeef)},
       {CKA_LABEL, label, 5},

@@ -79,7 +79,7 @@ TEST_F(RWUserSessionTest, SOLoginFail) {
   // Can't login as SO in read-write session if already logged in as user.
   CK_RV rv = g_fns->C_Login(session_, CKU_SO, (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin));
   EXPECT_TRUE(rv == CKR_SESSION_READ_ONLY_EXISTS ||
-              rv == CKR_USER_ANOTHER_ALREADY_LOGGED_IN);
+              rv == CKR_USER_ANOTHER_ALREADY_LOGGED_IN) << " rv=" << CK_RV_(rv);
 }
 
 TEST_F(RWUserSessionTest, LogoutInvalid) {

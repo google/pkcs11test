@@ -272,10 +272,10 @@ TEST_F(ReadWriteSessionTest, CreateObjectInvalid) {
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_CreateObject(session_, attrs, sizeof(attrs)/sizeof(attrs[0]), NULL_PTR));
   CK_RV rv = g_fns->C_CreateObject(session_, NULL_PTR, sizeof(attrs)/sizeof(attrs[0]), &object);
-  EXPECT_TRUE(rv == CKR_TEMPLATE_INCOMPLETE || rv == CKR_ARGUMENTS_BAD);
+  EXPECT_TRUE(rv == CKR_TEMPLATE_INCOMPLETE || rv == CKR_ARGUMENTS_BAD) << " rv=" << CK_RV_(rv);
 
   rv = g_fns->C_CreateObject(session_, attrs, 0, &object);
-  EXPECT_TRUE(rv == CKR_TEMPLATE_INCOMPLETE || rv == CKR_ARGUMENTS_BAD);
+  EXPECT_TRUE(rv == CKR_TEMPLATE_INCOMPLETE || rv == CKR_ARGUMENTS_BAD) << " rv=" << CK_RV_(rv);
 
   CK_ATTRIBUTE attr_value[] = {
     {CKA_VALUE, deadbeef, sizeof(deadbeef)},
@@ -376,7 +376,7 @@ TEST_F(DataObjectTest, GetSetAttributeInvalid) {
   EXPECT_CKR(CKR_OBJECT_HANDLE_INVALID,
              g_fns->C_GetAttributeValue(session_, INVALID_OBJECT_HANDLE, &get_attr, 1));
   CK_RV rv = g_fns->C_GetAttributeValue(session_, object_, NULL_PTR, 1);
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_TEMPLATE_INCOMPLETE);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_TEMPLATE_INCOMPLETE) << " rv=" << CK_RV_(rv);
   get_attr.ulValueLen = 1;
   EXPECT_CKR(CKR_BUFFER_TOO_SMALL,
              g_fns->C_GetAttributeValue(session_, object_, &get_attr, 1));

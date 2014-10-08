@@ -46,7 +46,7 @@ TEST_F(PKCS11Test, OpenSessionInvalidSlot) {
 TEST_F(PKCS11Test, OpenSessionInvalid) {
   CK_FLAGS flags = CKF_SERIAL_SESSION;
   CK_RV rv = g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, NULL_PTR);
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
 }
 
 TEST_F(PKCS11Test, ClosedSessionErrors) {

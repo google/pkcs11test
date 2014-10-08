@@ -36,7 +36,7 @@ TEST_F(ReadOnlySessionTest, GenerateKeyInvalid) {
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_GenerateKey(INVALID_SESSION_HANDLE, &mechanism, attrs, 3, &key));
   CK_RV rv = g_fns->C_GenerateKey(session_, NULL_PTR, attrs, 3, &key);
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID) << " rv=" << CK_RV_(rv);
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_GenerateKey(session_, &mechanism, NULL_PTR, 3, &key));
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
@@ -70,7 +70,7 @@ TEST_F(ReadOnlySessionTest, GenerateKeyPairInvalid) {
                                       public_attrs, 4,
                                       private_attrs, 2,
                                       &public_key, &private_key);
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID) << " rv=" << CK_RV_(rv);
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_GenerateKeyPair(session_, &mechanism,
                                       NULL_PTR, 4,
@@ -175,7 +175,7 @@ TEST_F(ReadOnlySessionTest, WrapInvalid) {
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_WrapKey(INVALID_SESSION_HANDLE, &wrap_mechanism, k2.handle(), k1.handle(), data, &data_len));
   rv = g_fns->C_WrapKey(session_, NULL_PTR, k2.handle(), k1.handle(), data, &data_len);
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID) << " rv=" << CK_RV_(rv);
   EXPECT_CKR(CKR_WRAPPING_KEY_HANDLE_INVALID,
              g_fns->C_WrapKey(session_, &wrap_mechanism, INVALID_OBJECT_HANDLE, k1.handle(), data, &data_len));
   EXPECT_CKR(CKR_KEY_HANDLE_INVALID,
@@ -226,7 +226,7 @@ TEST_F(ReadOnlySessionTest, UnwrapInvalid) {
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_UnwrapKey(INVALID_SESSION_HANDLE, &wrap_mechanism, k2.handle(), data, data_len, k3_attrs, 5, &k3));
   rv = g_fns->C_UnwrapKey(session_, NULL_PTR, k2.handle(), data, data_len, k3_attrs, 5, &k3);
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID) << " rv=" << CK_RV_(rv);
   EXPECT_CKR(CKR_WRAPPING_KEY_HANDLE_INVALID,
              g_fns->C_UnwrapKey(session_, &wrap_mechanism, NULL_PTR, data, data_len, k3_attrs, 5, &k3));
   EXPECT_CKR(CKR_ARGUMENTS_BAD,

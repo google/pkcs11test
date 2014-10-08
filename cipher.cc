@@ -283,9 +283,9 @@ TEST_P(SecretKeyTest, EncryptDecryptInitInvalid) {
 
   CK_RV rv;
   rv = g_fns->C_EncryptInit(session_, NULL_PTR, key_.handle());
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD  || rv == CKR_MECHANISM_INVALID);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD  || rv == CKR_MECHANISM_INVALID) << " rv=" << CK_RV_(rv);
   rv = g_fns->C_DecryptInit(session_, NULL_PTR, key_.handle());
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD  || rv == CKR_MECHANISM_INVALID);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD  || rv == CKR_MECHANISM_INVALID) << " rv=" << CK_RV_(rv);
 
   // Can't perform RSA with a symmetric key.
   CK_MECHANISM rsa_mechanism = {CKM_RSA_PKCS, NULL_PTR, 0};
@@ -334,7 +334,7 @@ TEST_P(SecretKeyTest, EncryptErrors) {
   CK_RV rv = g_fns->C_Encrypt(session_,
                               partial.get(), info_.blocksize - 1,
                               ciphertext, &ciphertext_len);
-  EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED);
+  EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
 }
 
 TEST_P(SecretKeyTest, DecryptErrors) {
@@ -375,7 +375,7 @@ TEST_P(SecretKeyTest, DecryptErrors) {
   CK_RV rv = g_fns->C_Decrypt(session_,
                               partial.get(), info_.blocksize - 1,
                               plaintext, &plaintext_len);
-  EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED);
+  EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
 }
 
 TEST_P(SecretKeyTest, EncryptUpdateErrors) {
@@ -531,9 +531,9 @@ TEST_P(SecretKeyTest, EncryptFinalErrors2) {
     output += output_len;
     output_len = sizeof(ciphertext) - (output - ciphertext);
     rv = g_fns->C_EncryptFinal(session_, output, &output_len);
-    EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED);
+    EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
   } else {
-    EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED);
+    EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
   }
 }
 

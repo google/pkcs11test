@@ -168,7 +168,7 @@ TEST_F(PKCS11Test, GetInfo) {
 
 TEST_F(PKCS11Test, GetInfoFail) {
   CK_RV rv = g_fns->C_GetInfo(nullptr);
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
 }
 
 TEST(Init, GetInfoNoInit) {
@@ -185,7 +185,7 @@ TEST_F(PKCS11Test, GetFunctionList) {
 
 TEST_F(PKCS11Test, GetFunctionListFail) {
   CK_RV rv = g_fns->C_GetFunctionList(nullptr) ;
-  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
 }
 
 }  // namespace test

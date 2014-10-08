@@ -33,9 +33,12 @@ TEST_F(ReadWriteSessionTest, TookanAttackA1) {
   CK_ULONG data_len = sizeof(data);
   CK_RV rv;
   rv = g_fns->C_WrapKey(session_, &wrap_mechanism, k2.handle(), k1.handle(), data, &data_len);
+  if (rv == CKR_FUNCTION_NOT_SUPPORTED) {
+    TEST_SKIPPED("Key wrapping not supported");
+    return;
+  }
   EXPECT_TRUE(rv == CKR_KEY_NOT_WRAPPABLE ||
-              rv == CKR_KEY_UNEXTRACTABLE ||
-              rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
+              rv == CKR_KEY_UNEXTRACTABLE) << " rv=" << CK_RV_(rv);
 
   if (rv == CKR_OK) {
     // Use k2 to decrypt the result, giving contents of k1.
@@ -63,9 +66,12 @@ TEST_F(RWEitherSessionTest, TookanAttackA2) {
   CK_ULONG data_len = sizeof(data);
   CK_RV rv;
   rv = g_fns->C_WrapKey(session_, &wrap_mechanism, k2.public_handle(), k1.handle(), data, &data_len);
+  if (rv == CKR_FUNCTION_NOT_SUPPORTED) {
+    TEST_SKIPPED("Key wrapping not supported");
+    return;
+  }
   EXPECT_TRUE(rv == CKR_KEY_NOT_WRAPPABLE ||
-              rv == CKR_KEY_UNEXTRACTABLE ||
-              rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
+              rv == CKR_KEY_UNEXTRACTABLE) << " rv=" << CK_RV_(rv);
 
   if (rv == CKR_OK) {
     // Use k2 to decrypt the result, giving contents of k1.

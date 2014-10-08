@@ -229,6 +229,15 @@ TEST_P(SecretKeyTest, EncryptDecryptParts) {
   ciphertext_len += part_len;
   EXPECT_EQ(kNumBlocks * info_.blocksize, ciphertext_len);
 
+  // Check we get the same result as a one-shot encryption.
+  CK_BYTE ciphertext2[1024];
+  CK_ULONG ciphertext2_len = sizeof(ciphertext);
+  ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
+  ASSERT_CKR_OK(g_fns->C_Encrypt(session_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
+                                 ciphertext2, &ciphertext2_len));
+  EXPECT_EQ(hex_data(ciphertext, ciphertext_len), hex_data(ciphertext2, ciphertext2_len));
+
   // Now decrypt the data.
   ASSERT_CKR_OK(g_fns->C_DecryptInit(session_, &mechanism_, key_.handle()));
 

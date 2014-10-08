@@ -114,6 +114,8 @@ TEST_F(ReadWriteSessionTest, SOLogin) {
 
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   EXPECT_EQ(original_state, session_info.state);
+
+  EXPECT_CKR(CKR_USER_NOT_LOGGED_IN, g_fns->C_Logout(session_));
 }
 
 TEST_F(RWSOSessionTest, SOSessionFail) {

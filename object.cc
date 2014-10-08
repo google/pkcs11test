@@ -164,15 +164,19 @@ TEST_F(RWUserSessionTest, EnumerateObjects) {
 TEST_F(ReadOnlySessionTest, ConsistentObjects) {
   // Shouldn't matter whether we retrieve the objects one at a time or in bigger lumps.
   set<CK_OBJECT_HANDLE> objs1 = GetObjects(session_, 1);
-  set<CK_OBJECT_HANDLE> objs2 = GetObjects(session_, 1024);
+  set<CK_OBJECT_HANDLE> objs2 = GetObjects(session_, 10);
+  set<CK_OBJECT_HANDLE> objs3 = GetObjects(session_, 1024);
   EXPECT_EQ(objs1, objs2);
+  EXPECT_EQ(objs1, objs3);
 }
 
 TEST_F(ReadWriteSessionTest, ConsistentObjects) {
   // Shouldn't matter whether we retrieve the objects one at a time or in bigger lumps.
   set<CK_OBJECT_HANDLE> objs1 = GetObjects(session_, 1);
-  set<CK_OBJECT_HANDLE> objs2 = GetObjects(session_, 1024);
+  set<CK_OBJECT_HANDLE> objs2 = GetObjects(session_, 10);
+  set<CK_OBJECT_HANDLE> objs3 = GetObjects(session_, 1024);
   EXPECT_EQ(objs1, objs2);
+  EXPECT_EQ(objs1, objs3);
 }
 
 TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
@@ -212,6 +216,7 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
     EXPECT_EQ(attrs[ii].ulValueLen, get_attr.ulValueLen);
     EXPECT_EQ(0, memcmp(buffer, attrs[ii].pValue, attrs[ii].ulValueLen));
   }
+
   // Check another attribute is absent.
   CK_ATTRIBUTE get_attr = {CKA_CERTIFICATE_TYPE, buffer, sizeof(buffer)};
   EXPECT_CKR(CKR_ATTRIBUTE_TYPE_INVALID,
@@ -235,6 +240,20 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
   EXPECT_EQ(8, get_attr.ulValueLen);
   EXPECT_EQ(0, memcmp(new_label, get_attr.pValue, 5));
 
+  // Make another copy but change the value attribute along the way.
+  CK_OBJECT_HANDLE object3;
+  CK_BYTE facefeed[] = { 0xFA, 0xCE, 0xFE, 0xED};
+  CK_ATTRIBUTE attrs3[] = {
+    {CKA_VALUE, facefeed, sizeof(facefeed)},
+  };
+  EXPECT_CKR_OK(g_fns->C_CopyObject(session_, object, attrs3, 1, &object3));
+
+  CK_ATTRIBUTE get_value = {CKA_VALUE, buffer, sizeof(buffer)};
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, object3, &get_value, 1));
+  EXPECT_EQ(sizeof(facefeed), get_value.ulValueLen);
+  EXPECT_EQ(hex_data(facefeed, sizeof(facefeed)), hex_data((CK_BYTE_PTR)get_value.pValue, get_value.ulValueLen));
+
+  EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object3));
   EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object2));
   EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object));
 }
@@ -256,8 +275,15 @@ TEST_F(ReadWriteSessionTest, CreateObjectInvalid) {
              g_fns->C_CreateObject(session_, attrs, sizeof(attrs)/sizeof(attrs[0]), NULL_PTR));
   CK_RV rv = g_fns->C_CreateObject(session_, NULL_PTR, sizeof(attrs)/sizeof(attrs[0]), &object);
   EXPECT_TRUE(rv == CKR_TEMPLATE_INCOMPLETE || rv == CKR_ARGUMENTS_BAD);
+
   rv = g_fns->C_CreateObject(session_, attrs, 0, &object);
   EXPECT_TRUE(rv == CKR_TEMPLATE_INCOMPLETE || rv == CKR_ARGUMENTS_BAD);
+
+  CK_ATTRIBUTE attr_value[] = {
+    {CKA_VALUE, deadbeef, sizeof(deadbeef)},
+  };
+  EXPECT_CKR(CKR_TEMPLATE_INCOMPLETE,
+             g_fns->C_CreateObject(session_, attr_value, 1, &object));
 }
 
 class DataObjectTest : public ReadWriteSessionTest {

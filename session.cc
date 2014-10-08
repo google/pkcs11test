@@ -88,6 +88,12 @@ TEST_F(PKCS11Test, ParallelSessions) {
     // PKCS#11 s9.2: Token has a "protected authentication path", whereby a user can log into the token without passing
     // a PIN through the Cryptoki library, so initial state might be logged in.
   }
+  EXPECT_EQ(ro_flags, session1_info.flags);
+  EXPECT_EQ(ro_flags, session2_info.flags);
+  EXPECT_EQ(rw_flags, session3_info.flags);
+  EXPECT_EQ(g_slot_id, session1_info.slotID);
+  EXPECT_EQ(g_slot_id, session2_info.slotID);
+  EXPECT_EQ(g_slot_id, session3_info.slotID);
 
   // Login relative to one session changes all session states.
   EXPECT_CKR_OK(g_fns->C_Login(session1, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
@@ -124,6 +130,9 @@ TEST_F(PKCS11Test, ParallelSessions) {
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session1, &session1_info));
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session2, &session2_info));
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GetSessionInfo(session3, &session3_info));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_CloseSession(session1));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_CloseSession(session2));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_CloseSession(session3));
 
   EXPECT_CKR_OK(g_fns->C_CloseAllSessions(g_slot_id));
 }
@@ -210,6 +219,26 @@ TEST_F(ReadWriteSessionTest, SessionInfo) {
   EXPECT_CKR_OK(g_fns->C_Logout(session_));
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session_, &session_info));
   EXPECT_EQ(original_state, session_info.state);
+}
+
+TEST_F(ReadWriteSessionTest, GetSetOperationStateInvalid) {
+  CK_ULONG len;
+  CK_RV rv = g_fns->C_GetOperationState(session_, NULL_PTR, &len);
+  if (rv == CKR_FUNCTION_NOT_SUPPORTED) {
+    TEST_SKIPPED("GetOperationState not supported");
+    return;
+  }
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_GetOperationState(INVALID_SESSION_HANDLE, NULL_PTR, &len));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_GetOperationState(session_, NULL_PTR, NULL_PTR));
+
+  CK_BYTE data[1024];
+  len = sizeof(data);
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+             g_fns->C_SetOperationState(INVALID_SESSION_HANDLE, data, len, 0, 0));
+  EXPECT_CKR(CKR_ARGUMENTS_BAD,
+             g_fns->C_SetOperationState(session_, NULL_PTR, NULL_PTR, 0, 0));
 }
 
 TEST_F(ReadWriteSessionTest, GetSetOperationState) {

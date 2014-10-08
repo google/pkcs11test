@@ -40,14 +40,15 @@ namespace {
 
 struct HmacInfo {
   CK_MECHANISM_TYPE hmac;
+  CK_ULONG mac_size;
 };
 
 map<string, HmacInfo> kHmacInfo = {
-  {"MD5-HMAC", {CKM_MD5_HMAC}},
-  {"SHA1-HMAC", {CKM_SHA_1_HMAC}},
-  {"SHA256-HMAC", {CKM_SHA256_HMAC}},
-  {"SHA384-HMAC", {CKM_SHA384_HMAC}},
-  {"SHA512-HMAC", {CKM_SHA512_HMAC}},
+  {"MD5-HMAC", {CKM_MD5_HMAC,  16}},
+  {"SHA1-HMAC", {CKM_SHA_1_HMAC, 20}},
+  {"SHA256-HMAC", {CKM_SHA256_HMAC, 256/8}},
+  {"SHA384-HMAC", {CKM_SHA384_HMAC, 384/8}},
+  {"SHA512-HMAC", {CKM_SHA512_HMAC, 512/8}},
 };
 
 struct TestData {
@@ -145,9 +146,10 @@ TEST_P(HmacTest, SignVerify) {
   CK_BYTE output[1024];
   CK_ULONG output_len = sizeof(output);
   EXPECT_CKR_OK(g_fns->C_Sign(session_, data_.get(), datalen_, output, &output_len));
+  EXPECT_EQ(info_.mac_size, output_len);
 
   ASSERT_CKR_OK(g_fns->C_VerifyInit(session_, &mechanism_, key_));
-  EXPECT_CKR_OK(g_fns->C_Verify(session_, data_.get(), datalen_,output, output_len));
+  EXPECT_CKR_OK(g_fns->C_Verify(session_, data_.get(), datalen_, output, output_len));
 }
 
 TEST_P(HmacTest, SignFailVerify) {
@@ -163,7 +165,7 @@ TEST_P(HmacTest, SignFailVerify) {
 
   ASSERT_CKR_OK(g_fns->C_VerifyInit(session_, &mechanism_, key_));
   EXPECT_CKR(CKR_SIGNATURE_INVALID,
-             g_fns->C_Verify(session_, data_.get(), datalen_,output, output_len));
+             g_fns->C_Verify(session_, data_.get(), datalen_, output, output_len));
 }
 
 INSTANTIATE_TEST_CASE_P(HMACs, HmacTest,

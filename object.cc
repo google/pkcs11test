@@ -309,6 +309,14 @@ TEST_F(DataObjectTest, CopyDestroyObjectInvalid) {
   EXPECT_CKR(CKR_OBJECT_HANDLE_INVALID, g_fns->C_DestroyObject(session_, INVALID_OBJECT_HANDLE));
 }
 
+// This test currently crashes chapsd.
+TEST_F(DataObjectTest, DISABLED_SetInvalidAttributeLen) {
+  CK_BBOOL bvalue;
+  CK_ATTRIBUTE attr = {CKA_ENCRYPT, &bvalue, sizeof(bvalue)};
+  attr.ulValueLen = 0xffffffffffffffff;
+  EXPECT_CKR_OK(g_fns->C_SetAttributeValue(session_, object_, &attr, 1));
+}
+
 TEST_F(DataObjectTest, GetMultipleAttributes) {
   CK_BYTE buffer[128];
   CK_BYTE buffer2[128];

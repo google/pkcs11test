@@ -491,6 +491,15 @@ TEST_P(SecretKeyTest, DecryptUpdateErrors) {
                                     plaintext, &plaintext_len));
 }
 
+TEST_P(SecretKeyTest, EncryptFinalImmediate) {
+  EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
+  CK_BYTE ciphertext[1024];
+  CK_ULONG ciphertext_len = sizeof(ciphertext);
+  // It is valid to call EncryptFinal without any intervening EncryptUpdate operations.
+  EXPECT_CKR_OK(g_fns->C_EncryptFinal(session_, ciphertext, &ciphertext_len));
+  EXPECT_EQ(0, ciphertext_len);
+}
+
 TEST_P(SecretKeyTest, EncryptFinalErrors1) {
   // Variety of bad arguments to C_EncryptFinal.  Each error terminates the
   // operation and so need re-initialization.

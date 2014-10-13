@@ -144,6 +144,7 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
   CK_ULONG object_size;
   EXPECT_CKR_OK(g_fns->C_GetObjectSize(session_, object, &object_size));
 
+  // Create a copy with the same attributes.
   CK_OBJECT_HANDLE object2;
   EXPECT_CKR_OK(g_fns->C_CopyObject(session_, object, attrs, 0, &object2));
 
@@ -168,7 +169,7 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
              g_fns->C_GetAttributeValue(session_, object2, &get_attr, 1));
   EXPECT_EQ((CK_ULONG)-1, get_attr.ulValueLen);
 
-  // Set a new attribute on the original object.
+  // Modify an attribute on the original object.
   CK_UTF8CHAR new_label[] = "NewLabel";
   CK_ATTRIBUTE set_attr = {CKA_LABEL, new_label, 8};
   EXPECT_CKR_OK(g_fns->C_SetAttributeValue(session_, object, &set_attr, 1));
@@ -196,7 +197,8 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
   CK_ATTRIBUTE get_value = {CKA_VALUE, buffer, sizeof(buffer)};
   EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, object3, &get_value, 1));
   EXPECT_EQ(sizeof(facefeed), get_value.ulValueLen);
-  EXPECT_EQ(hex_data(facefeed, sizeof(facefeed)), hex_data((CK_BYTE_PTR)get_value.pValue, get_value.ulValueLen));
+  EXPECT_EQ(hex_data(facefeed, sizeof(facefeed)),
+            hex_data((CK_BYTE_PTR)get_value.pValue, get_value.ulValueLen));
 
   EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object3));
   EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object2));
@@ -228,6 +230,33 @@ TEST_F(ReadWriteSessionTest, CreateObjectInvalid) {
   };
   EXPECT_CKR(CKR_TEMPLATE_INCOMPLETE,
              g_fns->C_CreateObject(session_, attr_value, 1, &object));
+}
+
+TEST_F(ReadWriteSessionTest, SetLatchingAttribute) {
+  // Start with an non-sensitive key object.
+  ObjectAttributes attrs;
+  SecretKey key(session_, attrs);
+  CK_BBOOL bvalue;
+  CK_ATTRIBUTE attr = {CKA_SENSITIVE, &bvalue, sizeof(bvalue)};
+
+  // Make it sensitive.
+  bvalue = CK_TRUE;
+  attr.ulValueLen = sizeof(bvalue);
+  EXPECT_CKR_OK(g_fns->C_SetAttributeValue(session_, key.handle(), &attr, 1));
+
+  attr.ulValueLen = sizeof(bvalue);
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, key.handle(), &attr, 1));
+  EXPECT_EQ(CK_TRUE, bvalue);
+
+  // Fail to make it insensitive again.
+  bvalue = CK_FALSE;
+  attr.ulValueLen = sizeof(bvalue);
+  EXPECT_CKR(CKR_ATTRIBUTE_READ_ONLY,
+             g_fns->C_SetAttributeValue(session_, key.handle(), &attr, 1));
+
+  attr.ulValueLen = sizeof(bvalue);
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, key.handle(), &attr, 1));
+  EXPECT_EQ(CK_TRUE, bvalue);
 }
 
 class DataObjectTest : public ReadWriteSessionTest {

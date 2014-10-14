@@ -37,10 +37,12 @@ namespace {
 
 CK_BYTE deadbeef[] = { 0xDE, 0xAD, 0xBE, 0xEF};
 
-set<CK_OBJECT_HANDLE> GetObjects(CK_SESSION_HANDLE session, int stride,
-                                 CK_ATTRIBUTE_PTR attrs = NULL_PTR,
-                                 CK_ULONG attr_count = 0) {
-  set<CK_OBJECT_HANDLE> results;
+typedef set<CK_OBJECT_HANDLE> ObjectSet;
+
+ObjectSet GetObjects(CK_SESSION_HANDLE session, int stride,
+                     CK_ATTRIBUTE_PTR attrs = NULL_PTR,
+                     CK_ULONG attr_count = 0) {
+  ObjectSet results;
   EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session, attrs, attr_count));
   while (true) {
     vector<CK_OBJECT_HANDLE> objects(stride);
@@ -60,7 +62,7 @@ void EnumerateObjects(CK_SESSION_HANDLE session) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session, &session_info));
 
-  set<CK_OBJECT_HANDLE> objects = GetObjects(session, 1);
+  ObjectSet objects = GetObjects(session, 1);
 
   for (CK_OBJECT_HANDLE object : objects) {
     CK_ULONG object_size;
@@ -106,18 +108,18 @@ TEST_F(RWUserSessionTest, EnumerateObjects) {
 
 TEST_F(ReadOnlySessionTest, ConsistentObjects) {
   // Shouldn't matter whether we retrieve the objects one at a time or in bigger lumps.
-  set<CK_OBJECT_HANDLE> objs1 = GetObjects(session_, 1);
-  set<CK_OBJECT_HANDLE> objs2 = GetObjects(session_, 10);
-  set<CK_OBJECT_HANDLE> objs3 = GetObjects(session_, 1024);
+  ObjectSet objs1 = GetObjects(session_, 1);
+  ObjectSet objs2 = GetObjects(session_, 10);
+  ObjectSet objs3 = GetObjects(session_, 1024);
   EXPECT_EQ(objs1, objs2);
   EXPECT_EQ(objs1, objs3);
 }
 
 TEST_F(ReadWriteSessionTest, ConsistentObjects) {
   // Shouldn't matter whether we retrieve the objects one at a time or in bigger lumps.
-  set<CK_OBJECT_HANDLE> objs1 = GetObjects(session_, 1);
-  set<CK_OBJECT_HANDLE> objs2 = GetObjects(session_, 10);
-  set<CK_OBJECT_HANDLE> objs3 = GetObjects(session_, 1024);
+  ObjectSet objs1 = GetObjects(session_, 1);
+  ObjectSet objs2 = GetObjects(session_, 10);
+  ObjectSet objs3 = GetObjects(session_, 1024);
   EXPECT_EQ(objs1, objs2);
   EXPECT_EQ(objs1, objs3);
 }
@@ -198,8 +200,8 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
             hex_data((CK_BYTE_PTR)get_value.pValue, get_value.ulValueLen));
 
   CK_ATTRIBUTE app_attr = {CKA_APPLICATION, app, sizeof(app)};
-  set<CK_OBJECT_HANDLE> test_objects = GetObjects(session_, 1, &app_attr, 1);
-  set<CK_OBJECT_HANDLE> expected_objects = {object, object2, object3};
+  ObjectSet test_objects = GetObjects(session_, 1, &app_attr, 1);
+  ObjectSet expected_objects = {object, object2, object3};
   EXPECT_EQ(expected_objects, test_objects);
 
   EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object3));
@@ -414,6 +416,60 @@ TEST_F(DataObjectTest, FindObject) {
   EXPECT_CKR_OK(g_fns->C_FindObjects(session_, object, sizeof(object), &count));
   EXPECT_EQ(0, count);
   EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session_));
+}
+
+TEST_F(ReadWriteSessionTest, FindObjectSubset) {
+  // Create a selection of objects.
+  vector<CK_ATTRIBUTE_TYPE> attrs = {CKA_ENCRYPT, CKA_DECRYPT};
+  SecretKey des_key1(session_, attrs, CKM_DES_KEY_GEN, -1);
+  SecretKey des_key2(session_, attrs, CKM_DES_KEY_GEN, -1);
+  SecretKey aes_key3(session_, attrs, CKM_AES_KEY_GEN, 16);
+  vector<CK_ATTRIBUTE_TYPE> public_attrs = {CKA_ENCRYPT};
+  vector<CK_ATTRIBUTE_TYPE> private_attrs = {CKA_DECRYPT};
+  KeyPair keypair1(session_, public_attrs, private_attrs);
+  KeyPair keypair2(session_, public_attrs, private_attrs);
+
+  CK_ATTRIBUTE label_attrs[] = {
+    {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+  };
+  ObjectSet all_objects = GetObjects(session_, 10, label_attrs, 1);
+  EXPECT_EQ(ObjectSet({des_key1.handle(), des_key2.handle(), aes_key3.handle(),
+                       keypair1.public_handle(), keypair1.private_handle(),
+                       keypair2.public_handle(), keypair2.private_handle()}),
+            all_objects);
+
+  CK_KEY_TYPE des_type = CKK_DES;
+  CK_ATTRIBUTE des_key_attrs[] = {
+    {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+    {CKA_KEY_TYPE, &des_type, sizeof(des_type)},
+  };
+  ObjectSet des_keys = GetObjects(session_, 1, des_key_attrs, 2);
+  EXPECT_EQ(ObjectSet({des_key1.handle(), des_key2.handle()}), des_keys);
+
+  CK_KEY_TYPE aes_type = CKK_AES;
+  CK_ATTRIBUTE aes_key_attrs[] = {
+    {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+    {CKA_KEY_TYPE, &aes_type, sizeof(aes_type)},
+  };
+  ObjectSet aes_keys = GetObjects(session_, 1, aes_key_attrs, 2);
+  EXPECT_EQ(ObjectSet({aes_key3.handle()}), aes_keys);
+
+  CK_OBJECT_CLASS public_type = CKO_PUBLIC_KEY;
+  CK_ATTRIBUTE public_key_attrs[] = {
+    {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+    {CKA_CLASS, &public_type, sizeof(public_type)},
+  };
+  ObjectSet public_keys = GetObjects(session_, 1, public_key_attrs, 2);
+  EXPECT_EQ(ObjectSet({keypair1.public_handle(), keypair2.public_handle()}), public_keys);
+
+  CK_OBJECT_CLASS private_type = CKO_PRIVATE_KEY;
+  CK_ATTRIBUTE private_key_attrs[] = {
+    {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+    {CKA_CLASS, &private_type, sizeof(private_type)},
+  };
+  ObjectSet private_keys = GetObjects(session_, 1, private_key_attrs, 2);
+  EXPECT_EQ(ObjectSet({keypair1.private_handle(), keypair2.private_handle()}), private_keys);
+
 }
 
 TEST_F(DataObjectTest, FindNoObject) {

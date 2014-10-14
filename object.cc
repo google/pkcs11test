@@ -37,9 +37,11 @@ namespace {
 
 CK_BYTE deadbeef[] = { 0xDE, 0xAD, 0xBE, 0xEF};
 
-set<CK_OBJECT_HANDLE> GetObjects(CK_SESSION_HANDLE session, int stride) {
+set<CK_OBJECT_HANDLE> GetObjects(CK_SESSION_HANDLE session, int stride,
+                                 CK_ATTRIBUTE_PTR attrs = NULL_PTR,
+                                 CK_ULONG attr_count = 0) {
   set<CK_OBJECT_HANDLE> results;
-  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session, NULL_PTR, 0));
+  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session, attrs, attr_count));
   while (true) {
     vector<CK_OBJECT_HANDLE> objects(stride);
     CK_ULONG object_count;
@@ -58,12 +60,9 @@ void EnumerateObjects(CK_SESSION_HANDLE session) {
   CK_SESSION_INFO session_info;
   EXPECT_CKR_OK(g_fns->C_GetSessionInfo(session, &session_info));
 
-  EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session, NULL_PTR, 0));
-  while (true) {
-    CK_OBJECT_HANDLE object;
-    CK_ULONG object_count;
-    EXPECT_CKR_OK(g_fns->C_FindObjects(session, &object, 1, &object_count));
-    if (object_count == 0) break;
+  set<CK_OBJECT_HANDLE> objects = GetObjects(session, 1);
+
+  for (CK_OBJECT_HANDLE object : objects) {
     CK_ULONG object_size;
     EXPECT_CKR_OK(g_fns->C_GetObjectSize(session, object, &object_size));
     if (g_verbose) cout << "  object x" << setw(8) << setfill('0') << hex << (unsigned int)object
@@ -77,9 +76,7 @@ void EnumerateObjects(CK_SESSION_HANDLE session) {
       EXPECT_EQ(CK_FALSE, is_private);
     }
   }
-  EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session));
 }
-
 
 }  // namespace
 
@@ -200,9 +197,28 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
   EXPECT_EQ(hex_data(facefeed, sizeof(facefeed)),
             hex_data((CK_BYTE_PTR)get_value.pValue, get_value.ulValueLen));
 
+  CK_ATTRIBUTE app_attr = {CKA_APPLICATION, app, sizeof(app)};
+  set<CK_OBJECT_HANDLE> test_objects = GetObjects(session_, 1, &app_attr, 1);
+  set<CK_OBJECT_HANDLE> expected_objects = {object, object2, object3};
+  EXPECT_EQ(expected_objects, test_objects);
+
   EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object3));
+
+  test_objects = GetObjects(session_, 1, &app_attr, 1);
+  expected_objects = {object, object2};
+  EXPECT_EQ(expected_objects, test_objects);
+
   EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object2));
+
+  test_objects = GetObjects(session_, 1, &app_attr, 1);
+  expected_objects = {object};
+  EXPECT_EQ(expected_objects, test_objects);
+
   EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, object));
+
+  test_objects = GetObjects(session_, 1, &app_attr, 1);
+  expected_objects.clear();
+  EXPECT_EQ(expected_objects, test_objects);
 }
 
 TEST_F(ReadWriteSessionTest, CreateObjectInvalid) {

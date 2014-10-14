@@ -28,9 +28,19 @@ namespace test {
 // This test may induce the PIN to be locked out.
 TEST_F(ReadOnlySessionTest, UserLoginWrongPIN) {
   EXPECT_CKR(CKR_PIN_INCORRECT, g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)"simply-wrong", 12));
+
+  CK_TOKEN_INFO info;
+  EXPECT_CKR_OK(g_fns->C_GetTokenInfo(g_slot_id, &info));
+  if (!(info.flags & CKF_PROTECTED_AUTHENTICATION_PATH))
+    EXPECT_TRUE(info.flags & CKF_USER_PIN_COUNT_LOW);
+
   // Do a successful login to try to ensure the PIN isn't locked out.
   EXPECT_CKR_OK(g_fns->C_Login(session_, CKU_USER, (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));
   EXPECT_CKR_OK(g_fns->C_Logout(session_));
+
+  EXPECT_CKR_OK(g_fns->C_GetTokenInfo(g_slot_id, &info));
+  if (!(info.flags & CKF_PROTECTED_AUTHENTICATION_PATH))
+    EXPECT_FALSE(info.flags & CKF_USER_PIN_COUNT_LOW);
 }
 
 TEST_F(ReadOnlySessionTest, UserLoginInvalid) {

@@ -309,12 +309,15 @@ TEST_F(DataObjectTest, CopyDestroyObjectInvalid) {
   EXPECT_CKR(CKR_OBJECT_HANDLE_INVALID, g_fns->C_DestroyObject(session_, INVALID_OBJECT_HANDLE));
 }
 
-// This test currently crashes chapsd.
 TEST_F(DataObjectTest, DISABLED_SetInvalidAttributeLen) {
   CK_BBOOL bvalue;
   CK_ATTRIBUTE attr = {CKA_ENCRYPT, &bvalue, sizeof(bvalue)};
-  attr.ulValueLen = 0xffffffffffffffff;
-  EXPECT_CKR_OK(g_fns->C_SetAttributeValue(session_, object_, &attr, 1));
+  // On a failed C_GetAttributeValue, the length field gets set to (CK_ULONG)-1.
+  // If this accidentally gets left in place for a C_SetAttributeValue call, the
+  // library should cope.
+  attr.ulValueLen = (CK_ULONG)-1;
+  EXPECT_CKR(CKR_ATTRIBUTE_VALUE_INVALID,
+             g_fns->C_SetAttributeValue(session_, object_, &attr, 1));
 }
 
 TEST_F(DataObjectTest, GetMultipleAttributes) {

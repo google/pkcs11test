@@ -250,7 +250,7 @@ TEST_F(ReadWriteSessionTest, GetSetOperationState) {
   }
 
   // No state => OPERATION_NOT_INITIALIZED
-  EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED, rv);
+  EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED, rv) << " state len=" << len;
 
   // Create some state
   vector<CK_ATTRIBUTE_TYPE> attrs({CKA_ENCRYPT, CKA_DECRYPT});
@@ -260,19 +260,52 @@ TEST_F(ReadWriteSessionTest, GetSetOperationState) {
   rv = g_fns->C_EncryptInit(session_, &mechanism, key.handle());
   ASSERT_CKR_OK(rv);
 
+  // Encrypt one block.
+  unique_ptr<CK_BYTE, freer> plaintext(randmalloc(16));
+  CK_BYTE ciphertext[16];
+  CK_BYTE_PTR output = ciphertext;
+  CK_ULONG output_len = sizeof(ciphertext);
+  EXPECT_CKR_OK(g_fns->C_EncryptUpdate(session_, plaintext.get(), 8, output, &output_len));
+  EXPECT_EQ(8, output_len);
+  output += output_len;
+  output_len = sizeof(ciphertext) - (output - ciphertext);
+
   rv = g_fns->C_GetOperationState(session_, NULL_PTR, &len);
-  if (rv != CKR_STATE_UNSAVEABLE) {
-    EXPECT_CKR(CKR_OK, rv);
-    unique_ptr<CK_BYTE, freer> state((CK_BYTE*)malloc(len));
-    rv = g_fns->C_GetOperationState(session_, state.get(), &len);
-    EXPECT_CKR_OK(rv);
-    if (rv == CKR_OK) {
-      rv = g_fns->C_SetOperationState(session_, state.get(), len, 0, 0);
-      if (rv == CKR_KEY_NEEDED) {
-        rv = g_fns->C_SetOperationState(session_, state.get(), len, key.handle(), 0);
-      }
-      EXPECT_CKR_OK(rv);
+  if (rv == CKR_STATE_UNSAVEABLE) {
+    TEST_SKIPPED("GetOperationState reports state unsaveable");
+    return;
+  }
+  EXPECT_CKR(CKR_OK, rv);
+  unique_ptr<CK_BYTE, freer> state((CK_BYTE*)malloc(len));
+  rv = g_fns->C_GetOperationState(session_, state.get(), &len);
+  EXPECT_CKR_OK(rv);
+  if (rv == CKR_OK) {
+    // Set the state on a different session.
+    CK_FLAGS flags = CKF_SERIAL_SESSION | CKF_RW_SESSION;
+    CK_SESSION_HANDLE session2;
+    EXPECT_CKR_OK(g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session2));
+
+    rv = g_fns->C_SetOperationState(session2, state.get(), len, 0, 0);
+    if (rv == CKR_KEY_NEEDED) {
+      rv = g_fns->C_SetOperationState(session2, state.get(), len, key.handle(), 0);
     }
+    EXPECT_CKR_OK(rv);
+
+    // Encrypt second block.
+    EXPECT_CKR_OK(g_fns->C_EncryptUpdate(session2, plaintext.get() + 8, 8, output, &output_len));
+    EXPECT_EQ(8, output_len);
+    output += output_len;
+    output_len = sizeof(ciphertext) - (output - ciphertext);
+    EXPECT_CKR_OK(g_fns->C_EncryptFinal(session2, output, &output_len));
+
+    // Check the result is the same as a one-shot encryption.
+    CK_BYTE ciphertext2[16];
+    output_len = sizeof(ciphertext2);
+    EXPECT_CKR_OK(g_fns->C_EncryptInit(session2, &mechanism, key.handle()));
+    EXPECT_CKR_OK(g_fns->C_Encrypt(session2, plaintext.get(), 16, ciphertext2, &output_len));
+    EXPECT_EQ(hex_data(ciphertext2, 16), hex_data(ciphertext, 16));
+
+    EXPECT_CKR_OK(g_fns->C_CloseSession(session2));
   }
 }
 

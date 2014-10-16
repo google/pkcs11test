@@ -167,7 +167,8 @@ TEST_F(PKCS11Test, GetSlotList) {
   // Every slot with a token should appear in the list of all slots.
   for (int ii = 0; ii < (int)slot_count; ++ii) {
     EXPECT_EQ(1, all_slots_set.count(token_slots.get()[ii]));
-    EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotInfo(token_slots.get()[ii], nullptr));
+    CK_RV rv = g_fns->C_GetSlotInfo(token_slots.get()[ii], nullptr);
+    EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED) << CK_RV_(rv);
     EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetTokenInfo(token_slots.get()[ii], nullptr));
   }
 }
@@ -196,7 +197,8 @@ TEST_F(PKCS11Test, GetSlotListTooLarge) {
 }
 
 TEST_F(PKCS11Test, GetSlotListFailArgumentsBad) {
-  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR));
+  CK_RV rv = g_fns->C_GetSlotList(CK_FALSE, NULL_PTR, NULL_PTR);
+  EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_FUNCTION_FAILED) << CK_RV_(rv);
 }
 
 TEST_F(PKCS11Test, GetSlotInfoFail) {

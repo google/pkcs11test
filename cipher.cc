@@ -271,6 +271,7 @@ TEST_P(SecretKeyTest, EncryptDecryptInitInvalid) {
   EXPECT_CKR(CKR_MECHANISM_INVALID,
              g_fns->C_DecryptInit(session_, &mechanism, key_.handle()));
 
+  mechanism.mechanism = info_.mode;
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_EncryptInit(INVALID_SESSION_HANDLE, &mechanism_, key_.handle()));
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
@@ -375,7 +376,9 @@ TEST_P(SecretKeyTest, DecryptErrors) {
   CK_RV rv = g_fns->C_Decrypt(session_,
                               partial.get(), info_.blocksize - 1,
                               plaintext, &plaintext_len);
-  EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE || rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
+  EXPECT_TRUE(rv == CKR_DATA_LEN_RANGE ||
+              rv == CKR_ENCRYPTED_DATA_LEN_RANGE ||
+              rv == CKR_FUNCTION_FAILED) << " rv=" << CK_RV_(rv);
 }
 
 TEST_P(SecretKeyTest, EncryptUpdateErrors) {

@@ -35,8 +35,8 @@ namespace {
 class KeyPairTest : public ReadWriteSessionTest {
  public:
   KeyPairTest()
-    : public_attrs_({CKA_ENCRYPT}),
-      private_attrs_({CKA_DECRYPT}),
+    : public_attrs_({CKA_ENCRYPT, CKA_TOKEN}),
+      private_attrs_({CKA_DECRYPT, CKA_TOKEN}),
       keypair_(session_, public_attrs_, private_attrs_) {}
  protected:
   vector<CK_ATTRIBUTE_TYPE> public_attrs_;

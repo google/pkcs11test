@@ -101,5 +101,35 @@ TEST_F(ReadWriteSessionTest, PublicExponent4Bytes) {
   }
 }
 
+TEST_F(ReadWriteSessionTest, ExtractKeys) {
+  vector<CK_ATTRIBUTE_TYPE> public_attrs = {CKA_ENCRYPT};
+  vector<CK_ATTRIBUTE_TYPE> private_attrs = {CKA_DECRYPT, CKA_SENSITIVE};
+  KeyPair keypair(session_, public_attrs, private_attrs);
+
+  // Should be able to retrieve the modulus and public exponent.
+  CK_BYTE modulus[512];
+  CK_BYTE public_exponent[16];
+  CK_ATTRIBUTE get_public_attrs[] = {
+    {CKA_MODULUS, modulus, sizeof(modulus)},
+    {CKA_PUBLIC_EXPONENT, public_exponent, sizeof(public_exponent)},
+  };
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, keypair.public_handle(), get_public_attrs, 2));
+
+  // Should not be able to retrieve the private exponent, nor the primes.
+  CK_BYTE buffer[1024];
+  CK_ATTRIBUTE get_private = {CKA_PRIME_1, buffer, sizeof(buffer)};
+  EXPECT_CKR(CKR_ATTRIBUTE_SENSITIVE,
+             g_fns->C_GetAttributeValue(session_, keypair.private_handle(), &get_private, 1));
+  get_private.type = CKA_PRIME_2;
+  get_private.ulValueLen = sizeof(buffer);
+  EXPECT_CKR(CKR_ATTRIBUTE_SENSITIVE,
+             g_fns->C_GetAttributeValue(session_, keypair.private_handle(), &get_private, 1));
+  get_private.type = CKA_PRIVATE_EXPONENT;
+  get_private.ulValueLen = sizeof(buffer);
+  EXPECT_CKR(CKR_ATTRIBUTE_SENSITIVE,
+             g_fns->C_GetAttributeValue(session_, keypair.private_handle(), &get_private, 1));
+
+}
+
 }  // namespace test
 }  // namespace pkcs11

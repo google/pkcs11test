@@ -131,5 +131,37 @@ TEST_F(ReadWriteSessionTest, ExtractKeys) {
 
 }
 
+TEST_F(ReadWriteSessionTest, AsymmetricTokenKeyPair) {
+  // Attempt to create a keypair with the private key on the token but
+  // the public key not.
+  CK_ULONG modulus_bits = 1024;
+  CK_BYTE public_exponent_value[] = {0x1, 0x0, 0x1}; // 65537=0x010001
+  CK_ATTRIBUTE public_attrs[] = {
+    {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+    {CKA_TOKEN, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
+    {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+    {CKA_MODULUS_BITS, &modulus_bits, sizeof(modulus_bits)},
+    {CKA_PUBLIC_EXPONENT, public_exponent_value, sizeof(public_exponent_value)},
+  };
+  CK_ATTRIBUTE private_attrs[] = {
+    {CKA_DECRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+    {CKA_TOKEN, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+    {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+  };
+  CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};
+  CK_OBJECT_HANDLE public_key;
+  CK_OBJECT_HANDLE private_key;
+  CK_RV rv = g_fns->C_GenerateKeyPair(session_, &mechanism,
+                                      public_attrs, 5,
+                                      private_attrs, 3,
+                                      &public_key, &private_key);
+  if (rv == CKR_OK) {
+    EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, public_key));
+    EXPECT_CKR_OK(g_fns->C_DestroyObject(session_, private_key));
+  } else {
+    EXPECT_CKR(CKR_TEMPLATE_INCONSISTENT, rv);
+  }
+}
+
 }  // namespace test
 }  // namespace pkcs11

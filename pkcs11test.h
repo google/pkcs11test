@@ -308,6 +308,35 @@ class KeyPair {
   CK_OBJECT_HANDLE private_key_;
 };
 
+// Test fixture for tests involving a secret key.
+class SecretKeyTest : public ReadOnlySessionTest,
+                      public ::testing::WithParamInterface<std::string> {
+ public:
+  static const int kNumBlocks = 4;
+  SecretKeyTest()
+    : attrs_({CKA_ENCRYPT, CKA_DECRYPT}),
+      info_(kCipherInfo[GetParam()]),
+      key_(session_, attrs_, info_.keygen, info_.keylen),
+      iv_(randmalloc(info_.blocksize)),
+      plaintext_(randmalloc(kNumBlocks * info_.blocksize)),
+      mechanism_({info_.mode,
+                  (info_.has_iv ? iv_.get() : NULL_PTR),
+                  (info_.has_iv ? (CK_ULONG)info_.blocksize : 0)}) {
+    if (g_verbose && info_.has_iv)
+      std::cout << "IV: " << hex_data(iv_.get(), info_.blocksize) << std::endl;
+    if (g_verbose)
+      std::cout << "PT: " << hex_data(plaintext_.get(), kNumBlocks * info_.blocksize) << std::endl;
+  }
+
+ protected:
+  std::vector<CK_ATTRIBUTE_TYPE> attrs_;
+  CipherInfo info_;
+  SecretKey key_;
+  std::unique_ptr<CK_BYTE, freer> iv_;
+  std::unique_ptr<CK_BYTE, freer> plaintext_;
+  CK_MECHANISM mechanism_;
+};
+
 }  // namespace test
 
 }  // namespace pkcs11

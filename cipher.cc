@@ -56,32 +56,6 @@ map<string, vector<TestData> > kTestVectors = {
 
 }  // namespace
 
-class SecretKeyTest : public ReadOnlySessionTest,
-                      public ::testing::WithParamInterface<string> {
- public:
-  static const int kNumBlocks = 4;
-  SecretKeyTest()
-    : attrs_({CKA_ENCRYPT, CKA_DECRYPT}),
-      info_(kCipherInfo[GetParam()]),
-      key_(session_, attrs_, info_.keygen, info_.keylen),
-      iv_(randmalloc(info_.blocksize)),
-      plaintext_(randmalloc(kNumBlocks * info_.blocksize)),
-      mechanism_({info_.mode,
-                  (info_.has_iv ? iv_.get() : NULL_PTR),
-                  (info_.has_iv ? (CK_ULONG)info_.blocksize : 0)}) {
-    if (g_verbose && info_.has_iv) cout << "IV: " << hex_data(iv_.get(), info_.blocksize) << endl;
-    if (g_verbose) cout << "PT: " << hex_data(plaintext_.get(), kNumBlocks * info_.blocksize) << endl;
-  }
-
- protected:
-  vector<CK_ATTRIBUTE_TYPE> attrs_;
-  CipherInfo info_;
-  SecretKey key_;
-  unique_ptr<CK_BYTE, freer> iv_;
-  unique_ptr<CK_BYTE, freer> plaintext_;
-  CK_MECHANISM mechanism_;
-};
-
 TEST_P(SecretKeyTest, EncryptDecrypt) {
   // First encrypt the data.
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));

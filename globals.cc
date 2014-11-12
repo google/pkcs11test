@@ -29,6 +29,44 @@ const char* g_reset_user_pin = "12345678";
 const char* g_so_pin = "sososo";
 const char* g_reset_so_pin = "87654321";
 
+// Algorithm information.
+std::map<std::string, HmacInfo> kHmacInfo = {
+  {"MD5-HMAC", {CKM_MD5_HMAC,  16}},
+  {"SHA1-HMAC", {CKM_SHA_1_HMAC, 20}},
+  {"SHA256-HMAC", {CKM_SHA256_HMAC, 256/8}},
+  {"SHA384-HMAC", {CKM_SHA384_HMAC, 384/8}},
+  {"SHA512-HMAC", {CKM_SHA512_HMAC, 512/8}},
+};
+
+std::map<std::string, SignatureInfo> kSignatureInfo = {
+  // CKM_RSA_PKCS has restrictions on data sizes (see PKCS#11 s12.1.6 table 37).
+  {"RSA", {CKM_RSA_PKCS, 64}},
+  {"MD5-RSA", {CKM_MD5_RSA_PKCS, 1024}},
+  {"SHA1-RSA", {CKM_SHA1_RSA_PKCS, 1024}},
+  {"SHA256-RSA", {CKM_SHA256_RSA_PKCS, 1024}},
+  {"SHA384-RSA", {CKM_SHA384_RSA_PKCS, 1024}},
+  {"SHA512-RSA", {CKM_SHA512_RSA_PKCS, 1024}},
+};
+
+std::map<std::string, CipherInfo> kCipherInfo = {
+  {"DES-ECB", {CKK_DES, CKM_DES_KEY_GEN, CKM_DES_ECB, 8, false, -1}},
+  {"DES-CBC", {CKK_DES, CKM_DES_KEY_GEN, CKM_DES_CBC, 8, true, -1}},
+  {"3DES-ECB", {CKK_DES3, CKM_DES3_KEY_GEN, CKM_DES3_ECB, 8, false, -1}},
+  {"3DES-CBC", {CKK_DES3, CKM_DES3_KEY_GEN, CKM_DES3_CBC, 8, true, -1}},
+  {"IDEA-ECB", {CKK_IDEA, CKM_IDEA_KEY_GEN, CKM_IDEA_ECB, 8, false, -1}},
+  {"IDEA-CBC", {CKK_IDEA, CKM_IDEA_KEY_GEN, CKM_IDEA_CBC, 8, true, -1}},
+  {"AES-ECB", {CKK_AES, CKM_AES_KEY_GEN, CKM_AES_ECB, 16, false, 16}},
+  {"AES-CBC", {CKK_AES, CKM_AES_KEY_GEN, CKM_AES_CBC, 16, true, 16}},
+};
+
+std::map<std::string, DigestInfo> kDigestInfo = {
+  {"MD5", {CKM_MD5, 16}},
+  {"SHA-1", {CKM_SHA_1, 20}},
+  {"SHA-256", {CKM_SHA256, 256/8}},
+  {"SHA-384", {CKM_SHA384, 384/8}},
+  {"SHA-512", {CKM_SHA512, 512/8}},
+};
+
 // PKCS#11 s12 table 34: Mechanisms vs. Functions
 std::set<CK_MECHANISM_TYPE> encrypt_decrypt_mechanisms = {
   CKM_RSA_PKCS,

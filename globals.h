@@ -19,6 +19,7 @@
 #include <pkcs11.h>
 
 #include <set>
+#include <map>
 
 namespace pkcs11 {
 namespace test {
@@ -46,6 +47,36 @@ extern const char* g_so_pin;
 extern const char* g_reset_user_pin;
 // Security Officer PIN after token reset.  Only used if (g_token_flags & CKF_LOGIN_REQUIRED).
 extern const char* g_reset_so_pin;
+
+// Algorithm information.  These tables are effectively const, but not marked as
+// const so operator[] can be used for convenience.
+struct HmacInfo {
+  CK_MECHANISM_TYPE hmac;
+  CK_ULONG mac_size;
+};
+extern std::map<std::string, HmacInfo> kHmacInfo;
+
+struct SignatureInfo {
+  CK_MECHANISM_TYPE alg;
+  int max_data;
+};
+extern std::map<std::string, SignatureInfo> kSignatureInfo;
+
+struct CipherInfo {
+  CK_KEY_TYPE keytype;
+  CK_MECHANISM_TYPE keygen;
+  CK_MECHANISM_TYPE mode;
+  int blocksize;
+  bool has_iv;
+  int keylen;
+};
+extern std::map<std::string, CipherInfo> kCipherInfo;
+
+struct DigestInfo {
+  CK_MECHANISM_TYPE type;
+  int size;
+};
+extern std::map<std::string, DigestInfo> kDigestInfo;
 
 // PKCS#11 mechanisms for encrypt/decrypt.
 extern std::set<CK_MECHANISM_TYPE> encrypt_decrypt_mechanisms;

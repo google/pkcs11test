@@ -36,32 +36,13 @@ namespace test {
 
 namespace {
 
-struct CipherInfo {
-  CK_KEY_TYPE keytype;
-  CK_MECHANISM_TYPE keygen;
-  CK_MECHANISM_TYPE mode;
-  int blocksize;
-  bool has_iv;
-  int keylen;
-};
-
-map<string, CipherInfo> kCipherInfo = {
-  {"DES-ECB", {CKK_DES, CKM_DES_KEY_GEN, CKM_DES_ECB, 8, false, -1}},
-  {"DES-CBC", {CKK_DES, CKM_DES_KEY_GEN, CKM_DES_CBC, 8, true, -1}},
-  {"3DES-ECB", {CKK_DES3, CKM_DES3_KEY_GEN, CKM_DES3_ECB, 8, false, -1}},
-  {"3DES-CBC", {CKK_DES3, CKM_DES3_KEY_GEN, CKM_DES3_CBC, 8, true, -1}},
-  {"IDEA-ECB", {CKK_IDEA, CKM_IDEA_KEY_GEN, CKM_IDEA_ECB, 8, false, -1}},
-  {"IDEA-CBC", {CKK_IDEA, CKM_IDEA_KEY_GEN, CKM_IDEA_CBC, 8, true, -1}},
-  {"AES-ECB", {CKK_AES, CKM_AES_KEY_GEN, CKM_AES_ECB, 16, false, 16}},
-  {"AES-CBC", {CKK_AES, CKM_AES_KEY_GEN, CKM_AES_CBC, 16, true, 16}},
-};
-
 struct TestData {
   string key;  // Hex
   string iv;  // Hex
   string plaintext;  // Hex
   string ciphertext;  // Hex
 };
+
 map<string, vector<TestData> > kTestVectors = {
   { "DES-ECB", {{"8000000000000000", "", "0000000000000000", "95A8D72813DAA94D"},
                 {"4000000000000000", "", "0000000000000000", "0EEC1487DD8C26D5"}, }},

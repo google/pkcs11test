@@ -38,19 +38,6 @@ namespace test {
 
 namespace {
 
-struct HmacInfo {
-  CK_MECHANISM_TYPE hmac;
-  CK_ULONG mac_size;
-};
-
-map<string, HmacInfo> kHmacInfo = {
-  {"MD5-HMAC", {CKM_MD5_HMAC,  16}},
-  {"SHA1-HMAC", {CKM_SHA_1_HMAC, 20}},
-  {"SHA256-HMAC", {CKM_SHA256_HMAC, 256/8}},
-  {"SHA384-HMAC", {CKM_SHA384_HMAC, 384/8}},
-  {"SHA512-HMAC", {CKM_SHA512_HMAC, 512/8}},
-};
-
 struct TestData {
   string key;  // Hex
   string data;  // Hex

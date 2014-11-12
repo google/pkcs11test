@@ -33,18 +33,6 @@ namespace pkcs11 {
 namespace test {
 
 namespace {
-struct DigestInfo {
-  CK_MECHANISM_TYPE type;
-  int size;
-};
-
-map<string, DigestInfo> kDigestInfo = {
-  {"MD5", {CKM_MD5, 16}},
-  {"SHA-1", {CKM_SHA_1, 20}},
-  {"SHA-256", {CKM_SHA256, 256/8}},
-  {"SHA-384", {CKM_SHA384, 384/8}},
-  {"SHA-512", {CKM_SHA512, 512/8}},
-};
 
 struct TestData {
   string input;  // UTF-8

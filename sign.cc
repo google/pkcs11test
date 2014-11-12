@@ -28,8 +28,6 @@
 //   C_VerifyRecover
 #include "pkcs11test.h"
 
-#include <map>
-
 using namespace std;  // So sue me
 
 namespace pkcs11 {
@@ -37,35 +35,20 @@ namespace test {
 
 namespace {
 
-struct HmacInfo {
-  CK_MECHANISM_TYPE hmac;
-  int max_data;
-};
-
-map<string, HmacInfo> kHmacInfo = {
-  // CKM_RSA_PKCS has restrictions on data sizes (see PKCS#11 s12.1.6 table 37).
-  {"RSA", {CKM_RSA_PKCS, 64}},
-  {"MD5-RSA", {CKM_MD5_RSA_PKCS, 1024}},
-  {"SHA1-RSA", {CKM_SHA1_RSA_PKCS, 1024}},
-  {"SHA256-RSA", {CKM_SHA256_RSA_PKCS, 1024}},
-  {"SHA384-RSA", {CKM_SHA384_RSA_PKCS, 1024}},
-  {"SHA512-RSA", {CKM_SHA512_RSA_PKCS, 1024}},
-};
-
 class SignTest : public ReadOnlySessionTest,
                  public ::testing::WithParamInterface<string> {
  public:
   SignTest()
-    : info_(kHmacInfo[GetParam()]),
+    : info_(kSignatureInfo[GetParam()]),
       public_attrs_({CKA_VERIFY}),
       private_attrs_({CKA_SIGN}),
       keypair_(session_, public_attrs_, private_attrs_),
       datalen_(std::rand() % info_.max_data),
       data_(randmalloc(datalen_)),
-      mechanism_({info_.hmac, NULL_PTR, 0}) {
+      mechanism_({info_.alg, NULL_PTR, 0}) {
   }
  protected:
-  HmacInfo info_;
+  SignatureInfo info_;
   vector<CK_ATTRIBUTE_TYPE> public_attrs_;
   vector<CK_ATTRIBUTE_TYPE> private_attrs_;
   KeyPair keypair_;

@@ -125,9 +125,9 @@ TEST_P(SignTest, SignFailVerifyShort) {
              g_fns->C_Verify(session_, data_.get(), datalen_, output, 4));
 }
 
-TEST_F(ReadOnlySessionTest, DISABLED_SignVerifyRecover) {
-  vector<CK_ATTRIBUTE_TYPE> public_attrs = {CKA_VERIFY_RECOVER};
-  vector<CK_ATTRIBUTE_TYPE> private_attrs = {CKA_SIGN_RECOVER};
+TEST_F(ReadOnlySessionTest, SignVerifyRecover) {
+  vector<CK_ATTRIBUTE_TYPE> public_attrs = {CKA_VERIFY_RECOVER, CKA_ENCRYPT};
+  vector<CK_ATTRIBUTE_TYPE> private_attrs = {CKA_SIGN_RECOVER, CKA_DECRYPT};
   KeyPair keypair(session_, public_attrs, private_attrs);
   const int datalen = 64;
   unique_ptr<CK_BYTE, freer> data = randmalloc(datalen);
@@ -136,6 +136,12 @@ TEST_F(ReadOnlySessionTest, DISABLED_SignVerifyRecover) {
   CK_RV rv = g_fns->C_SignRecoverInit(session_, &mechanism, keypair.private_handle());
   if (rv == CKR_FUNCTION_NOT_SUPPORTED) {
     TEST_SKIPPED("SignRecover not supported");
+    return;
+  }
+  if ((rv) == CKR_MECHANISM_INVALID) {
+    stringstream ss;
+    ss << "Digest type " << mechanism_type_name(mechanism.mechanism) << " not implemented";
+    TEST_SKIPPED(ss.str());
     return;
   }
   ASSERT_CKR_OK(rv);

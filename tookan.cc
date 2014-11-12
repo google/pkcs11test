@@ -11,6 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Test cases analogous to those described by the Tookan project:
+//   http://secgroup.dais.unive.it/projects/tookan/
 #include "pkcs11test.h"
 
 using namespace std;  // So sue me

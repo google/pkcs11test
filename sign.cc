@@ -96,7 +96,7 @@ TEST_P(SignTest, SignVerify) {
   EXPECT_CKR_OK(g_fns->C_Verify(session_, data_.get(), datalen_, output, output_len));
 }
 
-TEST_P(SignTest, SignFailVerify) {
+TEST_P(SignTest, SignFailVerifyWrong) {
   CK_RV rv = g_fns->C_SignInit(session_, &mechanism_, keypair_.private_handle());
   SKIP_IF_UNIMPLEMENTED_RV(rv);
   ASSERT_CKR_OK(rv);
@@ -110,6 +110,19 @@ TEST_P(SignTest, SignFailVerify) {
   ASSERT_CKR_OK(g_fns->C_VerifyInit(session_, &mechanism_, keypair_.public_handle()));
   EXPECT_CKR(CKR_SIGNATURE_INVALID,
              g_fns->C_Verify(session_, data_.get(), datalen_, output, output_len));
+}
+
+TEST_P(SignTest, SignFailVerifyShort) {
+  CK_RV rv = g_fns->C_SignInit(session_, &mechanism_, keypair_.private_handle());
+  SKIP_IF_UNIMPLEMENTED_RV(rv);
+  ASSERT_CKR_OK(rv);
+  CK_BYTE output[1024];
+  CK_ULONG output_len = sizeof(output);
+  EXPECT_CKR_OK(g_fns->C_Sign(session_, data_.get(), datalen_, output, &output_len));
+
+  ASSERT_CKR_OK(g_fns->C_VerifyInit(session_, &mechanism_, keypair_.public_handle()));
+  EXPECT_CKR(CKR_SIGNATURE_LEN_RANGE,
+             g_fns->C_Verify(session_, data_.get(), datalen_, output, 4));
 }
 
 TEST_F(ReadOnlySessionTest, DISABLED_SignVerifyRecover) {

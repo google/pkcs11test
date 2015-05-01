@@ -559,6 +559,44 @@ INSTANTIATE_TEST_CASE_P(Ciphers, SecretKeyTest,
                                           "AES-ECB",
                                           "AES-CBC"));
 
+TEST_F(ReadOnlySessionTest, CreateSecretKeyAttributes) {
+  string key = hex_decode("");
+  CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
+  CK_KEY_TYPE key_type = CKK_DES;
+  vector<CK_ATTRIBUTE> attrs = {
+    {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+    {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+    {CKA_DECRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+    {CKA_CLASS, &key_class, sizeof(key_class)},
+    {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
+    {CKA_VALUE, (CK_VOID_PTR)key.data(), key.size()},
+  };
+  CK_OBJECT_HANDLE key_object;
+  ASSERT_CKR_OK(g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_object));
+
+  // On creating a secret key object from external data, both
+  // CKA_ALWAYS_SENSITIVE and CKA_NEVER_EXTRACTABLE should be false (as the
+  // key's content has existed outside of the token).
+  CK_BBOOL value;
+  CK_ATTRIBUTE get_attr1 = {CKA_ALWAYS_SENSITIVE, &value, sizeof(value)};
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, key_object, &get_attr1, 1));
+  EXPECT_EQ(CK_FALSE, value);
+  CK_ATTRIBUTE get_attr2 = {CKA_NEVER_EXTRACTABLE, &value, sizeof(value)};
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, key_object, &get_attr2, 1));
+  EXPECT_EQ(CK_FALSE, value);
+
+  // Generated key is not local, and has no keygen mechanism.
+  CK_ATTRIBUTE get_attr3 = {CKA_LOCAL, &value, sizeof(value)};
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, key_object, &get_attr3, 1));
+  EXPECT_EQ(CK_FALSE, value);
+  CK_MECHANISM_TYPE mech;
+  CK_ATTRIBUTE get_attr4 = {CKA_KEY_GEN_MECHANISM, &mech, sizeof(mech)};
+  EXPECT_CKR_OK(g_fns->C_GetAttributeValue(session_, key_object, &get_attr4, 1));
+  EXPECT_EQ(CK_UNAVAILABLE_INFORMATION, mech);
+
+  ASSERT_CKR_OK(g_fns->C_DestroyObject(session_, key_object));
+}
+
 TEST_F(ReadOnlySessionTest, SecretKeyTestVectors) {
   for (const auto& kv : kTestVectors) {
     vector<TestData> testcases = kTestVectors[kv.first];

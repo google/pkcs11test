@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 // Local headers
 #include "pkcs11test.h"
@@ -53,11 +54,11 @@ int GetInteger(const CK_CHAR *val, int len) {
 }
 
 typedef vector<string> TestList;
-typedef map<string, TestList*> SkippedTestMap;
+typedef map<string, std::unique_ptr<TestList> > SkippedTestMap;
 static SkippedTestMap skipped_tests;
 void TestSkipped(const char *testcase, const char *test, const string& reason) {
   if (skipped_tests.find(reason) == skipped_tests.end()) {
-    skipped_tests[reason] = new TestList;
+    skipped_tests[reason] = std::unique_ptr<TestList>(new TestList);
   }
   string testname(testcase);
   testname += ".";

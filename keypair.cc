@@ -252,25 +252,30 @@ TEST_F(ReadOnlySessionTest, CreateKeyPairObjects) {
     {CKA_PRIVATE_EXPONENT, (CK_BYTE_PTR)private_exponent.data(), private_exponent.size()},
     {CKA_MODULUS, (CK_VOID_PTR)public_modulus.data(), public_modulus.size()},
   };
+  string prime1data;
   if (!keydata.prime1.empty()) {
-    string data = hex_decode(keydata.prime1);
-    private_attrs.push_back({CKA_PRIME_1, (CK_BYTE_PTR)data.data(), data.size()});
+    prime1data = hex_decode(keydata.prime1);
+    private_attrs.push_back({CKA_PRIME_1, (CK_BYTE_PTR)prime1data.data(), prime1data.size()});
   }
+  string prime2data;
   if (!keydata.prime2.empty()) {
-    string data = hex_decode(keydata.prime2);
-    private_attrs.push_back({CKA_PRIME_2, (CK_BYTE_PTR)data.data(), data.size()});
+    prime2data = hex_decode(keydata.prime2);
+    private_attrs.push_back({CKA_PRIME_2, (CK_BYTE_PTR)prime2data.data(), prime2data.size()});
   }
+  string exponent1data;
   if (!keydata.exponent1.empty()) {
-    string data = hex_decode(keydata.exponent1);
-    private_attrs.push_back({CKA_EXPONENT_1, (CK_BYTE_PTR)data.data(), data.size()});
+    exponent1data = hex_decode(keydata.exponent1);
+    private_attrs.push_back({CKA_EXPONENT_1, (CK_BYTE_PTR)exponent1data.data(), exponent1data.size()});
   }
+  string exponent2data;
   if (!keydata.exponent2.empty()) {
-    string data = hex_decode(keydata.exponent2);
-    private_attrs.push_back({CKA_EXPONENT_2, (CK_BYTE_PTR)data.data(), data.size()});
+    exponent2data = hex_decode(keydata.exponent2);
+    private_attrs.push_back({CKA_EXPONENT_2, (CK_BYTE_PTR)exponent2data.data(), exponent2data.size()});
   }
+  string coefficientdata;
   if (!keydata.coefficient.empty()) {
-    string data = hex_decode(keydata.coefficient);
-    private_attrs.push_back({CKA_COEFFICIENT, (CK_BYTE_PTR)data.data(), data.size()});
+    coefficientdata = hex_decode(keydata.coefficient);
+    private_attrs.push_back({CKA_COEFFICIENT, (CK_BYTE_PTR)coefficientdata.data(), coefficientdata.size()});
   }
   EXPECT_CKR_OK(g_fns->C_CreateObject(session_,
                                       private_attrs.data(),

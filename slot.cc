@@ -317,15 +317,7 @@ TEST_F(PKCS11Test, TokenInit) {
     return;
   }
 
-  // Both PINs will have been reset, so need to set them, which means we need a R/W SO session.
-  {
-    RWSOSession session(g_reset_so_pin);
-    // Restore the SO PIN to the expected value.
-    EXPECT_CKR_OK(g_fns->C_SetPIN(session.handle(),
-                                  (CK_UTF8CHAR_PTR)g_reset_so_pin, strlen(g_reset_so_pin),
-                                  (CK_UTF8CHAR_PTR)g_so_pin, strlen(g_so_pin)));
-  }
-  // Now set the user PIN.  Use a new session (which also checks that the SO PIN has been changed).
+  // User PIN will have been reset, so need to set it. Use a new session (which also checks that the SO PIN is still OK).
   {
     RWSOSession session(g_so_pin);
     EXPECT_CKR_OK(g_fns->C_InitPIN(session.handle(), (CK_UTF8CHAR_PTR)g_user_pin, strlen(g_user_pin)));

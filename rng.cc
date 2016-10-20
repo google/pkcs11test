@@ -64,7 +64,7 @@ TEST_F(ReadOnlySessionTest, GenerateRandom) {
 
 TEST(RNG, GenerateRandomNoInit) {
   CK_BYTE data[8];
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_SeedRandom(INVALID_SLOT_ID, data, sizeof(data)));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GenerateRandom(INVALID_SLOT_ID, data, sizeof(data)));
 }
 
 TEST_F(ReadOnlySessionTest, GenerateRandomBadArguments) {

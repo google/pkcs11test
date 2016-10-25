@@ -223,7 +223,7 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
   EXPECT_EQ(expected_objects, test_objects);
 }
 
-TEST_F(ReadWriteSessionTest, CreateObjectInvalid) {
+TEST_F(RWUserSessionTest, CreateObjectInvalid) {
   CK_OBJECT_CLASS data_class = CKO_DATA;
   CK_UTF8CHAR app[] = "pkcs11test";
   CK_ATTRIBUTE attrs[] = {

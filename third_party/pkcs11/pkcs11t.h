@@ -414,6 +414,11 @@ typedef CK_ULONG          CK_KEY_TYPE;
 /* ARIA is new for PKCS #11 v2.20 amendment 3 */
 #define CKK_ARIA                       0x00000026
 
+#define CKK_SHA_1_HMAC      (0x28UL)
+#define CKK_SHA256_HMAC     (0x2bUL)
+#define CKK_SHA384_HMAC     (0x2cUL)
+#define CKK_SHA512_HMAC     (0x2dUL)
+#define CKK_SHA224_HMAC     (0x2eUL)
 
 #define CKK_VENDOR_DEFINED  0x80000000
 

@@ -162,7 +162,7 @@ INSTANTIATE_TEST_CASE_P(HMACs, HmacTest,
                                           "SHA384-HMAC",
                                           "SHA512-HMAC"));
 
-TEST_F(ReadOnlySessionTest, HmacTestVectors) {
+TEST_F(RWUserSessionTest, HmacTestVectors) {
   for (const auto& kv : kTestVectors) {
     vector<TestData> testcases = kTestVectors[kv.first];
     HmacInfo info = kHmacInfo[kv.first];
@@ -170,6 +170,15 @@ TEST_F(ReadOnlySessionTest, HmacTestVectors) {
       string key = hex_decode(testcase.key);
       CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
       CK_KEY_TYPE key_type = CKK_GENERIC_SECRET;
+      if(kv.first == "SHA1-HMAC") {
+        key_type = CKK_SHA_1_HMAC;
+      } else if(kv.first == "SHA256-HMAC") {
+        key_type = CKK_SHA256_HMAC;
+      } else if(kv.first == "SHA384-HMAC") {
+        key_type = CKK_SHA384_HMAC;
+      } else if(kv.first == "SHA512-HMAC") {
+        key_type = CKK_SHA512_HMAC;
+      }
       vector<CK_ATTRIBUTE> attrs = {
         {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
         {CKA_SIGN, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
@@ -177,13 +186,17 @@ TEST_F(ReadOnlySessionTest, HmacTestVectors) {
         {CKA_CLASS, &key_class, sizeof(key_class)},
         {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
         {CKA_VALUE, (CK_VOID_PTR)key.data(), key.size()},
+        {CKA_ID, (CK_VOID_PTR)&key_type, 2},
       };
       CK_OBJECT_HANDLE key_object;
-      ASSERT_CKR_OK(g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_object));
+      CK_RV rv = g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_object);
+      if(rv == CKR_ATTRIBUTE_VALUE_INVALID) {
+        continue;
+      }
 
       CK_MECHANISM mechanism = {info.hmac, NULL_PTR, 0};
 
-      CK_RV rv = g_fns->C_SignInit(session_, &mechanism, key_object);
+      rv = g_fns->C_SignInit(session_, &mechanism, key_object);
       if (rv == CKR_MECHANISM_INVALID)
         continue;
       ASSERT_CKR_OK(rv);

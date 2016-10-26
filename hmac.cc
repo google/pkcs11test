@@ -82,10 +82,10 @@ class HmacTest : public RWUserSessionTest,
   HmacTest()
     : attrs_({CKA_SIGN, CKA_VERIFY}),
       info_(kHmacInfo[GetParam()]),
-      keylen_((std::rand() % 64)),
+      keylen_(1 + (std::rand() % 63)),
       key_data_(randmalloc(keylen_)),
       key_(INVALID_OBJECT_HANDLE),
-      datalen_(std::rand() % 1024),
+      datalen_(1 + std::rand() % 1024),
       data_(randmalloc(datalen_)),
       mechanism_({info_.hmac, NULL_PTR, 0}) {
     // Implementations generally only support HMAC with a GENERIC_SECRET key.

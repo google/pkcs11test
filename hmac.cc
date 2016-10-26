@@ -89,27 +89,16 @@ class HmacTest : public RWUserSessionTest,
       data_(randmalloc(datalen_)),
       mechanism_({info_.hmac, NULL_PTR, 0}) {
     // Implementations generally only support HMAC with a GENERIC_SECRET key.
-    CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
-    CK_KEY_TYPE key_type = CKK_GENERIC_SECRET;
+    key_type_ = CKK_GENERIC_SECRET;
     if(GetParam() == "SHA1-HMAC") {
-      key_type = CKK_SHA_1_HMAC;
+      key_type_ = CKK_SHA_1_HMAC;
     } else if(GetParam() == "SHA256-HMAC") {
-      key_type = CKK_SHA256_HMAC;
+      key_type_ = CKK_SHA256_HMAC;
     } else if(GetParam() == "SHA384-HMAC") {
-      key_type = CKK_SHA384_HMAC;
+      key_type_ = CKK_SHA384_HMAC;
     } else if(GetParam() == "SHA512-HMAC") {
-      key_type = CKK_SHA512_HMAC;
+      key_type_ = CKK_SHA512_HMAC;
     }
-    vector<CK_ATTRIBUTE> attrs = {
-      {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
-      {CKA_SIGN, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
-      {CKA_VERIFY, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
-      {CKA_CLASS, &key_class, sizeof(key_class)},
-      {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
-      {CKA_VALUE, (CK_VOID_PTR)key_data_.get(), (CK_ULONG)keylen_},
-      {CKA_ID, (CK_VOID_PTR)&key_type, 2},
-    };
-    EXPECT_CKR_OK(g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_));
   }
   ~HmacTest() {
     if (key_ != INVALID_OBJECT_HANDLE) {
@@ -126,6 +115,35 @@ class HmacTest : public RWUserSessionTest,
   const int datalen_;
   unique_ptr<CK_BYTE, freer> data_;
   CK_MECHANISM mechanism_;
+  CK_KEY_TYPE key_type_;
+
+  void Create() {
+    CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
+    vector<CK_ATTRIBUTE> attrs = {
+      {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+      {CKA_SIGN, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+      {CKA_VERIFY, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+      {CKA_CLASS, &key_class, sizeof(key_class)},
+      {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type_, sizeof(key_type_)},
+      {CKA_VALUE, (CK_VOID_PTR)key_data_.get(), (CK_ULONG)keylen_},
+      {CKA_ID, (CK_VOID_PTR)&key_type_, 2},
+    };
+    EXPECT_CKR_OK(g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_));
+  }
+
+  void Generate() {
+    CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
+    CK_MECHANISM mech = {CKM_GENERIC_SECRET_KEY_GEN, NULL_PTR, 0};
+    vector<CK_ATTRIBUTE> attrs = {
+      {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
+      {CKA_SIGN, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+      {CKA_VERIFY, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+      {CKA_CLASS, &key_class, sizeof(key_class)},
+      {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type_, sizeof(key_type_)},
+      {CKA_ID, (CK_VOID_PTR)&key_type_, 2},
+    };
+    EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mech, attrs.data(), attrs.size(), &key_));
+  }
 };
 
 #define SKIP_IF_UNIMPLEMENTED_RV(rv) \
@@ -136,7 +154,22 @@ class HmacTest : public RWUserSessionTest,
       return; \
     }
 
+TEST_P(HmacTest, GenerateSignVerify) {
+  Generate();
+  CK_RV rv = g_fns->C_SignInit(session_, &mechanism_, key_);
+  SKIP_IF_UNIMPLEMENTED_RV(rv);
+  ASSERT_CKR_OK(rv);
+  CK_BYTE output[1024];
+  CK_ULONG output_len = sizeof(output);
+  EXPECT_CKR_OK(g_fns->C_Sign(session_, data_.get(), datalen_, output, &output_len));
+  EXPECT_EQ(info_.mac_size, output_len);
+
+  ASSERT_CKR_OK(g_fns->C_VerifyInit(session_, &mechanism_, key_));
+  EXPECT_CKR_OK(g_fns->C_Verify(session_, data_.get(), datalen_, output, output_len));
+}
+
 TEST_P(HmacTest, SignVerify) {
+  Create();
   CK_RV rv = g_fns->C_SignInit(session_, &mechanism_, key_);
   SKIP_IF_UNIMPLEMENTED_RV(rv);
   ASSERT_CKR_OK(rv);
@@ -150,6 +183,7 @@ TEST_P(HmacTest, SignVerify) {
 }
 
 TEST_P(HmacTest, SignFailVerify) {
+  Create();
   CK_RV rv = g_fns->C_SignInit(session_, &mechanism_, key_);
   SKIP_IF_UNIMPLEMENTED_RV(rv);
   ASSERT_CKR_OK(rv);

@@ -35,7 +35,7 @@ namespace test {
 
 namespace {
 
-class SignTest : public ReadOnlySessionTest,
+class SignTest : public RWUserSessionTest,
                  public ::testing::WithParamInterface<string> {
  public:
   SignTest()

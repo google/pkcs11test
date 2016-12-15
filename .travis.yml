@@ -1,0 +1,19 @@
+language: c++
+sudo: required
+dist: trusty
+
+before_install:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get -qq update
+  - sudo apt-get install -y gcc-4.8 g++-4.8 debhelper scons protobuf-compiler libdbus-1-dev libdbus-c++-dev libprotobuf-dev libsnappy-dev libleveldb-dev libglib2.0-dev libctemplate-dev libssl-dev libtspi-dev libpam0g-dev fakeroot build-essential trousers
+
+script:
+  - export CXX="g++-4.8"
+  - export CC="gcc-4.8"
+  - make
+  - git clone https://github.com/google/chaps-linux
+  - cd chaps-linux
+  - make DPKGSIGN="-us -uc" package
+  - sudo dpkg -i *chaps*amd64.deb
+  - cd ..
+  - make test_chaps

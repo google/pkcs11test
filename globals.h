@@ -20,6 +20,7 @@
 
 #include <set>
 #include <map>
+#include <string>
 
 namespace pkcs11 {
 namespace test {

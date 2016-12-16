@@ -32,16 +32,27 @@ TEST(Init, Simple) {
 }
 
 TEST(Init, Uninitialized) {
-  // Nothing should work if the library hasn't been initialized.
+  // Expect CKR_CRYPTOKI_NOT_INITIALIZED as nothing should work if the
+  // library hasn't been initialized.
+  // However since some functions may not be supported, and PKCS#11 doesn't
+  // define what a stub function should do besides "simply" returning
+  // CKR_FUNCTION_NOT_SUPPORTED allow for that as well.
+  CK_RV rv;
 
   CK_FLAGS flags = CKF_SERIAL_SESSION;
   CK_SESSION_HANDLE session;
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED,
-             g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session));
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_CloseSession(1));
+  rv = g_fns->C_OpenSession(g_slot_id, flags, NULL_PTR, NULL_PTR, &session);
+  EXPECT_TRUE(rv == CKR_CRYPTOKI_NOT_INITIALIZED ||
+    rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
+
+  rv = g_fns->C_CloseSession(1);
+  EXPECT_TRUE(rv == CKR_CRYPTOKI_NOT_INITIALIZED ||
+    rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
 
   CK_MECHANISM mechanism;
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_EncryptInit(1, &mechanism, 1));
+  rv = g_fns->C_EncryptInit(1, &mechanism, 1);
+  EXPECT_TRUE(rv == CKR_CRYPTOKI_NOT_INITIALIZED ||
+    rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
 
   CK_OBJECT_CLASS data_class = CKO_DATA;
   CK_ATTRIBUTE attrs[] = {
@@ -49,11 +60,13 @@ TEST(Init, Uninitialized) {
   };
   CK_ULONG num_attrs = sizeof(attrs) / sizeof(attrs[0]);
   CK_OBJECT_HANDLE object;
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED,
-             g_fns->C_CreateObject(1, attrs, num_attrs, &object));
+  rv = g_fns->C_CreateObject(1, attrs, num_attrs, &object);
+  EXPECT_TRUE(rv == CKR_CRYPTOKI_NOT_INITIALIZED ||
+    rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
 
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED,
-             g_fns->C_FindObjectsInit(1, attrs, num_attrs));
+  rv = g_fns->C_FindObjectsInit(1, attrs, num_attrs);
+  EXPECT_TRUE(rv == CKR_CRYPTOKI_NOT_INITIALIZED ||
+    rv == CKR_FUNCTION_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
 }
 
 TEST(Init, DoubleFinalize) {

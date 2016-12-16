@@ -1,5 +1,6 @@
 pkcs11Test: A PKCS#11 Test Suite
 ================================
+[![Travis](https://img.shields.io/travis/Yubico/pkcs11test.svg)](https://travis-ci.org/Yubico/pkcs11test)
 
 **Warning: Do not run this test suite against a PKCS#11 token that contains real data; some of the tests may erase or
   permanently lock the token.**

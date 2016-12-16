@@ -12,7 +12,7 @@ dump_opencryptoki: pkcs11test
 dump_chaps: pkcs11test
 	./pkcs11test -m libchaps.so.0 -l /usr/lib --gtest_filter=*.Enumerate* -X -v
 
-GTEST_DIR=gtest-1.6.0
+GTEST_DIR=googletest-release-1.8.0/googletest
 GTEST_INC=-isystem $(GTEST_DIR)/include
 CXXFLAGS+=-Ithird_party/pkcs11  $(GTEST_INC) -g -std=c++0x -Wall
 OBJECTS=pkcs11test.o pkcs11-describe.o describe.o globals.o init.o slot.o session.o object.o login.o rng.o tookan.o keypair.o cipher.o digest.o sign.o hmac.o key.o dual.o

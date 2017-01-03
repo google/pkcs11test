@@ -24,28 +24,46 @@ using namespace std;  // So sue me
 namespace pkcs11 {
 namespace test {
 
+CK_BYTE seed[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+
 TEST_F(ReadOnlySessionTest, SeedRandom) {
-  // Additional seed data. Not actually particularly random.
-  CK_BYTE seed[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+  CK_RV rv = g_fns->C_SeedRandom(session_, seed, sizeof(seed));
   if (g_token_flags & CKF_RNG) {
-    EXPECT_CKR_OK(g_fns->C_SeedRandom(session_, seed, sizeof(seed)));
+    EXPECT_TRUE(rv == CKR_OK ||
+      rv == CKR_RANDOM_SEED_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
   } else {
-    EXPECT_CKR(CKR_RANDOM_NO_RNG, g_fns->C_SeedRandom(session_, seed, sizeof(seed)));
+    EXPECT_TRUE(rv == CKR_RANDOM_NO_RNG) << " rv=" << CK_RV_(rv);
   }
 }
 
 TEST(RNG, SeedRandomNoInit) {
-  CK_BYTE seed[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_SeedRandom(INVALID_SLOT_ID, seed, sizeof(seed)));
+  CK_RV rv = g_fns->C_SeedRandom(INVALID_SESSION_HANDLE, seed, sizeof(seed));
+  if (g_token_flags & CKF_RNG) {
+    EXPECT_TRUE(rv == CKR_CRYPTOKI_NOT_INITIALIZED ||
+      rv == CKR_RANDOM_SEED_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
+  } else {
+    EXPECT_TRUE(rv == CKR_RANDOM_NO_RNG) << " rv=" << CK_RV_(rv);
+  }
 }
 
 TEST_F(ReadOnlySessionTest, SeedRandomBadArguments) {
-  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_SeedRandom(session_, nullptr, 1));
+  CK_RV rv = g_fns->C_SeedRandom(session_, nullptr, 1);
+  if (g_token_flags & CKF_RNG) {
+    EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD ||
+      rv == CKR_RANDOM_SEED_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
+  } else {
+    EXPECT_TRUE(rv == CKR_RANDOM_NO_RNG) << " rv=" << CK_RV_(rv);
+  }
 }
 
 TEST_F(PKCS11Test, SeedRandomNoSession) {
-  CK_BYTE seed[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_SeedRandom(INVALID_SLOT_ID, seed, sizeof(seed)));
+  CK_RV rv = g_fns->C_SeedRandom(INVALID_SESSION_HANDLE, seed, sizeof(seed));
+  if (g_token_flags & CKF_RNG) {
+    EXPECT_TRUE(rv == CKR_SESSION_HANDLE_INVALID ||
+      rv == CKR_RANDOM_SEED_NOT_SUPPORTED) << " rv=" << CK_RV_(rv);
+  } else {
+    EXPECT_TRUE(rv == CKR_RANDOM_NO_RNG) << " rv=" << CK_RV_(rv);
+  }
 }
 
 TEST_F(ReadOnlySessionTest, GenerateRandom) {

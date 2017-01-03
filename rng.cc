@@ -82,7 +82,8 @@ TEST_F(ReadOnlySessionTest, GenerateRandom) {
 
 TEST(RNG, GenerateRandomNoInit) {
   CK_BYTE data[8];
-  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED, g_fns->C_GenerateRandom(INVALID_SLOT_ID, data, sizeof(data)));
+  EXPECT_CKR(CKR_CRYPTOKI_NOT_INITIALIZED,
+    g_fns->C_GenerateRandom(INVALID_SESSION_HANDLE, data, sizeof(data)));
 }
 
 TEST_F(ReadOnlySessionTest, GenerateRandomBadArguments) {
@@ -99,7 +100,8 @@ TEST_F(ReadOnlySessionTest, GenerateRandomNone) {
 
 TEST_F(PKCS11Test, GenerateRandomNoSession) {
   CK_BYTE data[16];
-  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID, g_fns->C_GenerateRandom(INVALID_SLOT_ID, data, sizeof(data)));
+  EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
+    g_fns->C_GenerateRandom(INVALID_SESSION_HANDLE, data, sizeof(data)));
 }
 
 }  // namespace test

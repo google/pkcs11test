@@ -66,18 +66,26 @@ TEST_F(PKCS11Test, SeedRandomNoSession) {
   }
 }
 
-TEST_F(ReadOnlySessionTest, GenerateRandom) {
+void GenerateRandom(CK_SESSION_HANDLE session) {
   CK_BYTE data[1024];
   if (g_token_flags & CKF_RNG) {
-    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session_, data, sizeof(data)));
-    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session_, data, 10));
-    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session_, data, 100));
+    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session, data, sizeof(data)));
+    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session, data, 10));
+    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session, data, 100));
     CK_BYTE data2[100];
-    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session_, data2, 100));
+    EXPECT_CKR_OK(g_fns->C_GenerateRandom(session, data2, 100));
     EXPECT_NE(0, memcmp(data, data2, 100));
   } else {
-    EXPECT_CKR(CKR_RANDOM_NO_RNG, g_fns->C_GenerateRandom(session_, data, sizeof(data)));
+    EXPECT_CKR(CKR_RANDOM_NO_RNG, g_fns->C_GenerateRandom(session, data, sizeof(data)));
   }
+}
+
+TEST_F(ReadOnlySessionTest, GenerateRandom) {
+  GenerateRandom(session_);
+}
+
+TEST_F(ROUserSessionTest, GenerateRandom) {
+  GenerateRandom(session_);
 }
 
 TEST(RNG, GenerateRandomNoInit) {
@@ -86,16 +94,32 @@ TEST(RNG, GenerateRandomNoInit) {
     g_fns->C_GenerateRandom(INVALID_SESSION_HANDLE, data, sizeof(data)));
 }
 
+void GenerateRandomBadArguments(CK_SESSION_HANDLE session) {
+  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GenerateRandom(session, nullptr, 1));
+}
+
 TEST_F(ReadOnlySessionTest, GenerateRandomBadArguments) {
-  EXPECT_CKR(CKR_ARGUMENTS_BAD, g_fns->C_GenerateRandom(session_, nullptr, 1));
+  GenerateRandomBadArguments(session_);
+}
+
+TEST_F(ROUserSessionTest, GenerateRandomBadArguments) {
+  GenerateRandomBadArguments(session_);
+}
+
+void GenerateRandomNone(CK_SESSION_HANDLE session) {
+  CK_BYTE data[64];
+  if (g_token_flags & CKF_RNG) {
+    CK_RV rv = g_fns->C_GenerateRandom(session, data, 0);
+    EXPECT_TRUE(rv == CKR_OK || rv == CKR_ARGUMENTS_BAD) << CK_RV_(rv);
+  }
 }
 
 TEST_F(ReadOnlySessionTest, GenerateRandomNone) {
-  CK_BYTE data[64];
-  if (g_token_flags & CKF_RNG) {
-    CK_RV rv = g_fns->C_GenerateRandom(session_, data, 0);
-    EXPECT_TRUE(rv == CKR_OK || rv == CKR_ARGUMENTS_BAD) << CK_RV_(rv);
-  }
+  GenerateRandomNone(session_);
+}
+
+TEST_F(ROUserSessionTest, GenerateRandomNone) {
+  GenerateRandomNone(session_);
 }
 
 TEST_F(PKCS11Test, GenerateRandomNoSession) {

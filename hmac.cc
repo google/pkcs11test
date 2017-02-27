@@ -76,7 +76,7 @@ map<string, vector<TestData> > kTestVectors = {
 
 }  // namespace
 
-class HmacTest : public ReadOnlySessionTest,
+class HmacTest : public RWUserSessionTest,
                  public ::testing::WithParamInterface<string> {
  public:
   HmacTest()

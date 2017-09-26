@@ -277,7 +277,7 @@ TEST_F(ReadWriteSessionTest, SetLatchingAttribute) {
   EXPECT_EQ(CK_TRUE, bvalue);
 }
 
-class DataObjectTest : public ReadWriteSessionTest {
+class DataObjectTest : public RWUserSessionTest {
  public:
   DataObjectTest() : object_(CK_INVALID_HANDLE) {
     CK_OBJECT_CLASS data_class = CKO_DATA;

@@ -126,7 +126,6 @@ class HmacTest : public RWUserSessionTest,
       {CKA_CLASS, &key_class, sizeof(key_class)},
       {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type_, sizeof(key_type_)},
       {CKA_VALUE, (CK_VOID_PTR)key_data_.get(), (CK_ULONG)keylen_},
-      {CKA_ID, (CK_VOID_PTR)&key_type_, 2},
     };
     EXPECT_CKR_OK(g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_));
   }
@@ -140,7 +139,6 @@ class HmacTest : public RWUserSessionTest,
       {CKA_VERIFY, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
       {CKA_CLASS, &key_class, sizeof(key_class)},
       {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type_, sizeof(key_type_)},
-      {CKA_ID, (CK_VOID_PTR)&key_type_, 2},
     };
     EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mech, attrs.data(), attrs.size(), &key_));
   }
@@ -229,7 +227,6 @@ TEST_F(RWUserSessionTest, HmacTestVectors) {
         {CKA_CLASS, &key_class, sizeof(key_class)},
         {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
         {CKA_VALUE, (CK_VOID_PTR)key.data(), key.size()},
-        {CKA_ID, (CK_VOID_PTR)&key_type, 2},
       };
       CK_OBJECT_HANDLE key_object;
       CK_RV rv = g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_object);

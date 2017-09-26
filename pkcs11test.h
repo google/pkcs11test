@@ -281,9 +281,6 @@ class KeyPair {
     CK_BYTE public_exponent_value[] = {0x1, 0x0, 0x1}; // 65537=0x010001
     CK_ATTRIBUTE public_exponent = {CKA_PUBLIC_EXPONENT, public_exponent_value, sizeof(public_exponent_value)};
     public_attrs_.push_back(public_exponent);
-    CK_ULONG key_id = std::rand() % 256;
-    CK_ATTRIBUTE id = {CKA_ID, &key_id, 2};
-    public_attrs_.push_back(id);
 
     CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};
     EXPECT_CKR_OK(g_fns->C_GenerateKeyPair(session_, &mechanism,

@@ -16,7 +16,6 @@
 // limitations under the License.
 
 #include "pkcs11-env.h"
-#include <pkcs11.h>
 
 #include <string>
 

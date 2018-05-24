@@ -17,10 +17,8 @@
 
 // Master header for all PKCS#11 test code.
 
-// Set up the environment for PKCS#11
+// Set up the environment for PKCS#11 and include the official PKCS#11 header file.
 #include "pkcs11-env.h"
-// Include the official PKCS#11 header file.
-#include <pkcs11.h>
 // Test-wide global variables (specifically g_fns)
 #include "globals.h"
 // Utilities to convert PKCS#11 types to strings.

@@ -15,7 +15,7 @@
 // limitations under the License.
 
 /* From 2.1 of [PKCS11-base-v2.40]: Cryptoki structures SHALL be packed with 1-byte alignment. */
-#pragma pack(push, cryptoki, 1)
+#pragma pack(push, 1)
 
 /* The following definitions need to be provided to the preprocessor before the PKCS#11 header file can be included */
 #define CK_PTR *
@@ -29,6 +29,6 @@
 
 #include <pkcs11.h>
 
-#pragma pack(pop, cryptoki)
+#pragma pack(pop)
 
 #endif  // PKCS11_ENV_H

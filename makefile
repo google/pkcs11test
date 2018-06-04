@@ -12,6 +12,11 @@ dump_opencryptoki: pkcs11test
 dump_chaps: pkcs11test
 	./pkcs11test -m libchaps.so.0 -l /usr/lib --gtest_filter=*.Enumerate* -X -v
 
+# Define STRICT_P11 somewhere to force 1-byte alignment on P11 structures
+ifneq (, $(STRICT_P11))
+    CXXFLAGS+=-DSTRICT_P11
+endif
+
 GTEST_DIR=gtest-1.6.0
 GTEST_INC=-isystem $(GTEST_DIR)/include
 CXXFLAGS+=-Ithird_party/pkcs11  $(GTEST_INC) -g -std=c++0x -Wall

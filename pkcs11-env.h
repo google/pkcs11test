@@ -14,6 +14,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/* From 2.1 of [PKCS11-base-v2.40]: Cryptoki structures SHALL be packed with 1-byte alignment. */
+#if defined(STRICT_P11)
+#  pragma pack(push, 1)
+#endif
+
 /* The following definitions need to be provided to the preprocessor before the PKCS#11 header file can be included */
 #define CK_PTR *
 #define CK_DEFINE_FUNCTION(returnType, name) returnType name
@@ -22,6 +27,12 @@
 #define CK_CALLBACK_FUNCTION(returnType, name) returnType (* name)
 #ifndef NULL_PTR
 #define NULL_PTR 0
+#endif
+
+#include <pkcs11.h>
+
+#if defined(STRICT_P11)
+#  pragma pack(pop)
 #endif
 
 #endif  // PKCS11_ENV_H

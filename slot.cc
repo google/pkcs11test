@@ -132,6 +132,14 @@ TEST_F(PKCS11Test, EnumerateMechanisms) {
     if (derive_mechanisms.count(mechanism_type)) {
       expected_flags |= CKF_DERIVE;
     }
+    if (elliptic_curve_mechanisms.count(mechanism_type)) {
+      expected_flags |= CKF_EC_F_P;
+      expected_flags |= CKF_EC_F_2M;
+      expected_flags |= CKF_EC_ECPARAMETERS;
+      expected_flags |= CKF_EC_NAMEDCURVE;
+      expected_flags |= CKF_EC_UNCOMPRESS;
+      expected_flags |= CKF_EC_COMPRESS;
+    }
     // Check that the mechanism's flags are a subset of those expected.
     CK_FLAGS extra_flags = mechanism_info.flags;
     extra_flags &= ~(expected_flags);

@@ -91,6 +91,8 @@ extern std::set<CK_MECHANISM_TYPE> generate_mechanisms;
 extern std::set<CK_MECHANISM_TYPE> wrap_unwrap_mechanisms;
 // PKCS#11 mechanisms for derive.
 extern std::set<CK_MECHANISM_TYPE> derive_mechanisms;
+// PKCS#11 mechanisms for elliptic curve cryptography.
+extern std::set<CK_MECHANISM_TYPE> elliptic_curve_mechanisms;
 
 // Global variables for boolean values.  These are useful in object
 // attribute lists.

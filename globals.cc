@@ -338,6 +338,15 @@ std::set<CK_MECHANISM_TYPE> derive_mechanisms = {
   CKM_EXTRACT_KEY_FROM_KEY,
 };
 
+std::set<CK_MECHANISM_TYPE> elliptic_curve_mechanisms = {
+  CKM_EC_KEY_PAIR_GEN,
+  CKM_ECDSA,
+  CKM_ECDSA_SHA1,
+  CKM_ECDH1_DERIVE,
+  CKM_ECDH1_COFACTOR_DERIVE,
+  CKM_ECMQV_DERIVE,
+};
+
 CK_BBOOL g_ck_false = CK_FALSE;
 CK_BBOOL g_ck_true = CK_TRUE;
 

@@ -161,14 +161,14 @@ class RWSOSessionTest : public ReadWriteSessionTest {
 // The following test fixtures perform a login if the token flags indicate login is required.
 class ROEitherSessionTest : public ReadOnlySessionTest {
  public:
-  ROEitherSessionTest() { if (g_token_flags & CKF_LOGIN_REQUIRED) Login(CKU_USER, g_user_pin); }
-  virtual ~ROEitherSessionTest() { if (g_token_flags & CKF_LOGIN_REQUIRED) EXPECT_CKR_OK(g_fns->C_Logout(session_)); }
+  ROEitherSessionTest() { if (g_token_flags & CKF_LOGIN_REQUIRED) { Login(CKU_USER, g_user_pin); } }
+  virtual ~ROEitherSessionTest() { if (g_token_flags & CKF_LOGIN_REQUIRED) { EXPECT_CKR_OK(g_fns->C_Logout(session_)); } }
 };
 
 class RWEitherSessionTest : public ReadWriteSessionTest {
  public:
-  RWEitherSessionTest() { if (g_token_flags & CKF_LOGIN_REQUIRED) Login(CKU_USER, g_user_pin); }
-  virtual ~RWEitherSessionTest() { if (g_token_flags & CKF_LOGIN_REQUIRED) EXPECT_CKR_OK(g_fns->C_Logout(session_)); }
+  RWEitherSessionTest() { if (g_token_flags & CKF_LOGIN_REQUIRED) { Login(CKU_USER, g_user_pin); } }
+  virtual ~RWEitherSessionTest() { if (g_token_flags & CKF_LOGIN_REQUIRED) { EXPECT_CKR_OK(g_fns->C_Logout(session_)); } }
 };
 
 // RAII objects for different types of session.

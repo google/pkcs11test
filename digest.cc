@@ -110,8 +110,9 @@ class DigestTest : public ReadOnlySessionTest,
 
   string PerformDigest(CK_BYTE_PTR data, CK_ULONG datalen) {
     string result = Digest(session_, &mechanism_, data, datalen);
-    if (result != "unimplemented")
+    if (result != "unimplemented") {
       EXPECT_EQ(info_.size, result.size());
+    }
     return result;
   }
 

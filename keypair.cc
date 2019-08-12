@@ -128,12 +128,14 @@ TEST_F(ReadWriteSessionTest, PublicExponent4Bytes) {
   CK_ULONG modulus_bits = 1024;
   CK_BYTE public_exponent_value[] = {0x00, 0x1, 0x0, 0x1}; // 65537=0x00010001
   vector<CK_ATTRIBUTE> public_attrs = {
-    {CKA_ENCRYPT},
+    {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
+    {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_MODULUS_BITS, &modulus_bits, sizeof(modulus_bits)},
     {CKA_PUBLIC_EXPONENT, public_exponent_value, sizeof(public_exponent_value)},
   };
   vector<CK_ATTRIBUTE> private_attrs = {
-    {CKA_DECRYPT},
+    {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
+    {CKA_DECRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
   };
   CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};
   CK_OBJECT_HANDLE public_key = INVALID_OBJECT_HANDLE;
@@ -190,6 +192,7 @@ TEST_F(ReadWriteSessionTest, AsymmetricTokenKeyPair) {
   CK_ATTRIBUTE public_attrs[] = {
     {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_TOKEN, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
+    {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
     {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
     {CKA_MODULUS_BITS, &modulus_bits, sizeof(modulus_bits)},
     {CKA_PUBLIC_EXPONENT, public_exponent_value, sizeof(public_exponent_value)},
@@ -197,6 +200,7 @@ TEST_F(ReadWriteSessionTest, AsymmetricTokenKeyPair) {
   CK_ATTRIBUTE private_attrs[] = {
     {CKA_DECRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_TOKEN, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+    {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
     {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
   };
   CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};
@@ -227,6 +231,7 @@ TEST_F(ReadOnlySessionTest, CreateKeyPairObjects) {
     {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_VERIFY, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_TOKEN, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
+    {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
     {CKA_CLASS, &public_key_class, sizeof(public_key_class)},
     {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
     {CKA_PUBLIC_EXPONENT, (CK_VOID_PTR)public_exponent.data(), public_exponent.size()},
@@ -246,6 +251,7 @@ TEST_F(ReadOnlySessionTest, CreateKeyPairObjects) {
     {CKA_SENSITIVE, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_EXTRACTABLE, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_TOKEN, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
+    {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
     {CKA_CLASS, &private_key_class, sizeof(private_key_class)},
     {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
     {CKA_PUBLIC_EXPONENT, (CK_VOID_PTR)public_exponent.data(), public_exponent.size()},

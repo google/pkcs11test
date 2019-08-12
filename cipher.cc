@@ -564,6 +564,7 @@ TEST_F(ReadOnlySessionTest, CreateSecretKeyAttributes) {
   CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
   CK_KEY_TYPE key_type = CKK_DES;
   vector<CK_ATTRIBUTE> attrs = {
+    {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
     {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
     {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_DECRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
@@ -612,6 +613,7 @@ TEST_F(ReadOnlySessionTest, SecretKeyTestVectors) {
       CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
       CK_KEY_TYPE key_type = info.keytype;
       vector<CK_ATTRIBUTE> attrs = {
+        {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
         {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
         {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
         {CKA_DECRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},

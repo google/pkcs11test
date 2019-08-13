@@ -132,6 +132,7 @@ TEST_F(ReadWriteSessionTest, CreateCopyDestroyObject) {
   CK_ATTRIBUTE attrs[] = {
     {CKA_CLASS, &data_class, sizeof(data_class)},
     {CKA_TOKEN, &g_ck_false, sizeof(g_ck_false)},  // Session object
+    {CKA_PRIVATE, &g_ck_false, sizeof(g_ck_false)},
     {CKA_APPLICATION, app, sizeof(app)},
     {CKA_VALUE, deadbeef, sizeof(deadbeef)},
     {CKA_LABEL, label, 8},
@@ -286,6 +287,7 @@ class DataObjectTest : public ReadWriteSessionTest {
     CK_ATTRIBUTE attrs[] = {
       {CKA_CLASS, &data_class, sizeof(data_class)},
       {CKA_TOKEN, &g_ck_false, sizeof(g_ck_false)},  // Session object
+      {CKA_PRIVATE, &g_ck_false, sizeof(g_ck_false)},
       {CKA_APPLICATION, app, sizeof(app)},
       {CKA_VALUE, deadbeef, sizeof(deadbeef)},
       {CKA_LABEL, label, 5},

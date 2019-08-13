@@ -246,6 +246,8 @@ class SecretKey {
       CK_ATTRIBUTE valuelen = {CKA_VALUE_LEN, &len, sizeof(CK_ULONG)};
       attrs_.push_back(valuelen);
     }
+    CK_ATTRIBUTE public_object = {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)};
+    attrs_.push_back(public_object);
     CK_MECHANISM mechanism = {keygen_mechanism, NULL_PTR, 0};
     EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
                                        attrs_.data(), attrs_.size(),
@@ -279,6 +281,10 @@ class KeyPair {
     CK_BYTE public_exponent_value[] = {0x1, 0x0, 0x1}; // 65537=0x010001
     CK_ATTRIBUTE public_exponent = {CKA_PUBLIC_EXPONENT, public_exponent_value, sizeof(public_exponent_value)};
     public_attrs_.push_back(public_exponent);
+
+    CK_ATTRIBUTE public_object = {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)};
+    public_attrs_.push_back(public_object);
+    private_attrs_.push_back(public_object);
 
     CK_MECHANISM mechanism = {CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0};
     EXPECT_CKR_OK(g_fns->C_GenerateKeyPair(session_, &mechanism,

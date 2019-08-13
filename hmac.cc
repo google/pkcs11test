@@ -184,7 +184,7 @@ TEST_F(ReadOnlySessionTest, HmacTestVectors) {
       CK_MECHANISM mechanism = {info.hmac, NULL_PTR, 0};
 
       CK_RV rv = g_fns->C_SignInit(session_, &mechanism, key_object);
-      if (rv == CKR_MECHANISM_INVALID)
+      if (rv == CKR_MECHANISM_INVALID || rv == CKR_KEY_SIZE_RANGE)
         continue;
       ASSERT_CKR_OK(rv);
 

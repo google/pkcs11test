@@ -92,6 +92,7 @@ class HmacTest : public ReadOnlySessionTest,
     CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
     CK_KEY_TYPE key_type = CKK_GENERIC_SECRET;
     vector<CK_ATTRIBUTE> attrs = {
+      {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
       {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
       {CKA_SIGN, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
       {CKA_VERIFY, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},

@@ -61,17 +61,23 @@ map<string, vector<TestData> > kTestVectors = {
    {{"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b", "4869205468657265",
      "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"},
     {"4a656665", "7768617420646f2079612077616e7420666f72206e6f7468696e673f",
-     "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"}, }},
+     "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"},
+    {"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b6579202d2048617368204b6579204669727374",
+     "60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54"}, }},
   {"SHA384-HMAC",
    {{"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b", "4869205468657265",
      "afd03944d84895626b0825f4ab46907f15f9dadbe4101ec682aa034c7cebc59cfaea9ea9076ede7f4af152e8b2fa9cb6"},
     {"4a656665", "7768617420646f2079612077616e7420666f72206e6f7468696e673f",
-     "af45d2e376484031617f78d2b58a6b1b9c7ef464f5a01b47e42ec3736322445e8e2240ca5e69e2c78b3239ecfab21649"}, }},
+     "af45d2e376484031617f78d2b58a6b1b9c7ef464f5a01b47e42ec3736322445e8e2240ca5e69e2c78b3239ecfab21649"},
+    {"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b6579202d2048617368204b6579204669727374",
+     "4ece084485813e9088d2c63a041bc5b44f9ef1012a2b588f3cd11f05033ac4c60c2ef6ab4030fe8296248df163f44952"}, }},
   {"SHA512-HMAC",
    {{"0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b", "4869205468657265",
      "87aa7cdea5ef619d4ff0b4241a1d6cb02379f4e2ce4ec2787ad0b30545e17cdedaa833b7d6b8a702038b274eaea3f4e4be9d914eeb61f1702e696c203a126854"},
     {"4a656665", "7768617420646f2079612077616e7420666f72206e6f7468696e673f",
-     "164b7a7bfcf819e2e395fbe73b56e0a387bd64222e831fd610270cd7ea2505549758bf75c05a994a6d034f65f8f0e6fdcaeab1a34d4a6b4b636e070a38bce737"}, }},
+     "164b7a7bfcf819e2e395fbe73b56e0a387bd64222e831fd610270cd7ea2505549758bf75c05a994a6d034f65f8f0e6fdcaeab1a34d4a6b4b636e070a38bce737"},
+    {"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "54657374205573696e67204c6172676572205468616e20426c6f636b2d53697a65204b6579202d2048617368204b6579204669727374",
+     "80b24263c7c1a3ebb71493c1dd7be8b49b46d1f41b4aeec1121b013783f8f3526b56d037e05f2598bd0fd2215d6a1e5295e64f73f63f0aec8b915a985d786598"}, }},
 };
 
 }  // namespace
@@ -169,6 +175,10 @@ TEST_F(ReadOnlySessionTest, HmacTestVectors) {
     HmacInfo info = kHmacInfo[kv.first];
     for (const TestData& testcase : kv.second) {
       string key = hex_decode(testcase.key);
+      // C_SignInit may complain if the key is too short
+      // (i.e. shorter than HMAC output size).
+      // if short_key is true, failing with CKR_KEY_SIZE_RANGE is allowed.
+      bool short_key = (testcase.key.size() < testcase.hash.size());
       CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
       CK_KEY_TYPE key_type = CKK_GENERIC_SECRET;
       vector<CK_ATTRIBUTE> attrs = {
@@ -186,7 +196,7 @@ TEST_F(ReadOnlySessionTest, HmacTestVectors) {
       CK_MECHANISM mechanism = {info.hmac, NULL_PTR, 0};
 
       CK_RV rv = g_fns->C_SignInit(session_, &mechanism, key_object);
-      if (rv == CKR_MECHANISM_INVALID)
+      if (rv == CKR_MECHANISM_INVALID || (short_key && rv == CKR_KEY_SIZE_RANGE))
         continue;
       ASSERT_CKR_OK(rv);
 

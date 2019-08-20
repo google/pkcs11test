@@ -241,8 +241,8 @@ class SecretKey {
             CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN,
             int keylen = -1)
     : session_(session), attrs_(attrs), key_(INVALID_OBJECT_HANDLE) {
+    CK_ULONG len = keylen;
     if (keylen > 0) {
-      CK_ULONG len = keylen;
       CK_ATTRIBUTE valuelen = {CKA_VALUE_LEN, &len, sizeof(CK_ULONG)};
       attrs_.push_back(valuelen);
     }

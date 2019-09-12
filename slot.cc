@@ -103,6 +103,11 @@ TEST_F(PKCS11Test, EnumerateMechanisms) {
     EXPECT_CKR_OK(g_fns->C_GetMechanismInfo(g_slot_id, mechanism_type, &mechanism_info));
     if (g_verbose) cout << "mechanism[" << ii << "]=" << mechanism_type_name(mechanism_type)
                         << " " << mechanism_info_description(&mechanism_info) << endl;
+
+    if (mechanism_type_name(mechanism_type) == "UNKNOWN") {
+      continue;
+    }
+
     EXPECT_LE(mechanism_info.ulMinKeySize, mechanism_info.ulMaxKeySize);
     // Check the expected functionality is available.
     CK_FLAGS expected_flags = CKF_HW;

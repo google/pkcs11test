@@ -227,7 +227,7 @@ TEST_F(ReadOnlySessionTest, UnwrapInvalid) {
              g_fns->C_UnwrapKey(INVALID_SESSION_HANDLE, &wrap_mechanism, k2.handle(), data, data_len, k3_attrs, 5, &k3));
   rv = g_fns->C_UnwrapKey(session_, NULL_PTR, k2.handle(), data, data_len, k3_attrs, 5, &k3);
   EXPECT_TRUE(rv == CKR_ARGUMENTS_BAD || rv == CKR_MECHANISM_INVALID) << " rv=" << CK_RV_(rv);
-  EXPECT_CKR(CKR_WRAPPING_KEY_HANDLE_INVALID,
+  EXPECT_CKR(CKR_UNWRAPPING_KEY_HANDLE_INVALID,
              g_fns->C_UnwrapKey(session_, &wrap_mechanism, NULL_PTR, data, data_len, k3_attrs, 5, &k3));
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_UnwrapKey(session_, &wrap_mechanism, k2.handle(), NULL_PTR, data_len, k3_attrs, 5, &k3));

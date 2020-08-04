@@ -986,7 +986,7 @@ string slot_description(CK_SLOT_INFO_PTR slot) {
   // PKCS#11 s9.2: Slot and token types
   stringstream ss;
   ss <<"CK_SLOT_INFO {";
-  ss << ".slotDescription='" << ck_char(slot->slotDescription, 32) << "', ";
+  ss << ".slotDescription='" << ck_char(slot->slotDescription, 64) << "', ";
   ss << ".manufacturerID='" << ck_char(slot->manufacturerID, 32) << "', ";
   ss << ".hardwareVersion="
      << static_cast<int>(slot->hardwareVersion.major) << "."

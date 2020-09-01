@@ -36,6 +36,8 @@ std::map<std::string, HmacInfo> kHmacInfo = {
   {"SHA256-HMAC", {CKM_SHA256_HMAC, 256/8}},
   {"SHA384-HMAC", {CKM_SHA384_HMAC, 384/8}},
   {"SHA512-HMAC", {CKM_SHA512_HMAC, 512/8}},
+  // PKCS#11 v2.20 amendment 3
+  {"SHA224-HMAC", {CKM_SHA224_HMAC, 224/8}},
 };
 
 std::map<std::string, SignatureInfo> kSignatureInfo = {
@@ -46,6 +48,8 @@ std::map<std::string, SignatureInfo> kSignatureInfo = {
   {"SHA256-RSA", {CKM_SHA256_RSA_PKCS, 1024}},
   {"SHA384-RSA", {CKM_SHA384_RSA_PKCS, 1024}},
   {"SHA512-RSA", {CKM_SHA512_RSA_PKCS, 1024}},
+  // PKCS#11 v2.20 amendment 3
+  {"SHA224-RSA", {CKM_SHA224_RSA_PKCS, 1024}},
 };
 
 std::map<std::string, CipherInfo> kCipherInfo = {
@@ -57,6 +61,13 @@ std::map<std::string, CipherInfo> kCipherInfo = {
   {"IDEA-CBC", {CKK_IDEA, CKM_IDEA_KEY_GEN, CKM_IDEA_CBC, 8, true, -1}},
   {"AES-ECB", {CKK_AES, CKM_AES_KEY_GEN, CKM_AES_ECB, 16, false, 16}},
   {"AES-CBC", {CKK_AES, CKM_AES_KEY_GEN, CKM_AES_CBC, 16, true, 16}},
+  // PKCS#11 v2.20 amendment 3
+  {"CAMELLIA-ECB", {CKK_CAMELLIA, CKM_CAMELLIA_KEY_GEN, CKM_CAMELLIA_ECB, 16, false, -1}},
+  {"CAMELLIA-CBC", {CKK_CAMELLIA, CKM_CAMELLIA_KEY_GEN, CKM_CAMELLIA_CBC, 16, true, -1}},
+  {"CAMELLIA-CBC-PAD", {CKK_CAMELLIA, CKM_CAMELLIA_KEY_GEN, CKM_CAMELLIA_CBC_PAD, 16, true, -1}},
+  {"ARIA-ECB", {CKK_ARIA, CKM_ARIA_KEY_GEN, CKM_ARIA_ECB, 16, false, -1}},
+  {"ARIA-CBC", {CKK_ARIA, CKM_ARIA_KEY_GEN, CKM_ARIA_CBC, 16, true, -1}},
+  {"ARIA-CBC-PAD", {CKK_ARIA, CKM_ARIA_KEY_GEN, CKM_ARIA_CBC_PAD, 16, true, -1}},
 };
 
 std::map<std::string, DigestInfo> kDigestInfo = {
@@ -65,6 +76,8 @@ std::map<std::string, DigestInfo> kDigestInfo = {
   {"SHA-256", {CKM_SHA256, 256/8}},
   {"SHA-384", {CKM_SHA384, 384/8}},
   {"SHA-512", {CKM_SHA512, 512/8}},
+  // PKCS#11 v2.20 amendment 3
+  {"SHA-224", {CKM_SHA224, 224/8}},
 };
 
 // PKCS#11 s12 table 34: Mechanisms vs. Functions
@@ -122,6 +135,14 @@ std::set<CK_MECHANISM_TYPE> encrypt_decrypt_mechanisms = {
   CKM_JUNIPER_SHUFFLE,
   CKM_BLOWFISH_CBC,
   CKM_TWOFISH_CBC,
+  // PKCS#11 v2.20 amendment 3
+  CKM_CAMELLIA_ECB,
+  CKM_CAMELLIA_CBC,
+  CKM_CAMELLIA_CBC_PAD,
+  CKM_CAMELLIA_CTR,
+  CKM_ARIA_ECB,
+  CKM_ARIA_CBC,
+  CKM_ARIA_CBC_PAD,
 };
 std::set<CK_MECHANISM_TYPE> sign_verify_mechanisms = {
   CKM_RSA_PKCS,
@@ -186,6 +207,15 @@ std::set<CK_MECHANISM_TYPE> sign_verify_mechanisms = {
   CKM_SSL3_MD5_MAC,
   CKM_SSL3_SHA1_MAC,
   CKM_CMS_SIG,
+  // PKCS#11 v2.20 amendment 3
+  CKM_SHA224_HMAC,
+  CKM_SHA224_HMAC_GENERAL,
+  CKM_SHA224_RSA_PKCS,
+  CKM_SHA224_RSA_PKCS_PSS,
+  CKM_CAMELLIA_MAC_GENERAL,
+  CKM_CAMELLIA_MAC,
+  CKM_ARIA_MAC_GENERAL,
+  CKM_ARIA_MAC,
 };
 std::set<CK_MECHANISM_TYPE> sign_verify_recover_mechanisms = {
   CKM_RSA_PKCS,
@@ -203,6 +233,8 @@ std::set<CK_MECHANISM_TYPE> digest_mechanisms = {
   CKM_RIPEMD128,
   CKM_RIPEMD160,
   CKM_FASTHASH,
+  // PKCS#11 v2.20 amendment 3
+  CKM_SHA224,
 };
 std::set<CK_MECHANISM_TYPE> generate_mechanisms = {
   CKM_RSA_PKCS_KEY_PAIR_GEN,
@@ -250,6 +282,9 @@ std::set<CK_MECHANISM_TYPE> generate_mechanisms = {
   CKM_WTLS_PRE_MASTER_KEY_GEN,
   CKM_BLOWFISH_KEY_GEN,
   CKM_TWOFISH_KEY_GEN,
+  // PKCS#11 v2.20 amendment 3
+  CKM_CAMELLIA_KEY_GEN,
+  CKM_ARIA_KEY_GEN,
 };
 std::set<CK_MECHANISM_TYPE> wrap_unwrap_mechanisms = {
   CKM_RSA_PKCS,
@@ -299,6 +334,14 @@ std::set<CK_MECHANISM_TYPE> wrap_unwrap_mechanisms = {
   CKM_DES_CFB8,
   CKM_BLOWFISH_CBC,
   CKM_TWOFISH_CBC,
+  // PKCS#11 v2.20 amendment 3
+  CKM_CAMELLIA_ECB,
+  CKM_CAMELLIA_CBC,
+  CKM_CAMELLIA_CBC_PAD,
+  CKM_CAMELLIA_CTR,
+  CKM_ARIA_ECB,
+  CKM_ARIA_CBC,
+  CKM_ARIA_CBC_PAD,
 };
 std::set<CK_MECHANISM_TYPE> derive_mechanisms = {
   CKM_ECDH1_DERIVE,
@@ -338,6 +381,12 @@ std::set<CK_MECHANISM_TYPE> derive_mechanisms = {
   CKM_CONCATENATE_DATA_AND_BASE,
   CKM_XOR_BASE_AND_DATA,
   CKM_EXTRACT_KEY_FROM_KEY,
+  // PKCS#11 v2.20 amendment 3
+  CKM_SHA224_KEY_DERIVATION,
+  CKM_CAMELLIA_ECB_ENCRYPT_DATA,
+  CKM_CAMELLIA_CBC_ENCRYPT_DATA,
+  CKM_ARIA_ECB_ENCRYPT_DATA,
+  CKM_ARIA_CBC_ENCRYPT_DATA,
 };
 
 std::set<CK_MECHANISM_TYPE> elliptic_curve_mechanisms = {

@@ -410,12 +410,12 @@ TEST_F(DataObjectTest, FindObject) {
     {CKA_LABEL, label, 5},
   };
   EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session_, attrs, 3));
-  CK_OBJECT_HANDLE object[5];
+  vector<CK_OBJECT_HANDLE> objects(5);
   CK_ULONG count;
-  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, objects.data(), objects.size(), &count));
   EXPECT_EQ(1, count);
-  EXPECT_EQ(object_, object[0]);
-  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+  EXPECT_EQ(object_, objects[0]);
+  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, objects.data(), objects.size(), &count));
   EXPECT_EQ(0, count);
   EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session_));
 }
@@ -484,9 +484,9 @@ TEST_F(DataObjectTest, FindNoObject) {
     {CKA_LABEL, label, 11},
   };
   EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session_, attrs, 3));
-  CK_OBJECT_HANDLE object[5];
+  vector<CK_OBJECT_HANDLE> objects(5);
   CK_ULONG count;
-  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+  EXPECT_CKR_OK(g_fns->C_FindObjects(session_, objects.data(), objects.size(), &count));
   EXPECT_EQ(0, count);
   EXPECT_CKR_OK(g_fns->C_FindObjectsFinal(session_));
 }
@@ -502,10 +502,10 @@ TEST_F(DataObjectTest, FindObjectInvalid) {
   };
 
   // Find before initialization
-  CK_OBJECT_HANDLE object[5];
+  vector<CK_OBJECT_HANDLE> objects(5);
   CK_ULONG count;
   EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
-             g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+             g_fns->C_FindObjects(session_, objects.data(), objects.size(), &count));
 
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_FindObjectsInit(INVALID_SESSION_HANDLE, attrs, 3));
@@ -516,11 +516,11 @@ TEST_F(DataObjectTest, FindObjectInvalid) {
   EXPECT_CKR_OK(g_fns->C_FindObjectsInit(session_, attrs, 3));
 
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
-             g_fns->C_FindObjects(INVALID_SESSION_HANDLE, object, sizeof(object), &count));
+             g_fns->C_FindObjects(INVALID_SESSION_HANDLE, objects.data(), objects.size(), &count));
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
              g_fns->C_FindObjects(session_, NULL_PTR, 1, &count));
   EXPECT_CKR(CKR_ARGUMENTS_BAD,
-             g_fns->C_FindObjects(session_, object, sizeof(object), NULL_PTR));
+             g_fns->C_FindObjects(session_, objects.data(), objects.size(), NULL_PTR));
 
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_FindObjectsFinal(INVALID_SESSION_HANDLE));
@@ -528,7 +528,7 @@ TEST_F(DataObjectTest, FindObjectInvalid) {
 
   // Find after finalization
   EXPECT_CKR(CKR_OPERATION_NOT_INITIALIZED,
-             g_fns->C_FindObjects(session_, object, sizeof(object), &count));
+             g_fns->C_FindObjects(session_, objects.data(), objects.size(), &count));
 }
 
 }  // namespace test

@@ -62,7 +62,7 @@ class SignTest : public ReadOnlySessionTest,
 #define SKIP_IF_UNIMPLEMENTED_RV(rv) \
     if ((rv) == CKR_MECHANISM_INVALID) {  \
       stringstream ss; \
-      ss << "Digest type " << mechanism_type_name(mechanism_.mechanism) << " not implemented"; \
+      ss << "Signing with " << mechanism_type_name(mechanism_.mechanism) << " not implemented"; \
       TEST_SKIPPED(ss.str()); \
       return; \
     }
@@ -123,7 +123,7 @@ TEST_F(ReadOnlySessionTest, SignVerifyRecover) {
   }
   if ((rv) == CKR_MECHANISM_INVALID) {
     stringstream ss;
-    ss << "Digest type " << mechanism_type_name(mechanism.mechanism) << " not implemented";
+    ss << "Signing with " << mechanism_type_name(mechanism.mechanism) << " not implemented";
     TEST_SKIPPED(ss.str());
     return;
   }

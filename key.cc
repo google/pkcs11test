@@ -98,6 +98,8 @@ TEST_F(ReadOnlySessionTest, WrapUnwrap) {
   ObjectAttributes k1_attrs = ObjectAttributes();
   CK_ATTRIBUTE insensitive_attr = {CKA_SENSITIVE, &g_ck_false, sizeof(g_ck_false)};
   k1_attrs.push_back(insensitive_attr);
+  CK_ATTRIBUTE extractable_attr = {CKA_EXTRACTABLE, &g_ck_true, sizeof(g_ck_true)};
+  k1_attrs.push_back(extractable_attr);
   SecretKey k1(session_, k1_attrs);
 
   vector<CK_ATTRIBUTE_TYPE> k2_attrs = {CKA_WRAP, CKA_UNWRAP, CKA_DECRYPT};
@@ -154,6 +156,8 @@ TEST_F(ReadOnlySessionTest, WrapInvalid) {
   ObjectAttributes k1_attrs = ObjectAttributes();
   CK_ATTRIBUTE insensitive_attr = {CKA_SENSITIVE, &g_ck_false, sizeof(g_ck_false)};
   k1_attrs.push_back(insensitive_attr);
+  CK_ATTRIBUTE extractable_attr = {CKA_EXTRACTABLE, &g_ck_true, sizeof(g_ck_true)};
+  k1_attrs.push_back(extractable_attr);
   SecretKey k1(session_, k1_attrs);
 
   vector<CK_ATTRIBUTE_TYPE> k2_attrs = {CKA_WRAP, CKA_UNWRAP, CKA_DECRYPT};
@@ -194,6 +198,8 @@ TEST_F(ReadOnlySessionTest, UnwrapInvalid) {
   ObjectAttributes k1_attrs = ObjectAttributes();
   CK_ATTRIBUTE insensitive_attr = {CKA_SENSITIVE, &g_ck_false, sizeof(g_ck_false)};
   k1_attrs.push_back(insensitive_attr);
+  CK_ATTRIBUTE extractable_attr = {CKA_EXTRACTABLE, &g_ck_true, sizeof(g_ck_true)};
+  k1_attrs.push_back(extractable_attr);
   SecretKey k1(session_, k1_attrs);
 
   vector<CK_ATTRIBUTE_TYPE> k2_attrs = {CKA_WRAP, CKA_UNWRAP, CKA_DECRYPT};

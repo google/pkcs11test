@@ -46,6 +46,8 @@ extern const char* g_so_pin;
 extern const char* g_reset_user_pin;
 // Security Officer PIN after token reset.  Only used if (g_token_flags & CKF_LOGIN_REQUIRED).
 extern const char* g_reset_so_pin;
+// The wrap mechanism by which the test will be carried out.
+extern const char* g_wrap_mechanism;
 
 // Algorithm information.  These tables are effectively const, but not marked as
 // const so operator[] can be used for convenience.

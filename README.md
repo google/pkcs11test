@@ -32,7 +32,7 @@ There are also several optional command-line parameters:
  - `-v`: Generate verbose output.
  - `-u pwd`: Provide the user PIN/password.
  - `-o pwd`: Provide the security officer PIN/password.
- -  `-w` : Wrap mechanism { 
+ - `-w cnm`: Name of cipher to use for keys being wrapped in key-wrapping tests. One of { 
               3DES-CBC, 3DES-ECB, AES-CBC
             , AES-ECB, ARIA-CBC, ARIA-CBC-PAD
             , ARIA-ECB, CAMELLIA-CBC, CAMELLIA-CBC-PAD

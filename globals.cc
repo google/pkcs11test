@@ -28,6 +28,7 @@ const char* g_user_pin = "useruser";
 const char* g_reset_user_pin = "12345678";
 const char* g_so_pin = "sososo";
 const char* g_reset_so_pin = "87654321";
+const char* g_wrap_mechanism = "3DES-ECB";
 
 // Algorithm information.
 std::map<std::string, HmacInfo> kHmacInfo = {

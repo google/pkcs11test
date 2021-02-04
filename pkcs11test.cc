@@ -88,7 +88,7 @@ void usage() {
   cerr << "  -v      : verbose output" << endl;
   cerr << "  -u pwd  : user PIN/password" << endl;
   cerr << "  -o pwd  : security officer PIN/password" << endl;
-  cerr << "  -w      : wrap mechanism { ";
+  cerr << "  -w name : cipher to use for keys being wrapped, one of: { ";
   for (const auto &key : kCipherInfo) {
     static int i = 0;
     if ((i % 3) == 0) {

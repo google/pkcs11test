@@ -238,7 +238,7 @@ class SecretKey {
  public:
   // Create a secret key with the given list of (boolean) attributes set to true.
   SecretKey(CK_SESSION_HANDLE session, const ObjectAttributes& attrs,
-            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES_KEY_GEN,
+            CK_MECHANISM_TYPE keygen_mechanism = CKM_DES3_KEY_GEN,
             int keylen = -1)
     : session_(session), attrs_(attrs), key_(INVALID_OBJECT_HANDLE) {
     CK_ULONG len = keylen;

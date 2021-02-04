@@ -88,6 +88,17 @@ void usage() {
   cerr << "  -v      : verbose output" << endl;
   cerr << "  -u pwd  : user PIN/password" << endl;
   cerr << "  -o pwd  : security officer PIN/password" << endl;
+  cerr << "  -w name : cipher to use for keys being wrapped, one of: { ";
+  for (const auto &key : kCipherInfo) {
+    static int i = 0;
+    if ((i % 3) == 0) {
+      cerr << endl;
+      cerr << "            ";
+    }
+    cerr << ", " << key.first;
+    i++;
+  }
+  cerr << " }" << endl;
   cerr << "  -I      : perform token init tests **WILL WIPE TOKEN CONTENTS**" << endl;
   exit(1);
 }
@@ -142,7 +153,7 @@ int main(int argc, char* argv[]) {
   int opt;
   const char* module_name = nullptr;
   const char* module_path = nullptr;
-  while ((opt = getopt(argc, argv, "vIXl:m:s:S:u:o:h")) != -1) {
+  while ((opt = getopt(argc, argv, "vIXl:m:s:S:u:o:w:h")) != -1) {
     switch (opt) {
       case 'v':
         g_verbose = true;
@@ -171,6 +182,9 @@ int main(int argc, char* argv[]) {
         break;
       case 'o':
         g_so_pin = optarg;
+        break;
+      case 'w':
+        g_wrap_mechanism = optarg;
         break;
       case 'h':
       default:

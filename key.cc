@@ -100,11 +100,12 @@ TEST_F(ReadOnlySessionTest, WrapUnwrap) {
   k1_attrs.push_back(insensitive_attr);
   SecretKey k1(session_, k1_attrs);
 
+  CipherInfo info = kCipherInfo[g_wrap_mechanism];
   vector<CK_ATTRIBUTE_TYPE> k2_attrs = {CKA_WRAP, CKA_UNWRAP, CKA_DECRYPT};
-  SecretKey k2(session_, k2_attrs);
+  SecretKey k2(session_, k2_attrs, info.keygen, info.keylen);
 
   // Use k2 to wrap k1.
-  CK_MECHANISM wrap_mechanism = {CKM_DES3_ECB, NULL_PTR, 0};
+  CK_MECHANISM wrap_mechanism = {info.mode, NULL_PTR, 0};
   CK_BYTE data[4096];
   CK_ULONG data_len = sizeof(data);
   CK_RV rv = g_fns->C_WrapKey(session_, &wrap_mechanism, k2.handle(), k1.handle(), data, &data_len);
@@ -156,11 +157,12 @@ TEST_F(ReadOnlySessionTest, WrapInvalid) {
   k1_attrs.push_back(insensitive_attr);
   SecretKey k1(session_, k1_attrs);
 
+  CipherInfo info = kCipherInfo[g_wrap_mechanism];
   vector<CK_ATTRIBUTE_TYPE> k2_attrs = {CKA_WRAP, CKA_UNWRAP, CKA_DECRYPT};
-  SecretKey k2(session_, k2_attrs);
+  SecretKey k2(session_, k2_attrs, info.keygen, info.keylen);
 
   // Use k2 to wrap k1.
-  CK_MECHANISM wrap_mechanism = {CKM_DES3_ECB, NULL_PTR, 0};
+  CK_MECHANISM wrap_mechanism = {info.mode, NULL_PTR, 0};
   CK_BYTE data[4096];
   CK_ULONG data_len = sizeof(data);
 
@@ -196,11 +198,12 @@ TEST_F(ReadOnlySessionTest, UnwrapInvalid) {
   k1_attrs.push_back(insensitive_attr);
   SecretKey k1(session_, k1_attrs);
 
+  CipherInfo info = kCipherInfo[g_wrap_mechanism];
   vector<CK_ATTRIBUTE_TYPE> k2_attrs = {CKA_WRAP, CKA_UNWRAP, CKA_DECRYPT};
-  SecretKey k2(session_, k2_attrs);
+  SecretKey k2(session_, k2_attrs, info.keygen, info.keylen);
 
   // Use k2 to wrap k1.
-  CK_MECHANISM wrap_mechanism = {CKM_DES3_ECB, NULL_PTR, 0};
+  CK_MECHANISM wrap_mechanism = {info.mode, NULL_PTR, 0};
   CK_BYTE data[4096];
   CK_ULONG data_len = sizeof(data);
 

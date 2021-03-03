@@ -422,9 +422,9 @@ TEST_P(SecretKeyTest, DecryptUpdateErrors) {
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
-  ASSERT_CKR_OK(g_fns->C_EncryptUpdate(session_,
-                                       plaintext_.get(), kNumBlocks * info_.blocksize,
-                                       ciphertext, &ciphertext_len));
+  ASSERT_CKR_OK(g_fns->C_Encrypt(session_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
+                                 ciphertext, &ciphertext_len));
 
   // Variety of bad arguments to C_DecryptUpdate.  Each error terminates the
   // operation and so need re-initialization.

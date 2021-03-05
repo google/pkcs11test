@@ -255,6 +255,13 @@ TEST_P(SecretKeyTest, EncryptDecryptInitInvalid) {
   EXPECT_CKR(CKR_OPERATION_ACTIVE,
              g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
 
+  // Finish active operation before starting a new one
+  CK_BYTE ciphertext[1024];
+  CK_ULONG ciphertext_len = sizeof(ciphertext);
+  EXPECT_CKR_OK(g_fns->C_Encrypt(session_,
+                                 plaintext_.get(), kNumBlocks * info_.blocksize,
+                                 ciphertext, &ciphertext_len));
+
   EXPECT_CKR_OK(g_fns->C_DecryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR(CKR_OPERATION_ACTIVE,
              g_fns->C_DecryptInit(session_, &mechanism_, key_.handle()));

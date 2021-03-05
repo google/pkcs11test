@@ -42,6 +42,11 @@ class DualSecretKeyTest : public SecretKeyTest {
 }  // namespace
 
 TEST_P(DualSecretKeyTest, DigestEncrypt) {
+  if (!(g_token_flags & CKF_DUAL_CRYPTO_OPERATIONS)) {
+    TEST_SKIPPED("Dual digest+encrypt not supported");
+    return;
+  }
+
   // Start digest and encryption operations
   ASSERT_CKR_OK(g_fns->C_DigestInit(session_, &digest_mechanism_));
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));

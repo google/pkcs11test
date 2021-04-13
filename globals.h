@@ -17,8 +17,9 @@
 
 #include "pkcs11-env.h"
 
-#include <set>
 #include <map>
+#include <set>
+#include <string>
 
 namespace pkcs11 {
 namespace test {

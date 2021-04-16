@@ -27,11 +27,12 @@ TEST_F(ReadWriteSessionTest, TookanAttackA1) {
   SecretKey k1(session_, k1_attrs);
 
   // Second, create a key k2 with wrap & decrypt
+  CipherInfo info = kCipherInfo[g_wrap_mechanism];
   vector<CK_ATTRIBUTE_TYPE> k2_attrs = {CKA_WRAP, CKA_DECRYPT};
-  SecretKey k2(session_, k2_attrs);
+  SecretKey k2(session_, k2_attrs, info.keygen, info.keylen);
 
   // Use k2 to wrap k1.
-  CK_MECHANISM wrap_mechanism = {CKM_DES_ECB, NULL_PTR, 0};
+  CK_MECHANISM wrap_mechanism = {info.mode, NULL_PTR, 0};
   CK_BYTE data[4096];
   CK_ULONG data_len = sizeof(data);
   CK_RV rv;

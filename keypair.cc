@@ -117,7 +117,7 @@ TEST_F(KeyPairTest, EncryptDecrypt) {
   ASSERT_CKR_OK(rv);
 
   CK_BYTE recovered_plaintext[1024];
-  CK_ULONG recovered_plaintext_len = sizeof(plaintext);
+  CK_ULONG recovered_plaintext_len = sizeof(recovered_plaintext);
   rv = g_fns->C_Decrypt(session_, ciphertext, ciphertext_len, recovered_plaintext, &recovered_plaintext_len);
   EXPECT_CKR_OK(rv);
   EXPECT_EQ(plaintext_len, recovered_plaintext_len);

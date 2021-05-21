@@ -144,7 +144,7 @@ TEST_F(ReadOnlySessionTest, SignVerifyRecover) {
   EXPECT_EQ(0, memcmp(data.get(), recovered, datalen));
 }
 
-INSTANTIATE_TEST_CASE_P(Signatures, SignTest,
+INSTANTIATE_TEST_SUITE_P(Signatures, SignTest,
                         ::testing::Values("RSA",
                                           "MD5-RSA",
                                           "SHA1-RSA",

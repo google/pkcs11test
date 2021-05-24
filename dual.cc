@@ -120,7 +120,7 @@ TEST_P(DualSecretKeyTest, DigestEncrypt) {
   EXPECT_EQ(hex_data(buffer, digest_len), hex_data(buffer2, digest2_len));
 }
 
-INSTANTIATE_TEST_CASE_P(Duals, DualSecretKeyTest,
+INSTANTIATE_TEST_SUITE_P(Duals, DualSecretKeyTest,
                         ::testing::Values("DES-ECB",
                                           "DES-CBC",
                                           "3DES-ECB",

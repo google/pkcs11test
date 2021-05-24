@@ -558,7 +558,7 @@ TEST_P(SecretKeyTest, DecryptFinalErrors2) {
                                    output, &output_len));
 }
 
-INSTANTIATE_TEST_CASE_P(Ciphers, SecretKeyTest,
+INSTANTIATE_TEST_SUITE_P(Ciphers, SecretKeyTest,
                         ::testing::Values("DES-ECB",
                                           "DES-CBC",
                                           "3DES-ECB",

@@ -162,7 +162,7 @@ TEST_P(HmacTest, SignFailVerify) {
              g_fns->C_Verify(session_, data_.get(), datalen_, output, output_len));
 }
 
-INSTANTIATE_TEST_CASE_P(HMACs, HmacTest,
+INSTANTIATE_TEST_SUITE_P(HMACs, HmacTest,
                         ::testing::Values("MD5-HMAC",
                                           "SHA1-HMAC",
                                           "SHA256-HMAC",

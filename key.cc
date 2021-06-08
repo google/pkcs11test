@@ -94,7 +94,7 @@ TEST_F(ReadOnlySessionTest, GenerateKeyPairInvalid) {
 }
 
 
-TEST_F(ReadOnlySessionTest, WrapUnwrap) {
+TEST_F(ROUserSessionTest, WrapUnwrap) {
   ObjectAttributes k1_attrs = ObjectAttributes();
   CK_ATTRIBUTE insensitive_attr = {CKA_SENSITIVE, &g_ck_false, sizeof(g_ck_false)};
   k1_attrs.push_back(insensitive_attr);
@@ -153,7 +153,7 @@ TEST_F(ReadOnlySessionTest, WrapUnwrap) {
   g_fns->C_DestroyObject(session_, k3);
 }
 
-TEST_F(ReadOnlySessionTest, WrapInvalid) {
+TEST_F(ROUserSessionTest, WrapInvalid) {
   ObjectAttributes k1_attrs = ObjectAttributes();
   CK_ATTRIBUTE insensitive_attr = {CKA_SENSITIVE, &g_ck_false, sizeof(g_ck_false)};
   k1_attrs.push_back(insensitive_attr);
@@ -196,7 +196,7 @@ TEST_F(ReadOnlySessionTest, WrapInvalid) {
              g_fns->C_WrapKey(session_, &wrap_mechanism, k2.handle(), k1.handle(), data, &data_len));
 }
 
-TEST_F(ReadOnlySessionTest, UnwrapInvalid) {
+TEST_F(ROUserSessionTest, UnwrapInvalid) {
   ObjectAttributes k1_attrs = ObjectAttributes();
   CK_ATTRIBUTE insensitive_attr = {CKA_SENSITIVE, &g_ck_false, sizeof(g_ck_false)};
   k1_attrs.push_back(insensitive_attr);

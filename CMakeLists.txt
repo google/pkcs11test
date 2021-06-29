@@ -1,6 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
-#set(CMAKE_CXX_STANDARD 11)
-#set(CMAKE_CXX_EXTENSIONS OFF)
+cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(p11test)
 
@@ -49,12 +47,9 @@ install(TARGETS ${PROJECT_NAME}
         )
 		
 install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)
-#install(FILES $<TARGET_FILE_DIR:${PROJECT_NAME}>/gmock.dll DESTINATION bin OPTIONAL)
-message("$<TARGET_FILE_DIR:${PROJECT_NAME}>")
-install(FILES "C:/Projects/pkcs11test/tmp/Debug/gmockd.dll" DESTINATION bin OPTIONAL)
 
-get_cmake_property(_variableNames VARIABLES)
-list (SORT _variableNames)
-foreach (_variableName ${_variableNames})
-    #message(STATUS "${_variableName}=${${_variableName}}")
-endforeach() 
+#get_cmake_property(_variableNames VARIABLES)
+#list (SORT _variableNames)
+#foreach (_variableName ${_variableNames})
+#    message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach() 

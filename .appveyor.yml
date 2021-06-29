@@ -18,7 +18,8 @@ install:
 - cmd: git fetch
 - cmd: git checkout 2021.05.12
 - cmd: bootstrap-vcpkg.bat
-- cmd: vcpkg install gtest
+- cmd: vcpkg install gtest:x86-windows
+- cmd: vcpkg install gtest:x64-windows
 - cmd: vcpkg update
 - cmd: vcpkg upgrade --no-dry-run
 build_script:
@@ -26,7 +27,7 @@ build_script:
 - cmd: mkdir C:\projects\pkcs11test\build
 - cmd: cd C:\projects\pkcs11test\build
 - cmd: vcpkg integrate install
-- cmd: cmake .. -G %GENERATOR% -DVCPKG_TARGET_TRIPLET=%TARGET% -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake 
+- cmd: cmake .. -G "%GENERATOR%" -DVCPKG_TARGET_TRIPLET=%TARGET% -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake 
 - cmd: cmake --build . --config RelWithDebInfo
 - cmd: ctest -C RelWithDebInfo --progress --verbose
 - cmd: cmake -DCMAKE_INSTALL_PREFIX=out/ -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake

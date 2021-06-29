@@ -8,9 +8,9 @@ cache:
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
   matrix:
-  - GENERATOR: "Visual Studio 15 2017"
+  - GENERATOR: "Visual Studio 14 2015"
     TARGET: x86-windows
-  - GENERATOR: "Visual Studio 15 2017 Win64"
+  - GENERATOR: "Visual Studio 14 2015 Win64"
     TARGET: x64-windows
 install:
 # Update vcpkg

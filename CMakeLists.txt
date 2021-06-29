@@ -36,11 +36,19 @@ list(APPEND INCLUDE_DIRS
 			${CMAKE_CURRENT_SOURCE_DIR}/third_party/pkcs11)
 
 
-
 find_package(GTest CONFIG REQUIRED COMPONENTS CXX_LIB)
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS} )
+
+if(${VCPKG_TARGET_TRIPLET} MATCHES  ".*windows-static$")
+	message(FATAL_ERROR "GTest library doesn't support static linking for now") 
+	# switch to MultiThreaded runtime library (MT) vs MultiThreaded DLL (MD)
+	set_property(TARGET ${PROJECT_NAME} PROPERTY
+				 MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
+
 
 install(TARGETS ${PROJECT_NAME}
         DESTINATION ${CMAKE_INSTALL_BINDIR}

@@ -7,6 +7,11 @@ cache:
   - C:/Tools/vcpkg/installed/
 environment:
   APPVEYOR_SAVE_CACHE_ON_ERROR: true
+  matrix:
+  - GENERATOR: "Visual Studio 15 2017"
+    TARGET: x86-windows
+  - GENERATOR: "Visual Studio 15 2017 Win64"
+    TARGET: x64-windows
 install:
 # Update vcpkg
 - cd c:\tools\vcpkg
@@ -21,7 +26,7 @@ build_script:
 - cmd: mkdir C:\projects\pkcs11test\build
 - cmd: cd C:\projects\pkcs11test\build
 - cmd: vcpkg integrate install
-- cmd: cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake 
+- cmd: cmake .. -G %GENERATOR% -DVCPKG_TARGET_TRIPLET=%TARGET% -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake 
 - cmd: cmake --build . --config RelWithDebInfo
 - cmd: ctest -C RelWithDebInfo --progress --verbose
 - cmd: cmake -DCMAKE_INSTALL_PREFIX=out/ -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake

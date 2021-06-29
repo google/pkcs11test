@@ -14,6 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef _WIN32
+#include "cryptoki.h"
+#else
 /* From 2.1 of [PKCS11-base-v2.40]: Cryptoki structures SHALL be packed with 1-byte alignment. */
 #if defined(STRICT_P11)
 #  pragma pack(push, 1)
@@ -28,6 +31,7 @@
 #ifndef NULL_PTR
 #define NULL_PTR 0
 #endif
+#endif //_WIN32
 
 #include <pkcs11.h>
 

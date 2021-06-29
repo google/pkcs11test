@@ -13,8 +13,14 @@
 // limitations under the License.
 
 // C headers
+#include <getopt.h>
+#ifdef _WIN32
+#include <windows.h>
+#include <stdlib.h>
+#else
 #include <dlfcn.h>
 #include <unistd.h>
+#endif
 
 // C++ headers
 #include <cctype>
@@ -24,7 +30,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <memory>
 
 // Local headers
 #include "pkcs11test.h"
@@ -54,11 +59,11 @@ int GetInteger(const CK_CHAR *val, int len) {
 }
 
 typedef vector<string> TestList;
-typedef map<string, std::unique_ptr<TestList> > SkippedTestMap;
+typedef map<string, TestList*> SkippedTestMap;
 static SkippedTestMap skipped_tests;
 void TestSkipped(const char *testcase, const char *test, const string& reason) {
   if (skipped_tests.find(reason) == skipped_tests.end()) {
-    skipped_tests[reason] = std::unique_ptr<TestList>(new TestList);
+    skipped_tests[reason] = new TestList;
   }
   string testname(testcase);
   testname += ".";
@@ -83,22 +88,10 @@ void usage() {
   cerr << "  -m name : name of PKCS#11 library" << endl;
   cerr << "  -l path : path to PKCS#11 library" << endl;
   cerr << "  -s id   : slot ID to perform tests against" << endl;
-  cerr << "  -S n    : slot index (0 for first slot)" << endl;
   cerr << "  -X      : skip tests requiring SO login" << endl;
   cerr << "  -v      : verbose output" << endl;
   cerr << "  -u pwd  : user PIN/password" << endl;
   cerr << "  -o pwd  : security officer PIN/password" << endl;
-  cerr << "  -w name : cipher to use for keys being wrapped, one of: { ";
-  for (const auto &key : kCipherInfo) {
-    static int i = 0;
-    if ((i % 3) == 0) {
-      cerr << endl;
-      cerr << "            ";
-    }
-    cerr << ", " << key.first;
-    i++;
-  }
-  cerr << " }" << endl;
   cerr << "  -I      : perform token init tests **WILL WIPE TOKEN CONTENTS**" << endl;
   exit(1);
 }
@@ -121,13 +114,25 @@ CK_C_GetFunctionList load_pkcs11_library(const char* libpath, const char* libnam
     exit(1);
   }
 
-  void* lib = dlopen(fullname.c_str(), RTLD_NOW);
+  void* lib;
+#if defined WIN32
+  fullname = "C:\\Projects\\SoftHSMv2\\tmp32\\src\\lib\\Debug\\softhsm2.dll";
+  lib = LoadLibraryA(fullname.c_str());
+#else
+  lib = dlopen(fullname.c_str(), RTLD_NOW);
+#endif
   if (lib == nullptr) {
     cerr << "Failed to dlopen(" << fullname << ")" << endl;
     exit(1);
   }
 
-  void* fn = dlsym(lib, "C_GetFunctionList");
+  void* fn;
+#if defined WIN32
+  fn = GetProcAddress((HMODULE)lib, "C_GetFunctionList");
+#else
+  fn = dlsym(lib, "C_GetFunctionList");
+#endif
+
   if (fn == nullptr) {
     cerr<< "Failed to dlsym(\"C_GetFunctionList\")" << endl;
     exit(1);
@@ -148,12 +153,10 @@ int main(int argc, char* argv[]) {
 
   // Retrieve PKCS module location.
   bool explicit_slotid = false;
-  bool use_slot_index = false;
-  unsigned slot_index = 0;
   int opt;
   const char* module_name = nullptr;
   const char* module_path = nullptr;
-  while ((opt = getopt(argc, argv, "vIXl:m:s:S:u:o:w:h")) != -1) {
+  while ((opt = getopt(argc, argv, "vIXl:m:s:u:o:h")) != -1) {
     switch (opt) {
       case 'v':
         g_verbose = true;
@@ -174,17 +177,11 @@ int main(int argc, char* argv[]) {
         g_slot_id = atoi(optarg);
         explicit_slotid = true;
         break;
-      case 'S':
-        slot_index = atoi(optarg);
-        use_slot_index = true;
       case 'u':
         g_user_pin = optarg;
         break;
       case 'o':
         g_so_pin = optarg;
-        break;
-      case 'w':
-        g_wrap_mechanism = optarg;
         break;
       case 'h':
       default:
@@ -195,6 +192,10 @@ int main(int argc, char* argv[]) {
 
   // Load the module.
   CK_C_GetFunctionList get_fn_list = load_pkcs11_library(module_path, module_name);
+
+//   CK_FUNCTION_LIST_PTR p11;
+//   (*get_fn_list)(&p11);
+//   p11->C_Initialize(NULL_PTR);
 
   // Retrieve the set of function pointers (C_GetFunctionList is the only function it's OK to call before C_Initialize).
   if (get_fn_list(&g_fns) != CKR_OK) {
@@ -209,32 +210,20 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  if (use_slot_index || !explicit_slotid) {
-    CK_SLOT_ID slots[32];
-    CK_ULONG slot_count = 32;
+  if (!explicit_slotid) {
+    // No slot specified; OK if there's only one accessible slot.
+    CK_SLOT_ID slots[2];
+    CK_ULONG slot_count = 2;
     rv = g_fns->C_GetSlotList(CK_TRUE, slots, &slot_count);
     if (rv == CKR_OK) {
-      if (slot_count == 0) {
+      if (slot_count == 1) {
+        g_slot_id = slots[0];
+      } else if (slot_count == 0) {
         cerr << "No slots with tokens available" << endl;
         exit(1);
       } else {
-        if (!use_slot_index) {
-          if (slot_count > 1) {
-            cerr << "Multiple slots with tokens available; specify one with -s" << endl;
-            for (unsigned i = 0; i < slot_count; i++) {
-              cerr << "Slot " << i << "= ID: " << slots[i] << endl;
-            }
-            exit(1);
-          }
-          // default to the first slot (slot_index = 0)
-        }
-
-        if (slot_index >= slot_count) {
-          cerr << "Slot index " << slot_index << " invalid, there are only " << slot_count << " slots." << endl;
-          exit(1);
-        }
-
-        g_slot_id = slots[slot_index];
+        cerr << "Multiple slots with tokens available; specify one with -s" << endl;
+        exit(1);
       }
     } else {
       cerr << "Failed to retrieve slot list" << endl;
@@ -269,7 +258,7 @@ int main(int argc, char* argv[]) {
   g_token_flags = token.flags;
   memcpy(g_token_label, token.label, sizeof(g_token_label));
 
-  if (!(g_token_flags & CKF_LOGIN_REQUIRED)) {
+  if ((g_token_flags & CKF_LOGIN_REQUIRED)) {
     // Disable all tests that require login in their fixture.
     // This unfortunately relies on some gTest innards.
     string filter(testing::GTEST_FLAG(filter).c_str());

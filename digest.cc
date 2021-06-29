@@ -22,6 +22,13 @@
 #include <cstdlib>
 #include "pkcs11test.h"
 
+
+#ifdef _WIN32
+#include <windows.h>
+#include <stdlib.h>
+#endif
+
+
 #include <map>
 #include <sstream>
 #include <string>

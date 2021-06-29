@@ -1,0 +1,28 @@
+version: 0.0.0-{dev}
+configuration: Release
+platform:
+- x86
+cache: 
+  - C:/Tools/vcpkg/installed/
+environment:
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
+install:
+# Update vcpkg
+- cd c:\tools\vcpkg
+- cmd: git fetch
+- cmd: git checkout 2021.05.12
+- cmd: bootstrap-vcpkg.bat
+- cmd: vcpkg install gtest:x86-windows
+- cmd: vcpkg update
+- cmd: vcpkg upgrade --no-dry-run
+build_script:
+- cmd: if exist "C:\projects\pkcs11test\build" rd /s /q C:\projects\pkcs11test\build
+- cmd: mkdir C:\projects\pkcs11test\build
+- cmd: cd C:\projects\pkcs11test\build
+- cmd: vcpkg integrate install
+- cmd: cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake 
+- cmd: cmake --build . --config RelWithDebInfo
+- cmd: ctest -C RelWithDebInfo --progress --verbose
+- cmd: cmake -DCMAKE_INSTALL_PREFIX=build/SoftHSMv2-$(Platform) -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

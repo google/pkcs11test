@@ -31,15 +31,15 @@ build_script:
 - cmd: cmake --build . --config RelWithDebInfo
 - cmd: ctest -C RelWithDebInfo --progress --verbose
 - cmd: cpack
-#on_finish:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 artifacts:
-  - path: "*.zip"
+  - path: "build/*.zip"
     name: artifacts-zip
 
 deploy:
-  release: pkcs11test-win32-v$(APPVEYOR_BUILD_VERSION)
-  description: 'Release x86'
+  release: pkcs11test-v$(APPVEYOR_BUILD_VERSION)
+  description: 'Windows binaries auto-built by AppVeyor'
   provider: GitHub
   auth_token:
     secure: KX9JW8h86LzNA1TDJy2adlFIV+E455sZqXTc/HQDPLSbHRTwEv5zpcdRA/n9xJGp
@@ -48,4 +48,4 @@ deploy:
   prerelease: false
   on:
     branch: dev
-    APPVEYOR_REPO_TAG: true
+#   APPVEYOR_REPO_TAG: true # deploy on tag push only

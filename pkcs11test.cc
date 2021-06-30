@@ -15,9 +15,11 @@
 // C headers
 #include <getopt.h>
 #ifdef _WIN32
+constexpr auto FILEPATH_NATIVE = '\\';
 #include <windows.h>
 #include <stdlib.h>
 #else
+constexpr auto FILEPATH_NATIVE = '/';
 #include <dlfcn.h>
 #include <unistd.h>
 #endif
@@ -129,7 +131,6 @@ CK_C_GetFunctionList load_pkcs11_library(const char* libpath, const char* libnam
 
   void* lib;
 #if defined WIN32
-  fullname = "C:\\Projects\\SoftHSMv2\\tmp32\\src\\lib\\Debug\\softhsm2.dll";
   lib = LoadLibraryA(fullname.c_str());
 #else
   lib = dlopen(fullname.c_str(), RTLD_NOW);

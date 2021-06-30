@@ -39,7 +39,7 @@ endif()
 list(APPEND INCLUDE_DIRS 
 			${CMAKE_CURRENT_SOURCE_DIR}/third_party/pkcs11)
 
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSTRICT_P11")
 find_package(GTest CONFIG REQUIRED COMPONENTS CXX_LIB)
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)

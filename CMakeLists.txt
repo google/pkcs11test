@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(p11test)
 
+set(VERSION "0.0.0")
+set(VERSION_MAJOR 0)
+set(VERSION_MINOR 0)
+set(VERSION_PATCH 0)
 
 set(SOURCES cipher.cc
 	describe.cc
@@ -50,12 +54,25 @@ endif()
 
 
 
-install(TARGETS ${PROJECT_NAME}
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
-        )
-		
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/gmock.dll DESTINATION bin OPTIONAL)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/gtest.dll DESTINATION bin OPTIONAL)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/gtest_main.dll DESTINATION bin OPTIONAL)
 
+# Packaging
+set(CPACK_PACKAGE_NAME ${PACKAGE_NAME})
+set(CPACK_PACKAGE_VENDOR "plcs11test")
+set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
+set(CPACK_GENERATOR "ZIP")
+set(CPACK_SOURCE_GENERATOR "ZIP")
+set(CPACK_SOURCE_IGNORE_FILES "build/*;\.git/*")
+
+include(CPack)
+
+##debug
 #get_cmake_property(_variableNames VARIABLES)
 #list (SORT _variableNames)
 #foreach (_variableName ${_variableNames})

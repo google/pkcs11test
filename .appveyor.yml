@@ -30,6 +30,22 @@ build_script:
 - cmd: cmake .. -G "%GENERATOR%" -DVCPKG_TARGET_TRIPLET=%TARGET% -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake 
 - cmd: cmake --build . --config RelWithDebInfo
 - cmd: ctest -C RelWithDebInfo --progress --verbose
-- cmd: cmake -DCMAKE_INSTALL_PREFIX=out/ -DCMAKE_INSTALL_CONFIG_NAME=RelWithDebInfo -P cmake_install.cmake
+- cmd: cpack
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+artifacts:
+  - path: **\*.zip
+    name: artifacts-zip
+
+deploy:
+  release: pkcs11test-win32-v$(APPVEYOR_BUILD_VERSION)
+  description: 'Release x86'
+  provider: GitHub
+  auth_token:
+    secure: KX9JW8h86LzNA1TDJy2adlFIV+E455sZqXTc/HQDPLSbHRTwEv5zpcdRA/n9xJGp
+  artifact: artifacts-zip
+  draft: true
+  prerelease: false
+  on:
+    branch: dev
+    APPVEYOR_REPO_TAG: true

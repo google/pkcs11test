@@ -48,4 +48,4 @@ deploy:
   prerelease: false
   on:
     branch: dev
-    APPVEYOR_REPO_TAG: true
+#   APPVEYOR_REPO_TAG: true # deploy on tag push only

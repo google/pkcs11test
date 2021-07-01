@@ -29,10 +29,10 @@ set(SOURCES cipher.cc
 
 if(MSVC)
 	list(APPEND INCLUDE_DIRS 
-                ${CMAKE_CURRENT_SOURCE_DIR}/third_party/win32)
+                ${CMAKE_CURRENT_SOURCE_DIR}/third_party/netbsd)
                 
 	list(APPEND SOURCES 
-                ${CMAKE_CURRENT_SOURCE_DIR}/third_party/win32/getopt.cpp)
+                ${CMAKE_CURRENT_SOURCE_DIR}/third_party/netbsd/getopt_long.c)
 
 endif()
 
@@ -53,9 +53,6 @@ if(${VCPKG_TARGET_TRIPLET} MATCHES  ".*windows-static$")
 endif()
 
 
-
-#install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
-#install(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION bin OPTIONAL)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/p11test.exe DESTINATION bin)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/p11test.pdb DESTINATION bin OPTIONAL)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/gmock.dll DESTINATION bin)
@@ -73,10 +70,3 @@ set(CPACK_SOURCE_GENERATOR "ZIP")
 set(CPACK_SOURCE_IGNORE_FILES "build/*;\.git/*")
 
 include(CPack)
-
-##debug
-#get_cmake_property(_variableNames VARIABLES)
-#list (SORT _variableNames)
-#foreach (_variableName ${_variableNames})
-#    message(STATUS "${_variableName}=${${_variableName}}")
-#endforeach() 

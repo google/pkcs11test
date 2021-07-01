@@ -42,7 +42,7 @@ list(APPEND INCLUDE_DIRS
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSTRICT_P11")
 find_package(GTest CONFIG REQUIRED COMPONENTS CXX_LIB)
 add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest)
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS} )
 
 if(${VCPKG_TARGET_TRIPLET} MATCHES  ".*windows-static$")
@@ -55,9 +55,7 @@ endif()
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/p11test.exe DESTINATION bin)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/p11test.pdb DESTINATION bin OPTIONAL)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/gmock.dll DESTINATION bin)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/gtest.dll DESTINATION bin)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/gtest_main.dll DESTINATION bin)
 
 # Packaging
 set(CPACK_PACKAGE_NAME ${PACKAGE_NAME})

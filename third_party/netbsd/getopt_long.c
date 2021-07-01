@@ -49,7 +49,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _WIN32
 #include <err.h>
+#else  //_WIN32
+#pragma warning(disable : 4996) //getenv
+/* warnx definition for windows*/
+#include <stdio.h>
+#include <stdarg.h>
+#include <windows.h>
+
+char opterrmsg[128];
+
+static void warnx(const char *fmt, ...)
+{
+	const int TRUNCATED = -1;
+	va_list ap;
+	va_start(ap, fmt);
+
+	if (fmt != NULL) {
+		int c = _vsnprintf_s(opterrmsg, sizeof(opterrmsg) - 4, _TRUNCATE, fmt, ap);
+
+		// enough space are reserved to add continuation mark or NL
+		if (c == TRUNCATED) {
+			c = sizeof(opterrmsg) - 5;
+			opterrmsg[c++] = '.';
+			opterrmsg[c++] = '.';
+			opterrmsg[c++] = '.';
+			opterrmsg[c++] = '\n';
+			opterrmsg[c++] = '\0';
+		}
+		else{
+			opterrmsg[c++] = '\n';
+			opterrmsg[c++] = '\0';
+		}
+	}
+	else {
+		opterrmsg[0] = '\0';
+	}
+	
+	OutputDebugStringA(opterrmsg);
+	fprintf(stderr, opterrmsg);
+
+	va_end(ap);
+}
+
+#endif //_WIN32
+
 #include <errno.h>
 #include <getopt.h>
 #include <stdlib.h>

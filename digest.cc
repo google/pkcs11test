@@ -24,8 +24,7 @@
 
 
 #ifdef _WIN32
-#include <windows.h>
-#include <stdlib.h>
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
 

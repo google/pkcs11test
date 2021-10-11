@@ -134,15 +134,16 @@ TEST_F(ROUserSessionTest, WrapUnwrap) {
   // Unwrap to generate a key object with the same value.
   CK_OBJECT_HANDLE k3;
   CK_OBJECT_CLASS key_class = CKO_SECRET_KEY;
-  CK_KEY_TYPE key_type = CKK_DES;
+  CK_KEY_TYPE key_type = CKK_DES3;
   CK_ATTRIBUTE k3_attrs[] = {
     {CKA_LABEL, (CK_VOID_PTR)g_label, g_label_len},
     {CKA_CLASS, &key_class, sizeof(key_class)},
     {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
     {CKA_ENCRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
     {CKA_DECRYPT, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
+    {CKA_EXTRACTABLE, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
   };
-  EXPECT_CKR_OK(g_fns->C_UnwrapKey(session_, &wrap_mechanism, k2.handle(), data, data_len, k3_attrs, 5, &k3));
+  EXPECT_CKR_OK(g_fns->C_UnwrapKey(session_, &wrap_mechanism, k2.handle(), data, data_len, k3_attrs, 6, &k3));
 
   CK_BYTE k3_value[2048];
   CK_ATTRIBUTE k3_get_attr = {CKA_VALUE, k3_value, sizeof(k3_value)};

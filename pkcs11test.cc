@@ -91,15 +91,19 @@ void usage() {
   cerr << "  -w name : cipher to use for keys being wrapped, one of: { ";
   for (const auto &key : kCipherInfo) {
     static int i = 0;
-    if ((i % 3) == 0) {
+    if ((i % 4) == 0) {
       cerr << endl;
-      cerr << "            ";
+      cerr << "              ";
+      cerr << key.first;
+    } else {
+      cerr << ", " << key.first;
     }
-    cerr << ", " << key.first;
     i++;
   }
   cerr << " }" << endl;
   cerr << "  -I      : perform token init tests **WILL WIPE TOKEN CONTENTS**" << endl;
+  cerr << "  -U pwd  : default user PIN/password expected after token init" << endl;
+  cerr << "  -O pwd  : default security officer PIN/password expected after token init" << endl;
   exit(1);
 }
 
@@ -153,7 +157,7 @@ int main(int argc, char* argv[]) {
   int opt;
   const char* module_name = nullptr;
   const char* module_path = nullptr;
-  while ((opt = getopt(argc, argv, "vIXl:m:s:S:u:o:w:h")) != -1) {
+  while ((opt = getopt(argc, argv, "vIXl:m:s:S:u:o:U:O:w:h")) != -1) {
     switch (opt) {
       case 'v':
         g_verbose = true;
@@ -182,6 +186,12 @@ int main(int argc, char* argv[]) {
         break;
       case 'o':
         g_so_pin = optarg;
+        break;
+      case 'U':
+        g_reset_user_pin = optarg;
+        break;
+      case 'O':
+        g_reset_so_pin = optarg;
         break;
       case 'w':
         g_wrap_mechanism = optarg;

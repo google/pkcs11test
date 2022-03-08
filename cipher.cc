@@ -233,9 +233,9 @@ TEST_P(SecretKeyTest, EncryptDecryptInitInvalid) {
              g_fns->C_DecryptInit(INVALID_SESSION_HANDLE, &mechanism_, key_.handle()));
 
   EXPECT_CKR(CKR_KEY_HANDLE_INVALID,
-             g_fns->C_EncryptInit(session_, &mechanism, INVALID_OBJECT_HANDLE));
+             g_fns->C_EncryptInit(session_, &mechanism_, INVALID_OBJECT_HANDLE));
   EXPECT_CKR(CKR_KEY_HANDLE_INVALID,
-             g_fns->C_DecryptInit(session_, &mechanism, INVALID_OBJECT_HANDLE));
+             g_fns->C_DecryptInit(session_, &mechanism_, INVALID_OBJECT_HANDLE));
 
   CK_RV rv;
   rv = g_fns->C_EncryptInit(session_, NULL_PTR, key_.handle());

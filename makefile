@@ -3,14 +3,10 @@ all: pkcs11test
 SLOT_ID ?= 0
 test_opencryptoki: pkcs11test
 	./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki -s ${SLOT_ID}
-test_chaps: pkcs11test
-	./pkcs11test -m libchaps.so.0 -l /usr/lib -u 111111 -X
 
 # Run the specific tests that dump token contents
 dump_opencryptoki: pkcs11test
 	./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki --gtest_filter=*.Enumerate* -s ${SLOT_ID} -v
-dump_chaps: pkcs11test
-	./pkcs11test -m libchaps.so.0 -l /usr/lib --gtest_filter=*.Enumerate* -X -v
 
 # Define STRICT_P11 somewhere to force 1-byte alignment on P11 structures
 ifneq (, $(STRICT_P11))

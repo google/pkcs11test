@@ -10,8 +10,6 @@ This repository holds a test suite for, and is therefore derived from, the
 To build the test program on Linux, just run `make`.  To run the tests against
 common Linux PKCS#11 implementations:
 
- - Run `make test_chaps` to test against a
-   [Chaps](https://github.com/google/chaps-linux) installation.
  - Run `make test_opencryptoki` to test against an
    [OpenCryptoKi](http://sourceforge.net/projects/opencryptoki/) [installation](https://packages.debian.org/wheezy/admin/opencryptoki).
 
@@ -32,7 +30,7 @@ There are also several optional command-line parameters:
  - `-v`: Generate verbose output.
  - `-u pwd`: Provide the user PIN/password.
  - `-o pwd`: Provide the security officer PIN/password.
- - `-w cnm`: Name of cipher to use for keys being wrapped in key-wrapping tests. One of { 
+ - `-w cnm`: Name of cipher to use for keys being wrapped in key-wrapping tests. One of {
               3DES-CBC, 3DES-ECB, AES-CBC
             , AES-ECB, ARIA-CBC, ARIA-CBC-PAD
             , ARIA-ECB, CAMELLIA-CBC, CAMELLIA-CBC-PAD

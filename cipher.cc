@@ -25,6 +25,7 @@
 #include <cstdlib>
 #include "pkcs11test.h"
 
+#include <algorithm>
 #include <map>
 #include <string>
 #include <vector>
@@ -56,7 +57,41 @@ map<string, vector<TestData> > kTestVectors = {
 
 }  // namespace
 
+// XXX: Cannot skip from SetUp(); consider GTEST_SKIP when on gtest>=1.10.0.
+#define SKIP_IF_UNIMPLEMENTED(info)                         \
+  do {                                                      \
+    CK_MECHANISM_TYPE missing;                              \
+    if (!has_cipher(info, &missing)) {                      \
+      stringstream ss;                                      \
+      ss << mechanism_type_name(missing) << " unavailable"; \
+      TEST_SKIPPED(ss.str());                               \
+      return;                                               \
+    }                                                       \
+  } while (0)
+
+static bool has_cipher(const CipherInfo &info, CK_MECHANISM_TYPE *missing) {
+  CK_ULONG count = 0;
+  CK_RV rv;
+
+  EXPECT_CKR_OK((rv = g_fns->C_GetMechanismList(g_slot_id, NULL_PTR, &count)));
+  if (rv != CKR_OK) return false;
+
+  std::vector<CK_MECHANISM_TYPE> list(count);
+  EXPECT_CKR_OK((rv = g_fns->C_GetMechanismList(g_slot_id, list.data(), &count)));
+  if (rv != CKR_OK) return false;
+
+  CK_MECHANISM_TYPE reqd[] = { info.keygen, info.mode };
+  for (auto needle : reqd) {
+    if (!std::count(list.begin(), list.end(), needle)) {
+      if (missing) *missing = needle;
+      return false;
+    }
+  }
+  return true;
+}
+
 TEST_P(SecretKeyTest, EncryptDecrypt) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // First encrypt the data.
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
 
@@ -82,6 +117,7 @@ TEST_P(SecretKeyTest, EncryptDecrypt) {
 }
 
 TEST_P(SecretKeyTest, EncryptFailDecrypt) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
@@ -104,6 +140,7 @@ TEST_P(SecretKeyTest, EncryptFailDecrypt) {
 }
 
 TEST_P(SecretKeyTest, EncryptDecryptGetSpace) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // First encrypt the data.
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
 
@@ -159,6 +196,7 @@ TEST_P(SecretKeyTest, EncryptDecryptGetSpace) {
 }
 
 TEST_P(SecretKeyTest, EncryptDecryptParts) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // First encrypt the data block by block.
   ASSERT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
 
@@ -220,6 +258,7 @@ TEST_P(SecretKeyTest, EncryptDecryptParts) {
 }
 
 TEST_P(SecretKeyTest, EncryptDecryptInitInvalid) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   CK_MECHANISM mechanism = {999, NULL_PTR, 0};
   EXPECT_CKR(CKR_MECHANISM_INVALID,
              g_fns->C_EncryptInit(session_, &mechanism, key_.handle()));
@@ -272,6 +311,7 @@ TEST_P(SecretKeyTest, EncryptDecryptInitInvalid) {
 }
 
 TEST_P(SecretKeyTest, EncryptErrors) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // Variety of bad arguments to C_Encrypt.  Each error terminates the
   // operation and so need re-initialization.
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
@@ -305,6 +345,7 @@ TEST_P(SecretKeyTest, EncryptErrors) {
 }
 
 TEST_P(SecretKeyTest, DecryptErrors) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // First encrypt the data.
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
@@ -348,6 +389,7 @@ TEST_P(SecretKeyTest, DecryptErrors) {
 }
 
 TEST_P(SecretKeyTest, EncryptUpdateErrors) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // Variety of bad arguments to C_EncryptUpdate.  Each error terminates the
   // operation and so need re-initialization.
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
@@ -372,6 +414,7 @@ TEST_P(SecretKeyTest, EncryptUpdateErrors) {
 }
 
 TEST_P(SecretKeyTest, EncryptModePolicing1) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
@@ -386,6 +429,7 @@ TEST_P(SecretKeyTest, EncryptModePolicing1) {
 }
 
 TEST_P(SecretKeyTest, EncryptModePolicing2) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = 0;
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
@@ -402,6 +446,7 @@ TEST_P(SecretKeyTest, EncryptModePolicing2) {
 
 TEST_P(SecretKeyTest, EncryptInvalidIV) {
   if (!info_.has_iv) return;
+  SKIP_IF_UNIMPLEMENTED(info_);
   CK_MECHANISM mechanism = {info_.mode, iv_.get(), (CK_ULONG)(info_.blocksize - 1)};
   EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
              g_fns->C_EncryptInit(session_, &mechanism, key_.handle()));
@@ -416,6 +461,7 @@ TEST_P(SecretKeyTest, EncryptInvalidIV) {
 
 TEST_P(SecretKeyTest, DecryptInvalidIV) {
   if (!info_.has_iv) return;
+  SKIP_IF_UNIMPLEMENTED(info_);
   CK_MECHANISM mechanism = {info_.mode, iv_.get(), (CK_ULONG)(info_.blocksize - 1)};
   EXPECT_CKR(CKR_MECHANISM_PARAM_INVALID,
              g_fns->C_DecryptInit(session_, &mechanism, key_.handle()));
@@ -429,6 +475,7 @@ TEST_P(SecretKeyTest, DecryptInvalidIV) {
 }
 
 TEST_P(SecretKeyTest, DecryptUpdateErrors) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // First encrypt the data.
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
@@ -461,6 +508,7 @@ TEST_P(SecretKeyTest, DecryptUpdateErrors) {
 }
 
 TEST_P(SecretKeyTest, EncryptFinalImmediate) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   EXPECT_CKR_OK(g_fns->C_EncryptInit(session_, &mechanism_, key_.handle()));
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
@@ -470,6 +518,7 @@ TEST_P(SecretKeyTest, EncryptFinalImmediate) {
 }
 
 TEST_P(SecretKeyTest, EncryptFinalErrors1) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // Variety of bad arguments to C_EncryptFinal.  Each error terminates the
   // operation and so need re-initialization.
   CK_BYTE ciphertext[1024];
@@ -486,6 +535,7 @@ TEST_P(SecretKeyTest, EncryptFinalErrors1) {
 }
 
 TEST_P(SecretKeyTest, EncryptFinalErrors2) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   CK_BYTE ciphertext[1024];
   CK_BYTE_PTR output = ciphertext;
   CK_ULONG output_len = sizeof(ciphertext) - (output - ciphertext);
@@ -516,6 +566,7 @@ TEST_P(SecretKeyTest, EncryptFinalErrors2) {
 }
 
 TEST_P(SecretKeyTest, DecryptFinalErrors1) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // First encrypt the data.
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);
@@ -540,6 +591,7 @@ TEST_P(SecretKeyTest, DecryptFinalErrors1) {
 }
 
 TEST_P(SecretKeyTest, DecryptFinalErrors2) {
+  SKIP_IF_UNIMPLEMENTED(info_);
   // First encrypt the data.
   CK_BYTE ciphertext[1024];
   CK_ULONG ciphertext_len = sizeof(ciphertext);

@@ -249,9 +249,8 @@ class SecretKey {
       attrs_.push_back(valuelen);
     }
     CK_MECHANISM mechanism = {keygen_mechanism, NULL_PTR, 0};
-    EXPECT_CKR_OK(g_fns->C_GenerateKey(session_, &mechanism,
-                                       attrs_.data(), attrs_.size(),
-                                       &key_));
+    rv_ = g_fns->C_GenerateKey(session_, &mechanism, attrs_.data(),
+                               attrs_.size(), &key_);
   }
   ~SecretKey() {
     if (key_ != INVALID_OBJECT_HANDLE) {
@@ -259,11 +258,15 @@ class SecretKey {
     }
   }
   bool valid() const { return (key_ != INVALID_OBJECT_HANDLE); }
-  CK_OBJECT_HANDLE handle() const { return key_; }
+  CK_OBJECT_HANDLE handle() const {
+    EXPECT_CKR_OK(rv_);
+    return key_;
+  }
  private:
   CK_SESSION_HANDLE session_;
   ObjectAttributes attrs_;
   CK_OBJECT_HANDLE key_;
+  CK_RV rv_;
 };
 
 class KeyPair {

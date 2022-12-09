@@ -665,10 +665,12 @@ TEST_F(ReadOnlySessionTest, CreateSecretKeyAttributes) {
   ASSERT_CKR_OK(g_fns->C_DestroyObject(session_, key_object));
 }
 
-TEST_F(ReadOnlySessionTest, SecretKeyTestVectors) {
+TEST_F(RWUserSessionTest, SecretKeyTestVectors) {
   for (const auto& kv : kTestVectors) {
     vector<TestData> testcases = kTestVectors[kv.first];
     CipherInfo info = kCipherInfo[kv.first];
+    if (!has_cipher(info, NULL))
+      continue;  /* skip this test */
     for (const TestData& testcase : kv.second) {
       if (g_verbose) {
         cout  << "KEY: " << testcase.key << endl;

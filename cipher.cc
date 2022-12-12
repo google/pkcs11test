@@ -265,6 +265,10 @@ TEST_P(SecretKeyTest, EncryptDecryptInitInvalid) {
   EXPECT_CKR_OK(g_fns->C_DecryptInit(session_, &mechanism_, key_.handle()));
   EXPECT_CKR(CKR_OPERATION_ACTIVE,
              g_fns->C_DecryptInit(session_, &mechanism_, key_.handle()));
+
+  // Finish active operation before starting a new one (in-place).
+  EXPECT_CKR_OK(g_fns->C_Decrypt(session_, ciphertext, ciphertext_len,
+                                 ciphertext, &ciphertext_len));
 }
 
 TEST_P(SecretKeyTest, EncryptErrors) {
@@ -556,6 +560,11 @@ TEST_P(SecretKeyTest, DecryptFinalErrors2) {
   EXPECT_CKR(CKR_SESSION_HANDLE_INVALID,
              g_fns->C_DecryptFinal(INVALID_SESSION_HANDLE,
                                    output, &output_len));
+  // Finish active operation before starting a new one for
+  // implementations that do not abort on the previous error.
+  CK_RV rv = g_fns->C_DecryptFinal(session_, output, &output_len);
+  EXPECT_TRUE(rv == CKR_OK || rv == CKR_OPERATION_NOT_INITIALIZED);
+
 }
 
 INSTANTIATE_TEST_CASE_P(Ciphers, SecretKeyTest,

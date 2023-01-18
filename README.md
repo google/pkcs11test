@@ -7,6 +7,20 @@ pkcs11Test: A PKCS#11 Test Suite
 This repository holds a test suite for, and is therefore derived from, the
 [RSA Security Inc. PKCS #11 Cryptographic Token Interface (Cryptoki)](http://www.emc.com/emc-plus/rsa-labs/standards-initiatives/pkcs-11-cryptographic-token-interface-standard.htm).
 
+The test suite exercises v2.2 of the PKCS#11 interface, and covers:
+
+- library management (`init.cc`)
+- slot and token management (`slot.cc`)
+- session management (`session.cc`, `login.cc`)
+- object management (`object.cc`)
+- key management (`key.cc`)
+- symmetric encryption and decryption (`cipher.cc`)
+- asymmetric encryption and decryption (`cipher.cc`)
+- signing and verification (`sign.cc`, `hmac.cc`)
+- message digesting (`digest.cc`)
+- dual-function mechanisms (`dual.cc`)
+
+
 To build the test program on Linux, just run `make`.  To run the tests against
 common Linux PKCS#11 implementations:
 

@@ -156,8 +156,12 @@ string rv_name(CK_RV val) {
     case CKR_NEW_PIN_MODE: return "CKR_NEW_PIN_MODE";
     case CKR_NEXT_OTP: return "CKR_NEXT_OTP";
     case CKR_FUNCTION_REJECTED: return "CKR_FUNCTION_REJECTED";
-    case CKR_VENDOR_DEFINED: return "CKR_VENDOR_DEFINED";
-    default: return "UNKNOWN";
+    default:
+        if (val >= CKR_VENDOR_DEFINED) {
+            return "CKR_VENDOR_DEFINED";
+        } else {
+            return "UNKNOWN";
+        }
   }
 }
 

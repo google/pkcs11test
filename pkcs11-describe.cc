@@ -68,6 +68,8 @@ string hex_decode(string hex_value) {
 
 string rv_name(CK_RV val) {
   // PKCS#11 s11.1: Function return values
+  if(val >= CKR_VENDOR_DEFINED) return "CKR_VENDOR_DEFINED";
+  
   switch (val) {
     case CKR_OK: return "CKR_OK";
     case CKR_CANCEL: return "CKR_CANCEL";
@@ -156,7 +158,6 @@ string rv_name(CK_RV val) {
     case CKR_NEW_PIN_MODE: return "CKR_NEW_PIN_MODE";
     case CKR_NEXT_OTP: return "CKR_NEXT_OTP";
     case CKR_FUNCTION_REJECTED: return "CKR_FUNCTION_REJECTED";
-    case CKR_VENDOR_DEFINED: return "CKR_VENDOR_DEFINED";
     default: return "UNKNOWN";
   }
 }

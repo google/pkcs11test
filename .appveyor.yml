@@ -1,0 +1,49 @@
+version: 0.0.0-{build}
+configuration: Release
+platform:
+- x86
+#- x64
+cache: 
+  - C:/Tools/vcpkg/installed/
+environment:
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
+  matrix:
+  - GENERATOR: "Visual Studio 14 2015"
+    TARGET: x86-windows
+  - GENERATOR: "Visual Studio 14 2015 Win64"
+    TARGET: x64-windows
+install:
+# Update vcpkg
+- cd c:\tools\vcpkg
+- cmd: git fetch
+- cmd: git checkout 2021.05.12
+- cmd: bootstrap-vcpkg.bat
+- cmd: vcpkg install gtest:x86-windows
+- cmd: vcpkg install gtest:x64-windows
+- cmd: vcpkg update
+- cmd: vcpkg upgrade --no-dry-run
+build_script:
+- cmd: if exist "C:\projects\pkcs11test\build" rd /s /q C:\projects\pkcs11test\build
+- cmd: mkdir C:\projects\pkcs11test\build
+- cmd: cd C:\projects\pkcs11test\build
+- cmd: vcpkg integrate install
+- cmd: cmake .. -G "%GENERATOR%" -DVCPKG_TARGET_TRIPLET=%TARGET% -DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake 
+- cmd: cmake --build . --config RelWithDebInfo
+- cmd: ctest -C RelWithDebInfo --progress --verbose
+- cmd: cpack
+artifacts:
+  - path: "build/*.zip"
+    name: artifacts-zip
+
+deploy:
+  release: pkcs11test-v$(APPVEYOR_BUILD_VERSION)
+  description: 'Windows binaries auto-built by AppVeyor'
+  provider: GitHub
+  auth_token:
+    secure: KX9JW8h86LzNA1TDJy2adlFIV+E455sZqXTc/HQDPLSbHRTwEv5zpcdRA/n9xJGp
+  artifact: artifacts-zip
+  draft: true
+  prerelease: false
+  on:
+    branch: dev
+#   APPVEYOR_REPO_TAG: true # deploy on tag push only

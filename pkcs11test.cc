@@ -13,8 +13,16 @@
 // limitations under the License.
 
 // C headers
+#include <getopt.h>
+#ifdef _WIN32
+constexpr auto FILEPATH_NATIVE = '\\';
+#include <windows.h>
+#include <stdlib.h>
+#else
+constexpr auto FILEPATH_NATIVE = '/';
 #include <dlfcn.h>
 #include <unistd.h>
+#endif
 
 // C++ headers
 #include <cctype>
@@ -115,8 +123,8 @@ CK_C_GetFunctionList load_pkcs11_library(const char* libpath, const char* libnam
   string fullname;
   if (libpath != nullptr) {
     fullname = libpath;
-    if (fullname.at(fullname.size() - 1) != '/') {
-      fullname += '/';
+    if (fullname.at(fullname.size() - 1) != FILEPATH_NATIVE) {
+      fullname += FILEPATH_NATIVE;
     }
   }
   fullname += libname;
@@ -125,13 +133,24 @@ CK_C_GetFunctionList load_pkcs11_library(const char* libpath, const char* libnam
     exit(1);
   }
 
-  void* lib = dlopen(fullname.c_str(), RTLD_NOW);
+  void* lib;
+#if defined WIN32
+  lib = LoadLibraryA(fullname.c_str());
+#else
+  lib = dlopen(fullname.c_str(), RTLD_NOW);
+#endif
   if (lib == nullptr) {
     cerr << "Failed to dlopen(" << fullname << ")" << endl;
     exit(1);
   }
 
-  void* fn = dlsym(lib, "C_GetFunctionList");
+  void* fn;
+#if defined WIN32
+  fn = GetProcAddress((HMODULE)lib, "C_GetFunctionList");
+#else
+  fn = dlsym(lib, "C_GetFunctionList");
+#endif
+
   if (fn == nullptr) {
     cerr<< "Failed to dlsym(\"C_GetFunctionList\")" << endl;
     exit(1);
@@ -206,6 +225,7 @@ int main(int argc, char* argv[]) {
   // Load the module.
   CK_C_GetFunctionList get_fn_list = load_pkcs11_library(module_path, module_name);
 
+
   // Retrieve the set of function pointers (C_GetFunctionList is the only function it's OK to call before C_Initialize).
   if (get_fn_list(&g_fns) != CKR_OK) {
     cerr << "Failed to retrieve list of functions" << endl;
@@ -222,6 +242,7 @@ int main(int argc, char* argv[]) {
   if (use_slot_index || !explicit_slotid) {
     CK_SLOT_ID slots[32];
     CK_ULONG slot_count = 32;
+
     rv = g_fns->C_GetSlotList(CK_TRUE, slots, &slot_count);
     if (rv == CKR_OK) {
       if (slot_count == 0) {

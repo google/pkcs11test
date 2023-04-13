@@ -22,6 +22,12 @@
 #include <cstdlib>
 #include "pkcs11test.h"
 
+
+#ifdef _WIN32
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
+
+
 #include <map>
 #include <sstream>
 #include <string>

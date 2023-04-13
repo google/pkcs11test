@@ -19,12 +19,52 @@
 #  pragma pack(push, 1)
 #endif
 
+
+
+#ifdef _WIN32
+
+/* Specifies that the function is a DLL entry point. */
+#define CK_IMPORT_SPEC __declspec(dllimport)
+
+#ifdef CRYPTOKI_EXPORTS
+ /* Specified that the function is an exported DLL entry point. */
+#define CK_EXPORT_SPEC __declspec(dllexport) 
+#else
+#define CK_EXPORT_SPEC CK_IMPORT_SPEC 
+#endif
+
+ /* Ensures the calling convention for Win32 builds */
+#define CK_CALL_SPEC __cdecl
+
+#define CK_PTR *
+
+#define CK_DEFINE_FUNCTION(returnType, name) \
+  returnType CK_EXPORT_SPEC CK_CALL_SPEC name
+
+#define CK_DECLARE_FUNCTION(returnType, name) \
+  returnType CK_EXPORT_SPEC CK_CALL_SPEC name
+
+#define CK_DECLARE_FUNCTION_POINTER(returnType, name) \
+  returnType CK_IMPORT_SPEC (CK_CALL_SPEC CK_PTR name)
+
+#define CK_CALLBACK_FUNCTION(returnType, name) \
+  returnType (CK_CALL_SPEC CK_PTR name)
+
+
+
+#else  //_WIN32
+
+/* UNIX version */
 /* The following definitions need to be provided to the preprocessor before the PKCS#11 header file can be included */
 #define CK_PTR *
 #define CK_DEFINE_FUNCTION(returnType, name) returnType name
 #define CK_DECLARE_FUNCTION(returnType, name) returnType name
 #define CK_DECLARE_FUNCTION_POINTER(returnType, name) returnType (*name)
 #define CK_CALLBACK_FUNCTION(returnType, name) returnType (* name)
+
+
+#endif //_WIN32
+
 #ifndef NULL_PTR
 #define NULL_PTR 0
 #endif

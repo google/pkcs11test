@@ -53,11 +53,11 @@ typedef CK_BYTE           CK_UTF8CHAR;
 typedef CK_BYTE           CK_BBOOL;
 
 /* an unsigned value, at least 32 bits long */
-typedef unsigned long int CK_ULONG;
+typedef PKCS11_ULONG_TYPE CK_ULONG;
 
 /* a signed value, the same size as a CK_ULONG */
 /* CK_LONG is new for v2.0 */
-typedef long int          CK_LONG;
+typedef PKCS11_LONG_TYPE  CK_LONG;
 
 /* at least 32 bits; each bit is a Boolean flag */
 typedef CK_ULONG          CK_FLAGS;

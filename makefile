@@ -1,5 +1,4 @@
 all: pkcs11test
-
 SLOT_ID ?= 0
 test_opencryptoki: pkcs11test
 	./pkcs11test -m libopencryptoki.so -l /usr/lib/opencryptoki -s ${SLOT_ID}
@@ -11,6 +10,9 @@ dump_opencryptoki: pkcs11test
 # Define STRICT_P11 somewhere to force 1-byte alignment on P11 structures
 ifneq (, $(STRICT_P11))
     CXXFLAGS+=-DSTRICT_P11
+endif
+ifneq (, $(PKCS11_LONGTYPE))
+    CXXFLAGS+=-DPKCS11_LONGTYPE=$(PKCS11_LONGTYPE)
 endif
 
 GTEST_DIR=gtest-1.10.0/googletest

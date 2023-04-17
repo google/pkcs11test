@@ -11,8 +11,8 @@ dump_opencryptoki: pkcs11test
 ifneq (, $(STRICT_P11))
     CXXFLAGS+=-DSTRICT_P11
 endif
-ifneq (, $(PKCS11_LONGTYPE))
-    CXXFLAGS+=-DPKCS11_LONGTYPE=$(PKCS11_LONGTYPE)
+ifneq (, $(PKCS11_LONG_SIZE))
+    CXXFLAGS+=-DPKCS11_LONG_SIZE=$(PKCS11_LONG_SIZE)
 endif
 
 GTEST_DIR=gtest-1.10.0/googletest

@@ -52,6 +52,10 @@ typedef CK_BYTE           CK_UTF8CHAR;
 /* a BYTE-sized Boolean flag */
 typedef CK_BYTE           CK_BBOOL;
 
+/* Local modification: the CK_LONG/CK_ULONG types are mapped to local typedefs
+ * to allow the tests to run against PKCS11 libraries that use a CK_[U]LONG type
+ * that is a different size from 'long int'. */ 
+
 /* an unsigned value, at least 32 bits long */
 typedef PKCS11_ULONG_TYPE CK_ULONG;
 

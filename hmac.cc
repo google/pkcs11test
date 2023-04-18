@@ -188,7 +188,7 @@ TEST_F(ReadOnlySessionTest, HmacTestVectors) {
         {CKA_VERIFY, (CK_VOID_PTR)&g_ck_true, sizeof(CK_BBOOL)},
         {CKA_CLASS, &key_class, sizeof(key_class)},
         {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
-        {CKA_VALUE, (CK_VOID_PTR)key.data(), key.size()},
+        {CKA_VALUE, (CK_VOID_PTR)key.data(), (CK_ULONG)key.size()},
       };
       CK_OBJECT_HANDLE key_object;
       ASSERT_CKR_OK(g_fns->C_CreateObject(session_, attrs.data(), attrs.size(), &key_object));

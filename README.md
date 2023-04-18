@@ -29,6 +29,14 @@ common Linux PKCS#11 implementations:
 
 This is NOT an official Google product.
 
+Additional make options:
+ - `PKCS11_LONG_SIZE=32` - set `CK_LONG`/`CK_ULONG` size to `int32_t`/`uint32_t`. Normally set to `long int`, which is machine/compiler dependent.
+ - `STRICT_P11=1` - set structures to packed, which tests against fully compliant PKCS11 implementations.
+
+Example:
+```
+make PKCS11_LONG_SIZE=32 STRICT_P11=1
+```
 
 Test Options
 ------------

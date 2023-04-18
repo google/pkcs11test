@@ -234,8 +234,8 @@ TEST_F(ReadOnlySessionTest, CreateKeyPairObjects) {
     {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
     {CKA_CLASS, &public_key_class, sizeof(public_key_class)},
     {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
-    {CKA_PUBLIC_EXPONENT, (CK_VOID_PTR)public_exponent.data(), public_exponent.size()},
-    {CKA_MODULUS, (CK_VOID_PTR)public_modulus.data(), public_modulus.size()},
+    {CKA_PUBLIC_EXPONENT, (CK_VOID_PTR)public_exponent.data(), (CK_ULONG)public_exponent.size()},
+    {CKA_MODULUS, (CK_VOID_PTR)public_modulus.data(), (CK_ULONG)public_modulus.size()},
   };
   EXPECT_CKR_OK(g_fns->C_CreateObject(session_,
                                       public_attrs.data(),
@@ -254,34 +254,34 @@ TEST_F(ReadOnlySessionTest, CreateKeyPairObjects) {
     {CKA_PRIVATE, (CK_VOID_PTR)&g_ck_false, sizeof(CK_BBOOL)},
     {CKA_CLASS, &private_key_class, sizeof(private_key_class)},
     {CKA_KEY_TYPE, (CK_VOID_PTR)&key_type, sizeof(key_type)},
-    {CKA_PUBLIC_EXPONENT, (CK_VOID_PTR)public_exponent.data(), public_exponent.size()},
-    {CKA_PRIVATE_EXPONENT, (CK_BYTE_PTR)private_exponent.data(), private_exponent.size()},
-    {CKA_MODULUS, (CK_VOID_PTR)public_modulus.data(), public_modulus.size()},
+    {CKA_PUBLIC_EXPONENT, (CK_VOID_PTR)public_exponent.data(), (CK_ULONG)public_exponent.size()},
+    {CKA_PRIVATE_EXPONENT, (CK_BYTE_PTR)private_exponent.data(), (CK_ULONG)private_exponent.size()},
+    {CKA_MODULUS, (CK_VOID_PTR)public_modulus.data(), (CK_ULONG)public_modulus.size()},
   };
   string prime1data;
   if (!keydata.prime1.empty()) {
     prime1data = hex_decode(keydata.prime1);
-    private_attrs.push_back({CKA_PRIME_1, (CK_BYTE_PTR)prime1data.data(), prime1data.size()});
+    private_attrs.push_back({CKA_PRIME_1, (CK_BYTE_PTR)prime1data.data(), (CK_ULONG)prime1data.size()});
   }
   string prime2data;
   if (!keydata.prime2.empty()) {
     prime2data = hex_decode(keydata.prime2);
-    private_attrs.push_back({CKA_PRIME_2, (CK_BYTE_PTR)prime2data.data(), prime2data.size()});
+    private_attrs.push_back({CKA_PRIME_2, (CK_BYTE_PTR)prime2data.data(), (CK_ULONG)prime2data.size()});
   }
   string exponent1data;
   if (!keydata.exponent1.empty()) {
     exponent1data = hex_decode(keydata.exponent1);
-    private_attrs.push_back({CKA_EXPONENT_1, (CK_BYTE_PTR)exponent1data.data(), exponent1data.size()});
+    private_attrs.push_back({CKA_EXPONENT_1, (CK_BYTE_PTR)exponent1data.data(), (CK_ULONG)exponent1data.size()});
   }
   string exponent2data;
   if (!keydata.exponent2.empty()) {
     exponent2data = hex_decode(keydata.exponent2);
-    private_attrs.push_back({CKA_EXPONENT_2, (CK_BYTE_PTR)exponent2data.data(), exponent2data.size()});
+    private_attrs.push_back({CKA_EXPONENT_2, (CK_BYTE_PTR)exponent2data.data(), (CK_ULONG)exponent2data.size()});
   }
   string coefficientdata;
   if (!keydata.coefficient.empty()) {
     coefficientdata = hex_decode(keydata.coefficient);
-    private_attrs.push_back({CKA_COEFFICIENT, (CK_BYTE_PTR)coefficientdata.data(), coefficientdata.size()});
+    private_attrs.push_back({CKA_COEFFICIENT, (CK_BYTE_PTR)coefficientdata.data(), (CK_ULONG)coefficientdata.size()});
   }
   EXPECT_CKR_OK(g_fns->C_CreateObject(session_,
                                       private_attrs.data(),

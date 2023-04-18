@@ -29,6 +29,23 @@
 #define NULL_PTR 0
 #endif
 
+#ifdef PKCS11_LONG_SIZE
+ #include <stdint.h>
+ #if PKCS11_LONG_SIZE==32
+ typedef uint32_t PKCS11_ULONG_TYPE;
+ typedef int32_t PKCS11_LONG_TYPE;
+ #elif PKCS11_LONG_SIZE==64
+ typedef uint64_t PKCS11_ULONG_TYPE;
+ typedef int64_t PKCS11_LONG_TYPE;
+ #else
+ #error "Invalid value for PKCS11_LONG_SIZE, defaulting to long"
+ typedef unsigned long int PKCS11_ULONG_TYPE;
+ typedef long int PKCS11_LONG_TYPE;
+ #endif
+#else
+ typedef unsigned long int PKCS11_ULONG_TYPE;
+ typedef long int PKCS11_LONG_TYPE;
+#endif
 #include <pkcs11.h>
 
 #if defined(STRICT_P11)

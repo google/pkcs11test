@@ -122,13 +122,11 @@ class DigestTest : public ReadOnlySessionTest,
     const int kChunkSize = 10;
     CK_BYTE_PTR p = data;
     int dataleft = datalen;
-    int count = 0;
     while (dataleft > 0) {
       int size = min(kChunkSize, dataleft);
       EXPECT_CKR_OK(g_fns->C_DigestUpdate(session_, p, size));
       p += size;
       dataleft -= size;
-      ++count;
     }
 
     CK_BYTE buffer[512];
